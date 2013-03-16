@@ -1,6 +1,21 @@
 #include <stdio.h>
 #include <glib.h>
 #include <gsl/gsl_sf_gamma.h>
+#include <gsl/gsl_sf_log.h>
+#include <gsl/gsl_sf_exp.h>
+
+
+gdouble log_add_exp(gdouble xx, gdouble yy) {
+	gdouble diff = xx - yy;
+	if (diff >= 0) {
+		return xx + gsl_sf_log_1plusx(gsl_sf_exp(-diff));
+	} else if (diff < 0) {
+		return yy + gsl_sf_log_1plusx(gsl_sf_exp(diff));
+	} else {
+		/* inf/nan with same sign */
+		return xx + yy;
+	}
+}
 
 
 typedef struct {
@@ -17,8 +32,13 @@ typedef struct {
 
 Dataset_Key * dataset_key(const gchar *src, const gchar *dst) {
 	Dataset_Key * key = g_new(Dataset_Key, 1);
-	key->src = src;
-	key->dst = dst;
+	if (g_strcmp0(src, dst) <= 0) {
+		key->src = src;
+		key->dst = dst;
+	} else {
+		key->src = dst;
+		key->dst = src;
+	}
 	return key;
 }
 
@@ -112,12 +132,16 @@ void dataset_unref(Dataset* dataset) {
 }
 
 typedef struct {
+	guint		ref_count;
 	guint		num_ones;
 	guint		num_total;
 } Counts;
 
 Counts * counts_new(guint num_ones, guint num_total) {
-	Counts * counts = g_new(Counts, 1);
+	Counts * counts;
+
+	counts = g_new(Counts, 1);
+	counts->ref_count = 1;
 	counts->num_ones = num_ones;
 	counts->num_total = num_total;
 	return counts;
@@ -132,8 +156,16 @@ void counts_add(Counts * dst, Counts * src) {
 	dst->num_total += src->num_total;
 }
 
-void counts_free(Counts * counts) {
-	g_free(counts);
+void counts_ref(Counts * counts) {
+	counts->ref_count++;
+}
+
+void counts_unref(Counts * counts) {
+	if (counts->ref_count <= 1) {
+		g_free(counts);
+	} else {
+		counts->ref_count--;
+	}
 }
 
 
@@ -141,6 +173,7 @@ typedef struct {
 	guint		ref_count;
 	Dataset *	dataset;
 	gdouble		gamma;
+	gdouble		loggamma; /* really log(1-gamma) */
 	gdouble		alpha;
 	gdouble		beta;
 	gdouble		delta;
@@ -153,6 +186,7 @@ Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble bet
 	params->dataset = dataset;
 	dataset_ref(dataset);
 	params->gamma = gamma;
+	params->loggamma = gsl_sf_log(1.0 - gamma);
 	params->alpha = alpha;
 	params->beta = beta;
 	params->delta = delta;
@@ -180,16 +214,25 @@ void params_unref(Params * params) {
 	}
 }
 
-gdouble params_logprob_cluster(Params * params, gpointer pcounts) {
+gdouble params_logprob_on(Params * params, gpointer pcounts) {
 	Counts * counts = pcounts;
 	gdouble a1 = params->alpha + counts->num_ones;
 	gdouble b0 = params->beta  + counts->num_total - counts->num_ones;
 	return gsl_sf_lnbeta(a1, b0) - gsl_sf_lnbeta(params->alpha, params->beta);
 }
 
+gdouble params_logprob_off(Params * params, gpointer pcounts) {
+	Counts * counts = pcounts;
+	gdouble a1 = params->delta + counts->num_ones;
+	gdouble b0 = params->lambda  + counts->num_total - counts->num_ones;
+	return gsl_sf_lnbeta(a1, b0) - gsl_sf_lnbeta(params->delta, params->lambda);
+}
+
 gpointer suff_stats_from_label(Params * params, gpointer label) {
 	gboolean missing;
-	gboolean value = dataset_get(params->dataset, label, label, &missing);
+	gboolean value;
+
+	value = dataset_get(params->dataset, label, label, &missing);
 	if (missing) {
 		return counts_new(0, 0);
 	}
@@ -207,8 +250,29 @@ void suff_stats_add(gpointer pdst, gpointer psrc) {
 }
 
 
-void suff_stats_free(gpointer ss) {
-	counts_free(ss);
+gpointer params_suff_stats_off_lookup(Params * params, GList * srcs, GList * dsts) {
+	Counts * counts;
+	GList * src;
+	GList * dst;
+	gboolean missing;
+	gboolean value;
+
+	counts = counts_new(0, 0);
+
+	for (src = g_list_first(srcs); src != NULL; src = g_list_next(src)) {
+		for (dst = g_list_first(dsts); dst != NULL; dst = g_list_next(dst)) {
+			value = dataset_get(params->dataset, src->data, dst->data, &missing);
+			if (!missing) {
+				counts->num_ones += value;
+				counts->num_total++;
+			}
+		}
+	}
+	return counts;
+}
+
+void suff_stats_unref(gpointer ss) {
+	counts_unref(ss);
 }
 
 
@@ -217,38 +281,79 @@ typedef struct {
 	Params *	params;
 	gpointer	suff_stats_on;
 	gpointer	suff_stats_off;
-	gdouble		logprob;
 	GPtrArray *	children;
-	union {
-		gpointer label;
-	} u;
+	GList *		labels;
+
+	gboolean	dirty;
+	gdouble		log_pi;
+	gdouble		log_not_pi;
+	gdouble		logprob_cluster;
+	gdouble		logprob_children;
+
+	gdouble		logprob;
 } Tree;
 
+void tree_assert(Tree * tree) {
+	g_assert(tree->ref_count >= 1);
+	g_assert(tree->params != NULL);
+	g_assert(tree->suff_stats_on != NULL);
+	g_assert(tree->suff_stats_off != NULL);
+	g_assert(tree->logprob <= 0.0);
+	if (tree->children == NULL) {
+		g_assert(g_list_length(tree->labels) == 1);
+	} else {
+		guint ii;
+
+		for (ii = 0; ii < tree->children->len; ii++) {
+			tree_assert(g_ptr_array_index(tree->children, ii));
+		}
+	}
+}
+
 void tree_unref(Tree *);
+gdouble tree_logprob(Tree *);
+
+Tree * tree_new(Params * params) {
+	Tree * tree;
+       
+	tree = g_new(Tree, 1);
+	tree->ref_count = 1;
+	tree->params = params;
+	params_ref(tree->params);
+	tree->suff_stats_on = NULL;
+	tree->suff_stats_off = NULL;
+	tree->children = NULL;
+	tree->labels = NULL;
+
+	tree->dirty = TRUE;
+	tree->log_pi = 0.0;
+	tree->log_not_pi = 0.0;
+	tree->logprob_cluster = 0.0;
+	tree->logprob_children = 0.0;
+	tree->logprob = 0.0;
+
+	return tree;
+}
 
 Tree * leaf_new(Params * params, gpointer label) {
-	Tree * leaf = g_new(Tree, 1);
-	leaf->ref_count = 1;
+	Tree * leaf;
+
+	leaf = tree_new(params);
 	leaf->suff_stats_on = suff_stats_from_label(params, label);
 	leaf->suff_stats_off = suff_stats_empty(params);
-	leaf->params = params;
-	params_ref(leaf->params);
-	leaf->logprob = params_logprob_cluster(leaf->params, leaf->suff_stats_on);
-	leaf->children = NULL;
-	leaf->u.label = label;
+	leaf->labels = g_list_append(NULL, label);
+	leaf->logprob = tree_logprob(leaf);
 	return leaf;
 }
 
 Tree * branch_new(Params * params) {
-	Tree * branch = g_new(Tree, 1);
-	branch->ref_count = 1;
+	Tree * branch;
+
+	branch = tree_new(params);
 	branch->suff_stats_on = suff_stats_empty(params);
 	branch->suff_stats_off = suff_stats_empty(params);
-	branch->params = params;
-	params_ref(branch->params);
 	branch->children = g_ptr_array_new_with_free_func((GDestroyNotify)tree_unref);
-	branch->u.label = NULL;
-	branch->logprob = 0.0;
+	branch->logprob = tree_logprob(branch);
 	return branch;
 }
 
@@ -288,7 +393,8 @@ void tree_struct_print(Tree * tree, GString *str) {
 	guint ii;
 
 	if (tree_is_leaf(tree)) {
-		g_string_append_printf(str, "%s", (gchar *)tree->u.label);
+		g_string_append_printf(str, "%s",
+				(gchar *)g_list_first(tree->labels)->data);
 		return;
 	}
 	g_string_append_printf(str, "%2.2e:{", tree->logprob);
@@ -315,8 +421,9 @@ void tree_unref(Tree * tree) {
 		if (!tree_is_leaf(tree)) {
 			g_ptr_array_unref(tree->children);
 		}
-		suff_stats_free(tree->suff_stats_on);
-		suff_stats_free(tree->suff_stats_off);
+		g_list_free(tree->labels);
+		suff_stats_unref(tree->suff_stats_on);
+		suff_stats_unref(tree->suff_stats_off);
 		params_unref(tree->params);
 		g_free(tree);
 	} else {
@@ -324,12 +431,79 @@ void tree_unref(Tree * tree) {
 	}
 }
 
+gdouble leaf_logprob(Tree * leaf) {
+	g_assert(tree_is_leaf(leaf));
+	leaf->logprob = params_logprob_on(leaf->params, leaf->suff_stats_on);
+	leaf->dirty = FALSE;
+	return leaf->logprob;
+}
+
 void branch_add_child(Tree * branch, Tree * child) {
+	GList *labels;
+	gpointer new_off;
+
 	g_assert(!tree_is_leaf(branch));
 	tree_ref(child);
 	g_ptr_array_add(branch->children, child);
+
+	new_off = params_suff_stats_off_lookup(branch->params, branch->labels, child->labels);
+	suff_stats_add(branch->suff_stats_off, new_off);
+	suff_stats_unref(new_off);
 	suff_stats_add(branch->suff_stats_on, child->suff_stats_on);
-	suff_stats_add(branch->suff_stats_off, child->suff_stats_off);
+	for (labels = g_list_first(child->labels); labels != NULL; labels = g_list_next(labels)) {
+		branch->labels = g_list_insert_sorted(branch->labels,
+				labels->data, (GCompareFunc)g_strcmp0);
+	}
+	branch->dirty = TRUE;
+	branch->logprob = tree_logprob(branch);
+}
+
+gdouble branch_log_not_pi(Tree * branch) {
+	const gdouble num_children = branch->children->len;
+
+	return (num_children-1)*branch->params->loggamma;
+}
+
+gdouble branch_log_pi(Tree * branch, gdouble log_not_pi) {
+	if (log_not_pi > gsl_sf_log(2.0)) {
+		return gsl_sf_log(-gsl_sf_expm1(log_not_pi));
+	} else {
+		return gsl_sf_log_1plusx(-gsl_sf_exp(log_not_pi));
+	}
+}
+
+gdouble branch_logprob(Tree * branch) {
+	Tree * child;
+	guint ii;
+
+	if (branch->children->len < 2) {
+		return 0.0;
+	}
+
+	branch->log_not_pi = branch_log_not_pi(branch);
+	branch->log_pi = branch_log_pi(branch, branch->log_not_pi);
+	branch->logprob_cluster = params_logprob_on(branch->params, branch->suff_stats_on);
+	branch->logprob_children = params_logprob_off(branch->params, branch->suff_stats_off);
+	for (ii = 0; ii < branch->children->len; ii++) {
+		child = g_ptr_array_index(branch->children, ii);
+		branch->logprob_children += tree_logprob(child);
+	}
+	branch->logprob = log_add_exp(
+			branch->log_pi + branch->logprob_cluster,
+			branch->log_not_pi + branch->logprob_children);
+	branch->dirty = FALSE;
+	return branch->logprob;
+}
+
+gdouble tree_logprob(Tree *tree) {
+	if (!tree->dirty) {
+		return tree->logprob;
+	}
+
+	if (tree_is_leaf(tree)) {
+		return leaf_logprob(tree);
+	}
+	return branch_logprob(tree);
 }
 
 typedef struct {
@@ -339,15 +513,32 @@ typedef struct {
 	gdouble score;
 } Merge;
 
+gdouble merge_calc_logprob_rel(Params *, Tree *, Tree *);
+
+
 Merge * merge_new(Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
-	Merge * merge = g_new(Merge, 1);
+	Merge * merge;
+	gdouble logprob_rel;
+
+	merge = g_new(Merge, 1);
 	merge->ii = ii;
 	merge->jj = jj;
 	merge->tree = branch_new(params);
 	branch_add_child(merge->tree, aa);
 	branch_add_child(merge->tree, bb);
-	merge->score = -(gdouble)(ii * jj);
+	logprob_rel = merge_calc_logprob_rel(params, aa, bb);
+	merge->score = merge->tree->logprob - aa->logprob - bb->logprob - logprob_rel;
 	return merge;
+}
+
+gdouble merge_calc_logprob_rel(Params * params, Tree * aa, Tree * bb) {
+	gpointer offblock;
+	gdouble logprob_rel;
+
+	offblock = params_suff_stats_off_lookup(params, aa->labels, bb->labels);
+	logprob_rel = params_logprob_off(params, offblock);
+	suff_stats_unref(offblock);
+	return logprob_rel;
 }
 
 void merge_free(Merge * merge) {
@@ -359,7 +550,7 @@ void merge_free(Merge * merge) {
 gint cmp_score(gconstpointer paa, gconstpointer pbb, gpointer userdata) {
 	const Merge * aa = paa;
 	const Merge * bb = pbb;
-	return aa->score - bb->score;
+	return bb->score - aa->score;
 }
 
 
@@ -465,11 +656,8 @@ int main(int argc, char * argv[]) {
 	 * cc   0    0    _
 	 */
 	dataset_set(dataset, "aa", "bb", TRUE);
-	dataset_set(dataset, "bb", "aa", TRUE);
 	dataset_set(dataset, "aa", "cc", FALSE);
-	dataset_set(dataset, "cc", "aa", FALSE);
 	dataset_set(dataset, "bb", "cc", FALSE);
-	dataset_set(dataset, "cc", "bb", FALSE);
 
 	params = params_default(dataset);
 
