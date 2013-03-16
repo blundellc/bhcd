@@ -5,6 +5,10 @@
 #include <gsl/gsl_sf_log.h>
 #include <gsl/gsl_sf_exp.h>
 
+typedef union {
+	gpointer ptr;
+	gconstpointer const_ptr;
+} UnionPtr;
 
 gdouble log_add_exp(gdouble xx, gdouble yy) {
 	gdouble diff = xx - yy;
@@ -19,6 +23,16 @@ gdouble log_add_exp(gdouble xx, gdouble yy) {
 }
 
 
+gint cmp_quark(gconstpointer paa, gconstpointer pbb) {
+	GQuark aa;
+	GQuark bb;
+
+	aa = GPOINTER_TO_INT(paa);
+	bb = GPOINTER_TO_INT(pbb);
+	return (gint)aa - (gint)bb;
+}
+
+
 #define	DATASET_VALUE_SHIFT	0x10
 typedef struct {
 	guint		ref_count;
@@ -27,22 +41,22 @@ typedef struct {
 } Dataset;
 
 typedef struct {
-	gchar *	src;
-	gchar *	dst;
+	GQuark	src;
+	GQuark	dst;
 } Dataset_Key;
 
 
-Dataset_Key * dataset_key(gchar *src, gchar *dst, gboolean fast) {
+Dataset_Key * dataset_key(gpointer *psrc, gpointer *pdst, gboolean fast) {
 	Dataset_Key * key;
+	GQuark src;
+	GQuark dst;
 
 	key = g_new(Dataset_Key, 1);
 
-	if (!fast) {
-		src = g_strdup(src);
-		dst = g_strdup(dst);
-	}
+	src = GPOINTER_TO_INT(psrc);
+	dst = GPOINTER_TO_INT(pdst);
 
-	if (g_strcmp0(src, dst) <= 0) {
+	if (src < dst) {
 		key->src = src;
 		key->dst = dst;
 	} else {
@@ -54,21 +68,14 @@ Dataset_Key * dataset_key(gchar *src, gchar *dst, gboolean fast) {
 
 guint dataset_key_hash(gconstpointer pkey) {
 	const Dataset_Key *key = pkey;
-	return 41*g_str_hash(key->src) + g_str_hash(key->dst);
+	return 41*g_direct_hash(GINT_TO_POINTER(key->src))
+		+ g_direct_hash(GINT_TO_POINTER(key->dst));
 }
 
 gboolean dataset_key_eq(gconstpointer paa, gconstpointer pbb) {
 	const Dataset_Key * aa = paa;
 	const Dataset_Key * bb = pbb;
-	return g_str_equal(aa->src, bb->src) && g_str_equal(aa->dst, bb->dst);
-}
-
-void dataset_key_free(gpointer pkey) {
-	Dataset_Key *key = pkey;
-
-	g_free(key->src);
-	g_free(key->dst);
-	g_free(key);
+	return aa->src == bb->src && aa->dst == bb->dst;
 }
 
 Dataset* dataset_new(void) {
@@ -77,13 +84,13 @@ Dataset* dataset_new(void) {
 	data->cells = g_hash_table_new_full(
 				dataset_key_hash,
 				dataset_key_eq,
-				dataset_key_free,
+				g_free,
 				NULL
 			);
 	data->labels = g_hash_table_new_full(
-				g_str_hash,
-				g_str_equal,
-				g_free,
+				NULL,
+				NULL,
+				NULL,
 				NULL
 			);
 	return data;
@@ -93,26 +100,35 @@ guint dataset_num_labels(Dataset * dataset) {
 	return g_hash_table_size(dataset->labels);
 }
 
-void dataset_add_label(Dataset * dataset, const gchar * label) {
-	gchar * my_label;
+
+void dataset_add_label(Dataset * dataset, gpointer label) {
 	if (g_hash_table_lookup_extended(dataset->labels, label, NULL, NULL)) {
 		return;
 	}
-	my_label = g_strdup(label);
 	/* key = value apparently enables some optimization in hash table for
 	 * sets.
 	 */
-	g_hash_table_insert(dataset->labels, my_label, my_label);
+	g_hash_table_insert(dataset->labels, label, label);
 }
 
-gboolean dataset_is_missing(Dataset * dataset, gchar *src, gchar *dst) {
+gpointer dataset_add_string_label(Dataset * dataset, gchar * label) {
+	GQuark qlabel;
+	gpointer plabel;
+
+	qlabel = g_quark_from_string(label);
+	plabel = GINT_TO_POINTER(qlabel);
+	dataset_add_label(dataset, plabel);
+	return plabel;
+}
+
+gboolean dataset_is_missing(Dataset * dataset, gpointer src, gpointer dst) {
 	Dataset_Key * key = dataset_key(src, dst, TRUE);
 	gboolean is_missing = !g_hash_table_lookup_extended(dataset->cells, key, NULL, NULL);
 	g_free(key);
 	return is_missing;
 }
 
-void dataset_set(Dataset * dataset, gchar *src, gchar *dst, gboolean value) {
+void dataset_set(Dataset * dataset, gpointer src, gpointer dst, gboolean value) {
 	Dataset_Key * key = dataset_key(src, dst, FALSE);
 	g_hash_table_replace(dataset->cells, key, GINT_TO_POINTER(value+DATASET_VALUE_SHIFT));
 	dataset_add_label(dataset, src);
@@ -124,7 +140,23 @@ GList * dataset_get_labels(Dataset * dataset) {
 	return g_hash_table_get_keys(dataset->labels);
 }
 
-gboolean dataset_get(Dataset * dataset, gchar *src, gchar *dst, gboolean *missing) {
+GList * dataset_get_labels_string(Dataset * dataset) {
+	GList * labels;
+	GList * label;
+
+	labels = g_hash_table_get_keys(dataset->labels);
+	/* now convert each label back into a string... */
+	for (label = labels; label != NULL; label = g_list_next(label)) {
+		UnionPtr str;
+
+		str.const_ptr = g_quark_to_string(GPOINTER_TO_INT(label->data));
+		label->data = str.ptr;
+	}
+
+	return labels;
+}
+
+gboolean dataset_get(Dataset * dataset, gpointer src, gpointer dst, gboolean *missing) {
 	gboolean value;
 	Dataset_Key * key;
 	gpointer ptr;
@@ -167,13 +199,15 @@ Dataset * dataset_generate(GRand * rng, guint num_items, gdouble prob_one) {
 	dd = dataset_new();
 	for (ii = 0; ii < num_items; ii++) {
 		gchar *name_ii = g_base64_encode((guchar *)&ii, sizeof(ii));
+		gpointer label_ii = dataset_add_string_label(dd, name_ii);
+		g_free(name_ii);
 		for (jj = ii; jj < num_items; jj++) {
 			gchar *name_jj = g_base64_encode((guchar *)&jj, sizeof(jj));
-			dataset_set(dd, name_ii, name_jj,
-					g_rand_double(rng) < prob_one);
+			gpointer label_jj = dataset_add_string_label(dd, name_jj);
 			g_free(name_jj);
+			dataset_set(dd, label_ii, label_jj,
+					g_rand_double(rng) < prob_one);
 		}
-		g_free(name_ii);
 	}
 	return dd;
 }
@@ -533,8 +567,10 @@ void tree_struct_print(Tree * tree, GString *str) {
 	GList * child;
 
 	if (tree_is_leaf(tree)) {
-		g_string_append_printf(str, "%s",
-				(gchar *)g_list_first(tree->labels)->data);
+		guint32 qlabel;
+
+		qlabel = GPOINTER_TO_INT(tree->labels->data);
+		g_string_append_printf(str, "%s", g_quark_to_string(qlabel));
 		return;
 	}
 	g_string_append_printf(str, "%2.2e:{", tree->logprob);
@@ -592,7 +628,7 @@ void branch_add_child(Tree * branch, Tree * child) {
 	suff_stats_add(branch->suff_stats_on, child->suff_stats_on);
 	for (labels = child->labels; labels != NULL; labels = g_list_next(labels)) {
 		branch->labels = g_list_insert_sorted(branch->labels,
-				labels->data, (GCompareFunc)g_strcmp0);
+				labels->data, cmp_quark);
 	}
 	branch->dirty = TRUE;
 	branch->logprob = tree_logprob(branch);
