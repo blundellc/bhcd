@@ -9,4 +9,4 @@ dflags="-g"
 cflags="-std=c89 -O2 $wflags $dflags $(pkg-config --cflags $pkgs)"
 
 lflags="$(pkg-config --libs $pkgs)"
-cc $cflags -o fastbrt $lflags fastbrt.c
+cc $cflags -o fastbrt fastbrt.c $lflags
