@@ -12,3 +12,4 @@ missing
 configure.scan
 autom4te.cache/
 depcomp
+aclocal.m4

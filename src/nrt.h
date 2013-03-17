@@ -7,5 +7,6 @@
 #include "params.h"
 #include "tree.h"
 #include "merge.h"
+#include "build.h"
 
 #endif
