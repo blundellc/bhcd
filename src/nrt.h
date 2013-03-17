@@ -3,5 +3,9 @@
 
 #include "dataset.h"
 #include "util.h"
+#include "counts.h"
+#include "params.h"
+#include "tree.h"
+#include "merge.h"
 
 #endif
