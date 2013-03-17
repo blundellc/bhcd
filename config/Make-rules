@@ -1,0 +1,16 @@
+AM_CFLAGS = -std=c89 -O2
+
+# warnings
+AM_CFLAGS += -pedantic -Wall -Wfloat-equal -Wbad-function-cast -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wdeclaration-after-statement -Wuninitialized -Werror -Wstrict-overflow=5 -Wextra -Wno-unused-parameter -Wfatal-errors
+
+# paranoid
+# AM_CFLAGS += -D_FORIFY_SOURCE=2 -Wformat -Wformat-security
+# AM_LDADD += -pie -fPIE -Wl,-z,relro -Wl,-z,now -fstack-protector
+
+# debug
+# AM_CFLAGS += -g -pg
+# AM_LDFLAGS += -g -pg
+
+AM_CFLAGS += $(DEPS_CFLAGS)
+AM_CFLAGS += -I$(top_srcdir)/inc
+

@@ -1,0 +1,14 @@
+AC_PREREQ([2.69])
+
+AC_INIT([fastnrt], [1.0], [c.blundell@gatsby.ucl.ac.uk])
+
+AM_INIT_AUTOMAKE([1.9 foreign])
+
+AC_PROG_CC
+AC_CHECK_HEADERS([string.h])
+
+PKG_CHECK_MODULES([DEPS], [glib-2.0 >= 2.30 gsl >= 1.0])
+
+AC_CONFIG_FILES([Makefile src/Makefile])
+AC_OUTPUT
+

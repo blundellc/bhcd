@@ -1,0 +1,14 @@
+Makefile
+Makefile.in
+configure
+*.log
+*.swp
+*.o
+*.orig
+config.status
+.deps/
+install-sh
+missing
+configure.scan
+autom4te.cache/
+depcomp
