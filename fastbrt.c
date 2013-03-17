@@ -22,6 +22,20 @@ gdouble log_add_exp(gdouble xx, gdouble yy) {
 	}
 }
 
+gchar * num_to_string(guint ii) {
+	static gchar base[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+	GString *out;
+
+	out = g_string_new("");
+
+	do {
+		g_string_append_c(out, base[ii % sizeof(base)]);
+		ii /= sizeof(base);
+	} while (ii != 0);
+
+	return g_string_free(out, FALSE);
+}
+
 
 gint cmp_quark(gconstpointer paa, gconstpointer pbb) {
 	GQuark aa;
@@ -192,17 +206,17 @@ void dataset_unref(Dataset* dataset) {
 }
 
 
-Dataset * dataset_generate(GRand * rng, guint num_items, gdouble prob_one) {
+Dataset * dataset_gen_speckle(GRand * rng, guint num_items, gdouble prob_one) {
 	Dataset * dd;
 	guint ii, jj;
 
 	dd = dataset_new();
 	for (ii = 0; ii < num_items; ii++) {
-		gchar *name_ii = g_base64_encode((guchar *)&ii, sizeof(ii));
+		gchar *name_ii = num_to_string(ii);
 		gpointer label_ii = dataset_add_string_label(dd, name_ii);
 		g_free(name_ii);
 		for (jj = ii; jj < num_items; jj++) {
-			gchar *name_jj = g_base64_encode((guchar *)&jj, sizeof(jj));
+			gchar *name_jj = num_to_string(jj);
 			gpointer label_jj = dataset_add_string_label(dd, name_jj);
 			g_free(name_jj);
 			dataset_set(dd, label_ii, label_jj,
@@ -213,18 +227,49 @@ Dataset * dataset_generate(GRand * rng, guint num_items, gdouble prob_one) {
 }
 
 
+Dataset * dataset_gen_blocks(GRand * rng, guint num_items, guint block_width, gdouble prob_flip) {
+	Dataset *dd;
+	guint ii, jj;
+	guint value;
+
+	dd = dataset_new();
+	for (ii = 0; ii < num_items; ii++) {
+		gchar *name_ii = num_to_string(ii);
+		gpointer label_ii = dataset_add_string_label(dd, name_ii);
+		g_free(name_ii);
+		for (jj = ii; jj < num_items; jj++) {
+			gchar *name_jj = num_to_string(jj);
+			gpointer label_jj = dataset_add_string_label(dd, name_jj);
+			g_free(name_jj);
+
+			value = (ii/block_width % 2) == (jj/block_width % 2)
+				&& ABS((gint)ii-(gint)jj) < block_width;
+			if (g_rand_double(rng) < prob_flip) {
+				value = !value;
+			}
+			dataset_set(dd, label_ii, label_jj, value);
+		}
+	}
+	return dd;
+}
+
+
 void dataset_print(Dataset * dataset, GString *str) {
 	GList * labels;
 	GList * xx;
 	GList * yy;
+	GQuark qxx;
+	GQuark qyy;
 	guint max_len;
+	guint len;
 	gboolean missing;
 	gboolean value;
 
 	labels = g_hash_table_get_keys(dataset->labels);
 	max_len = 5;
 	for (xx = labels; xx != NULL; xx = g_list_next(xx)) {
-		guint len = strlen(xx->data);
+		qxx = GPOINTER_TO_INT(xx->data);
+		len = strlen(g_quark_to_string(qxx));
 		if (len > max_len) {
 			max_len = len;
 		}
@@ -232,11 +277,13 @@ void dataset_print(Dataset * dataset, GString *str) {
 	/* header */
 	g_string_append_printf(str, "%*s ", max_len, "");
 	for (yy = labels; yy != NULL; yy = g_list_next(yy)) {
-		g_string_append_printf(str, "%*s ", max_len, (gchar *)yy->data);
+		qyy = GPOINTER_TO_INT(yy->data);
+		g_string_append_printf(str, "%*s ", max_len, g_quark_to_string(qyy));
 	}
 	g_string_append(str, "\n");
 	for (xx = labels; xx != NULL; xx = g_list_next(xx)) {
-		g_string_append_printf(str, "%*s ", max_len, (gchar *)xx->data);
+		qxx = GPOINTER_TO_INT(xx->data);
+		g_string_append_printf(str, "%*s ", max_len, g_quark_to_string(qxx));
 		/* content */
 		for (yy = labels; yy != NULL; yy = g_list_next(yy)) {
 			value = dataset_get(dataset, xx->data, yy->data, &missing);
@@ -892,7 +939,8 @@ void run_rand(GRand * rng, guint num_items, gdouble sparsity, guint verbose) {
 	Tree * root;
 	GString * out;
 
-	dataset = dataset_generate(rng, num_items, 1.0-sparsity);
+	/* dataset = dataset_gen_speckle(rng, num_items, 1.0-sparsity); */
+	dataset = dataset_gen_blocks(rng, num_items, 3, sparsity);
 	if (verbose > 1) {
 		out = g_string_new("dataset: \n");
 		dataset_print(dataset, out);
@@ -932,12 +980,12 @@ int main(int argc, char * argv[]) {
 	rng = g_rand_new();
 	timer = g_timer_new();
 
-	sparsity = 0.1;
-	for (num_items = 2; num_items < 10; num_items += 2) {
+	sparsity = 0.0;
+	for (num_items = 10; num_items < 14; num_items += 2) {
 		max_time = 0.0;
 		for (repeat = 0; repeat < 100; repeat++) {
 			g_timer_start(timer);
-			run_rand(rng, num_items, sparsity, 0);
+			run_rand(rng, num_items, sparsity, 2);
 			g_timer_stop(timer);
 			if (g_timer_elapsed(timer, NULL) > max_time) {
 				max_time = g_timer_elapsed(timer, NULL);
