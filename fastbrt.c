@@ -484,7 +484,7 @@ Tree * tree_copy(Tree * template) {
        
 	tree = g_new(Tree, 1);
 	tree->ref_count = 1;
-	tree->is_leaf = TRUE;
+	tree->is_leaf = template->is_leaf;
 	tree->params = template->params;
 	params_ref(tree->params);
 
@@ -692,19 +692,74 @@ typedef struct {
 gdouble merge_calc_logprob_rel(Params *, Tree *, Tree *);
 
 
-Merge * merge_new(Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
+Merge * merge_new(Params * params, guint ii, Tree * aa, guint jj, Tree * bb, Tree * mm) {
 	Merge * merge;
 	gdouble logprob_rel;
 
 	merge = g_new(Merge, 1);
 	merge->ii = ii;
 	merge->jj = jj;
-	merge->tree = branch_new(params);
-	branch_add_child(merge->tree, aa);
-	branch_add_child(merge->tree, bb);
+	merge->tree = mm;
 	logprob_rel = merge_calc_logprob_rel(params, aa, bb);
 	merge->score = merge->tree->logprob - aa->logprob - bb->logprob - logprob_rel;
 	return merge;
+}
+
+void merge_free(Merge * merge) {
+	tree_unref(merge->tree);
+	g_free(merge);
+}
+
+void merge_free1(gpointer merge, gpointer data) {
+	merge_free(merge);
+}
+
+Merge * merge_join(Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
+	Tree * tree;
+
+	tree = branch_new(params);
+	branch_add_child(tree, aa);
+	branch_add_child(tree, bb);
+	return merge_new(params, ii, aa, jj, bb, tree);
+}
+
+Merge * merge_absorb(Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
+	/* absorb bb as a child of aa */
+	Tree * tree;
+
+	if (tree_is_leaf(aa)) {
+		return NULL;
+	}
+
+	tree = tree_copy(aa);
+	branch_add_child(tree, bb);
+	return merge_new(params, ii, aa, jj, bb, tree);
+}
+
+Merge * merge_best(Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
+	Merge * merge;
+	Merge * best_merge;
+
+	best_merge = merge_join(params, ii, aa, jj, bb);
+	merge = merge_absorb(params, ii, aa, jj, bb);
+	if (merge != NULL) {
+		if (merge->score > best_merge->score) {
+			merge_free(best_merge);
+			best_merge = merge;
+		} else {
+			merge_free(merge);
+		}
+	}
+	merge = merge_absorb(params, jj, bb, ii, aa);
+	if (merge != NULL) {
+		if (merge->score > best_merge->score) {
+			merge_free(best_merge);
+			best_merge = merge;
+		} else {
+			merge_free(merge);
+		}
+	}
+	return best_merge;
 }
 
 gdouble merge_calc_logprob_rel(Params * params, Tree * aa, Tree * bb) {
@@ -715,15 +770,6 @@ gdouble merge_calc_logprob_rel(Params * params, Tree * aa, Tree * bb) {
 	logprob_rel = params_logprob_off(params, offblock);
 	suff_stats_unref(offblock);
 	return logprob_rel;
-}
-
-void merge_free(Merge * merge) {
-	tree_unref(merge->tree);
-	g_free(merge);
-}
-
-void merge_free1(gpointer merge, gpointer data) {
-	merge_free(merge);
 }
 
 
@@ -760,7 +806,7 @@ GSequence * build_init_merges(Params * params, GPtrArray * trees) {
 		aa = g_ptr_array_index(trees, ii);
 		for (jj = ii + 1; jj < trees->len; jj++) {
 			bb = g_ptr_array_index(trees, jj);
-			new_merge = merge_new(params, ii, aa, jj, bb);
+			new_merge = merge_best(params, ii, aa, jj, bb);
 			g_sequence_insert_sorted(merges, new_merge, cmp_score, NULL);
 		}
 	}
@@ -787,7 +833,7 @@ void build_add_merges(Params * params, GSequence * merges, GPtrArray * trees, Tr
 		}
 
 		tll = g_ptr_array_index(trees, ll);
-		new_merge = merge_new(params, kk, tkk, ll, tll);
+		new_merge = merge_best(params, kk, tkk, ll, tll);
 		g_sequence_insert_sorted(merges, new_merge, cmp_score, NULL);
 	}
 }
@@ -839,7 +885,7 @@ Tree * build(Params * params, GList * labels) {
 }
 
 
-void run_rand(GRand * rng, guint num_items, gdouble sparsity, gboolean verbose) {
+void run_rand(GRand * rng, guint num_items, gdouble sparsity, guint verbose) {
 	Dataset * dataset;
 	Params * params;
 	GList * labels;
@@ -847,7 +893,7 @@ void run_rand(GRand * rng, guint num_items, gdouble sparsity, gboolean verbose) 
 	GString * out;
 
 	dataset = dataset_generate(rng, num_items, 1.0-sparsity);
-	if (verbose) {
+	if (verbose > 1) {
 		out = g_string_new("dataset: \n");
 		dataset_print(dataset, out);
 		g_print("%s\n", out->str);
@@ -891,7 +937,7 @@ int main(int argc, char * argv[]) {
 		max_time = 0.0;
 		for (repeat = 0; repeat < 100; repeat++) {
 			g_timer_start(timer);
-			run_rand(rng, num_items, sparsity, FALSE);
+			run_rand(rng, num_items, sparsity, 0);
 			g_timer_stop(timer);
 			if (g_timer_elapsed(timer, NULL) > max_time) {
 				max_time = g_timer_elapsed(timer, NULL);
