@@ -20,6 +20,9 @@ void init_test_toy3(Tree **laa, Tree **lbb, Tree **lcc) {
 	*laa = leaf_new(params, aa);
 	*lbb = leaf_new(params, bb);
 	*lcc = leaf_new(params, cc);
+
+	params_unref(params);
+	dataset_unref(dd);
 }
 
 void test_tree_logprob3(void) {
@@ -135,6 +138,8 @@ void test_merge_score3(void) {
 			   )
 	   	- (correct_tab + 0.0 + gsl_sf_lnbeta(0.2, 1.0+2) - gsl_sf_lnbeta(0.2, 1.0));
 	assert_eqfloat(merge->score, score_tabc, prec);
+
+	merge_free(merge);
 	tree_unref(tab);
 	tree_unref(tabc);
 	tree_unref(laa);

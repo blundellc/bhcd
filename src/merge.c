@@ -11,6 +11,7 @@ Merge * merge_new(Params * params, guint ii, Tree * aa, guint jj, Tree * bb, Tre
 	merge->ii = ii;
 	merge->jj = jj;
 	merge->tree = mm;
+	tree_ref(merge->tree);
 	logprob_rel = merge_calc_logprob_rel(params, aa, bb);
 	merge->score = tree_get_logprob(merge->tree)
 	       		- tree_get_logprob(aa) - tree_get_logprob(bb) - logprob_rel;
@@ -43,16 +44,20 @@ void merge_tostring(Merge * merge, GString * out) {
 
 Merge * merge_join(Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
 	Tree * tree;
+	Merge * merge;
 
 	tree = branch_new(params);
 	branch_add_child(tree, aa);
 	branch_add_child(tree, bb);
-	return merge_new(params, ii, aa, jj, bb, tree);
+	merge = merge_new(params, ii, aa, jj, bb, tree);
+	tree_unref(tree);
+	return merge;
 }
 
 Merge * merge_absorb(Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
 	/* absorb bb as a child of aa */
 	Tree * tree;
+	Merge * merge;
 
 	if (tree_is_leaf(aa)) {
 		return NULL;
@@ -60,7 +65,9 @@ Merge * merge_absorb(Params * params, guint ii, Tree * aa, guint jj, Tree * bb) 
 
 	tree = tree_copy(aa);
 	branch_add_child(tree, bb);
-	return merge_new(params, ii, aa, jj, bb, tree);
+	merge = merge_new(params, ii, aa, jj, bb, tree);
+	tree_unref(tree);
+	return merge;
 }
 
 Merge * merge_best(Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {

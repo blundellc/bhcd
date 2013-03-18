@@ -4,7 +4,7 @@
 GPtrArray * build_init_trees(Params * params, GList * labels) {
 	GPtrArray * trees;
 
-	trees = g_ptr_array_new();
+	trees = g_ptr_array_new_full(g_list_length(labels), (GDestroyNotify)tree_unref);
 	for (labels = g_list_first(labels); labels != NULL; labels = g_list_next(labels)) {
 		Tree * leaf = leaf_new(params, labels->data);
 		g_ptr_array_add(trees, leaf);
@@ -102,6 +102,7 @@ Tree * build(Params * params, GList * labels) {
 	build_greedy(params, trees, merges);
 
 	root = g_ptr_array_index(trees, trees->len - 1);
+	tree_ref(root);
 	g_assert(root != NULL);
 	g_ptr_array_free(trees, TRUE);
 	g_sequence_foreach(merges, merge_free1, NULL);
