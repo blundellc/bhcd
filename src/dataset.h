@@ -27,6 +27,7 @@ void dataset_tostring(Dataset *, GString *);
 Dataset * dataset_gen_speckle(GRand *, guint, gdouble);
 Dataset * dataset_gen_blocks(GRand *, guint, guint, gdouble);
 Dataset * dataset_gen_toy3(void);
+Dataset * dataset_gen_toy4(void);
 
 
 #endif

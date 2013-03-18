@@ -305,3 +305,40 @@ Dataset * dataset_gen_toy3(void) {
 	return dataset;
 }
 
+
+Dataset * dataset_gen_toy4(void) {
+	Dataset * dataset;
+	gpointer aa, bb, cc, dd;
+
+	dataset = dataset_new(FALSE);
+	/* from scala code
+	 *     aa   bb   cc   dd
+	 * aa   1    0    0    1
+	 * bb   0    _    1    _
+	 * cc   1    1    0    0
+	 * dd   0    0    1    _
+	 */
+	aa = dataset_get_string_label(dataset, "aa");
+	bb = dataset_get_string_label(dataset, "bb");
+	cc = dataset_get_string_label(dataset, "cc");
+	dd = dataset_get_string_label(dataset, "dd");
+
+	/* ones */
+	dataset_set(dataset, aa, aa, TRUE);
+	dataset_set(dataset, aa, dd, TRUE);
+	dataset_set(dataset, bb, cc, TRUE);
+	dataset_set(dataset, cc, aa, TRUE);
+	dataset_set(dataset, cc, bb, TRUE);
+	dataset_set(dataset, dd, cc, TRUE);
+
+	/* zeros */
+	dataset_set(dataset, aa, bb, FALSE);
+	dataset_set(dataset, aa, cc, FALSE);
+	dataset_set(dataset, bb, aa, FALSE);
+	dataset_set(dataset, cc, cc, FALSE);
+	dataset_set(dataset, cc, dd, FALSE);
+	dataset_set(dataset, dd, aa, FALSE);
+	dataset_set(dataset, dd, bb, FALSE);
+
+	return dataset;
+}
