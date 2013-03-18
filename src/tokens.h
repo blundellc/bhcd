@@ -12,6 +12,8 @@ void tokens_close(Tokens * toks);
 
 gboolean tokens_has_next(Tokens * toks);
 gchar * tokens_next(Tokens * toks);
+gdouble tokens_next_double(Tokens * toks);
+gint64 tokens_next_int(Tokens * toks);
 
 void tokens_expect(Tokens * toks, const gchar *token);
 void tokens_expect_end(Tokens * toks);

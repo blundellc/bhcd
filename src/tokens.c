@@ -128,6 +128,40 @@ gchar * tokens_next(Tokens * toks) {
 	return next;
 }
 
+
+gdouble tokens_next_double(Tokens * toks) {
+	gdouble next;
+	gchar *endp;
+
+	if (!tokens_has_next(toks)) {
+		tokens_fail(toks, "expected a token; none found");
+	}
+
+	next = g_ascii_strtod(toks->next, &endp);
+	if (*endp != '\0') {
+		tokens_fail(toks, "expected a double; found %s", next);
+	}
+	tokens_advance(toks);
+	return next;
+}
+
+
+gint64 tokens_next_int(Tokens * toks) {
+	gint64 next;
+	gchar *endp;
+
+	if (!tokens_has_next(toks)) {
+		tokens_fail(toks, "expected a token; none found");
+	}
+	next = g_ascii_strtoll(toks->next, &endp, 0);
+	if (*endp != '\0') {
+		tokens_fail(toks, "expected a integer; found %s", next);
+	}
+	tokens_advance(toks);
+	return next;
+}
+
+
 void tokens_expect(Tokens * toks, const gchar *token) {
 	if (!tokens_has_next(toks)) {
 		tokens_fail(toks, "expecting `%s'; nothing found.", token);
