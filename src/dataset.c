@@ -5,6 +5,7 @@
 #define	DATASET_VALUE_SHIFT	0x10
 struct Dataset_t {
 	guint		ref_count;
+	gchar *		filename;
 	gboolean	symmetric;
 	GHashTable *	labels;
 	GHashTable *	cells;
@@ -67,6 +68,7 @@ static gint dataset_label_cmp(gconstpointer paa, gconstpointer pbb) {
 Dataset* dataset_new(gboolean symmetric) {
 	Dataset * data = g_new(Dataset, 1);
 	data->ref_count = 1;
+	data->filename = NULL;
 	data->symmetric = symmetric;
 	data->cells = g_hash_table_new_full(
 				dataset_key_hash,
@@ -117,6 +119,15 @@ gboolean dataset_is_missing(Dataset * dataset, gpointer src, gpointer dst) {
 	gboolean is_missing = !g_hash_table_lookup_extended(dataset->cells, key, NULL, NULL);
 	g_free(key);
 	return is_missing;
+}
+
+void dataset_set_filename(Dataset *dataset, const gchar *filename) {
+	dataset->filename = g_strdup(filename);
+}
+
+
+const gchar * dataset_get_filename(Dataset * dataset) {
+	return dataset->filename;
 }
 
 void dataset_set(Dataset * dataset, gpointer src, gpointer dst, gboolean value) {
@@ -173,6 +184,7 @@ void dataset_unref(Dataset* dataset) {
 	if (dataset->ref_count <= 1) {
 		g_hash_table_unref(dataset->cells);
 		g_hash_table_unref(dataset->labels);
+		g_free(dataset->filename);
 		g_free(dataset);
 	} else {
 		dataset->ref_count--;

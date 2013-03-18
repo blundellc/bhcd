@@ -13,14 +13,15 @@ gboolean dataset_is_symmetric(Dataset *);
 void dataset_set(Dataset *, gpointer, gpointer, gboolean);
 gpointer dataset_add_string_label(Dataset *, gchar *);
 
-gboolean dataset_get(Dataset *, gpointer, gpointer, gboolean *);
-
 gboolean dataset_is_missing(Dataset *, gpointer, gpointer);
+gboolean dataset_get(Dataset *, gpointer, gpointer, gboolean *);
 GList * dataset_get_labels(Dataset *);
 const gchar * dataset_get_label_string(Dataset *, gconstpointer);
 gpointer dataset_get_string_label(Dataset *, const gchar *);
-
 guint dataset_num_labels(Dataset *);
+const gchar * dataset_get_filename(Dataset *);
+void dataset_set_filename(Dataset *, const gchar *);
+
 void dataset_println(Dataset *, const gchar *);
 void dataset_tostring(Dataset *, GString *);
 
