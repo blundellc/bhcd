@@ -1,0 +1,4 @@
+#!/bin/sh
+
+./scripts/dbg --leak-check=full "$@"
+
