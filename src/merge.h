@@ -22,6 +22,7 @@ void merge_free1(gpointer merge, gpointer data);
 Merge * merge_best(GRand *, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
 Merge * merge_absorb(GRand *, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
 Merge * merge_join(GRand *, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
+Merge * merge_collapse(GRand *, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
 
 void merge_println(Merge * merge, const gchar * prefix);
 void merge_tostring(Merge * merge, GString * out);
