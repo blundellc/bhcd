@@ -76,6 +76,8 @@ void build_greedy(Params * params, GPtrArray * trees, GSequence * merges) {
 			goto again;
 		}
 
+		tree_println(cur->tree, "merge: ");
+
 		build_remove_tree(trees, cur->ii);
 		build_remove_tree(trees, cur->jj);
 		live_trees--;

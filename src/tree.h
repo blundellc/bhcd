@@ -22,7 +22,8 @@ GList * tree_get_labels(Tree * tree);
 gdouble tree_logprob(Tree *tree);
 guint tree_num_intern(Tree * tree);
 guint tree_num_leaves(Tree * tree);
-void tree_print(Tree * tree, GString *str);
+void tree_println(Tree * tree, const gchar *prefix);
+void tree_tostring(Tree * tree, GString *str);
 void tree_struct_print(Tree * tree, GString *str);
 
 #endif /*TREE_H*/

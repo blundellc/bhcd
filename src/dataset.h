@@ -21,7 +21,8 @@ const gchar * dataset_get_label_string(Dataset *, gpointer);
 gpointer dataset_get_string_label(Dataset *, gchar *);
 
 guint dataset_num_labels(Dataset *);
-void dataset_print(Dataset *, GString *);
+void dataset_println(Dataset *, const gchar *);
+void dataset_tostring(Dataset *, GString *);
 
 Dataset * dataset_gen_speckle(GRand *, guint, gdouble);
 Dataset * dataset_gen_blocks(GRand *, guint, guint, gdouble);

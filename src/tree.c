@@ -45,9 +45,6 @@ void tree_assert(Tree * tree) {
 	}
 }
 
-void tree_unref(Tree *);
-void tree_ref(Tree *);
-gdouble tree_logprob(Tree *);
 
 static Tree * tree_new(Params * params) {
 	Tree * tree;
@@ -181,7 +178,15 @@ void tree_struct_print(Tree * tree, GString *str) {
 	g_string_append_printf(str, "}");
 }
 
-void tree_print(Tree * tree, GString *str) {
+void tree_println(Tree * tree, const gchar *prefix) {
+	GString * out;
+	out = g_string_new(prefix);
+	tree_tostring(tree, out);
+	g_print("%s\n", out->str);
+	g_string_free(out, TRUE);
+}
+
+void tree_tostring(Tree * tree, GString *str) {
 	g_string_append_printf(str, "logprob: %2.2e #intern: %u ", tree->logprob, tree_num_intern(tree));
 	tree_struct_print(tree, str);
 }

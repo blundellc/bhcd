@@ -213,7 +213,16 @@ Dataset * dataset_gen_blocks(GRand * rng, guint num_items, guint block_width, gd
 }
 
 
-void dataset_print(Dataset * dataset, GString *str) {
+void dataset_println(Dataset * dataset, const gchar *prefix) {
+	GString * out;
+
+	out = g_string_new("dataset: \n");
+	dataset_tostring(dataset, out);
+	g_print("%s\n", out->str);
+	g_string_free(out, TRUE);
+}
+
+void dataset_tostring(Dataset * dataset, GString *str) {
 	GList * labels;
 	GList * xx;
 	GList * yy;
