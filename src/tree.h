@@ -18,6 +18,8 @@ void tree_assert(Tree * tree);
 void branch_add_child(Tree * branch, Tree * child);
 GList * branch_get_children(Tree * branch);
 
+gconstpointer leaf_get_label(Tree * leaf);
+
 gboolean tree_is_leaf(Tree * tree);
 GList * tree_get_labels(Tree * tree);
 Params * tree_get_params(Tree * tree);

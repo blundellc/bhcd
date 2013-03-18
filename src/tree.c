@@ -217,6 +217,12 @@ void tree_unref(Tree * tree) {
 	}
 }
 
+
+gconstpointer leaf_get_label(Tree * leaf) {
+	g_assert(tree_is_leaf(leaf));
+	return leaf->labels->data;
+}
+
 static gdouble leaf_logprob(Tree * leaf) {
 	g_assert(tree_is_leaf(leaf));
 	leaf->logprob = params_logprob_on(leaf->params, leaf->suff_stats_on);
