@@ -11,11 +11,14 @@ void dataset_ref(Dataset *);
 void dataset_unref(Dataset *);
 
 void dataset_set(Dataset *, gpointer, gpointer, gboolean);
+gpointer dataset_add_string_label(Dataset *, gchar *);
+
 gboolean dataset_get(Dataset *, gpointer, gpointer, gboolean *);
 
 gboolean dataset_is_missing(Dataset *, gpointer, gpointer);
 GList * dataset_get_labels(Dataset *);
 const gchar * dataset_get_label_string(Dataset *, gpointer);
+gpointer dataset_get_string_label(Dataset *, gchar *);
 
 guint dataset_num_labels(Dataset *);
 void dataset_print(Dataset *, GString *);

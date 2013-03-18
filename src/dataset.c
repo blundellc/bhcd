@@ -19,7 +19,6 @@ static Dataset_Key * dataset_key(gpointer *, gpointer *, gboolean);
 static guint dataset_key_hash(gconstpointer);
 static gboolean dataset_key_eq(gconstpointer, gconstpointer);
 static void dataset_add_label(Dataset *, gpointer);
-static gpointer dataset_add_string_label(Dataset *, gchar *);
 
 static Dataset_Key * dataset_key(gpointer *psrc, gpointer *pdst, gboolean fast) {
 	Dataset_Key * key;
@@ -123,6 +122,13 @@ const gchar * dataset_get_label_string(Dataset * dataset, gpointer label) {
 	return str.ptr;
 }
 
+gpointer dataset_get_string_label(Dataset * dataset, gchar * label) {
+	GQuark qq;
+       
+	qq = g_quark_from_string(label);
+	return GINT_TO_POINTER(qq);
+}
+
 gboolean dataset_get(Dataset * dataset, gpointer src, gpointer dst, gboolean *missing) {
 	gboolean value;
 	Dataset_Key * key;
@@ -196,7 +202,7 @@ Dataset * dataset_gen_blocks(GRand * rng, guint num_items, guint block_width, gd
 			g_free(name_jj);
 
 			value = (ii/block_width % 2) == (jj/block_width % 2)
-				&& ABS((gint)ii-(gint)jj) < block_width;
+				&& (guint)ABS((gint)ii-(gint)jj) < block_width;
 			if (g_rand_double(rng) < prob_flip) {
 				value = !value;
 			}
