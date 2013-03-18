@@ -1,3 +1,4 @@
+#include <string.h>
 #include <gsl/gsl_sf_log.h>
 #include <gsl/gsl_sf_exp.h>
 #include <glib/gprintf.h>
@@ -80,3 +81,13 @@ void io_stdout(IOFunc func, gpointer user_data) {
 	g_io_channel_unref(io);
 }
 
+gchar * strip_quotes(gchar *str) {
+	guint len;
+
+	len = strlen(str);
+	if (len > 1 && str[0] == '"' && str[len-1] == '"') {
+		g_memmove(str, &str[1], len-1);
+		str[len-2] = '\0';
+	}
+	return str;
+}
