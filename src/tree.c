@@ -128,6 +128,10 @@ GList * tree_get_labels(Tree * tree) {
 	return tree->labels;
 }
 
+Params * tree_get_params(Tree * tree) {
+	return tree->params;
+}
+
 guint tree_num_leaves(Tree * tree) {
 	guint total;
 	GList *child;
