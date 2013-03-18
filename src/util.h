@@ -25,6 +25,7 @@ gdouble log_add_exp(gdouble, gdouble);
 gchar * num_to_string(guint);
 gint cmp_quark(gconstpointer, gconstpointer);
 void io_printf(GIOChannel *io, const gchar *fmt, ...);
+void io_stdout(IOFunc func, gpointer user_data);
 
 #define	assert_eqfloat(expa, expb, prec)							\
 	do {											\

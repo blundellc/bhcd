@@ -71,3 +71,12 @@ void io_printf(GIOChannel *io, const gchar *fmt, ...) {
 
 }
 
+
+void io_stdout(IOFunc func, gpointer user_data) {
+        GIOChannel *io;
+
+	io = g_io_channel_unix_new(1);
+	func(user_data, io);
+	g_io_channel_unref(io);
+}
+
