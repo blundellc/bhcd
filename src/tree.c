@@ -200,6 +200,9 @@ void tree_ref(Tree * tree) {
 }
 
 void tree_unref(Tree * tree) {
+	if (tree == NULL) {
+		return;
+	}
 	if (tree->ref_count <= 1) {
 		if (!tree_is_leaf(tree)) {
 			g_list_free_full(tree->children, (GDestroyNotify)tree_unref);
