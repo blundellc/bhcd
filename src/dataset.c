@@ -132,17 +132,15 @@ GList * dataset_get_labels(Dataset * dataset) {
 }
 
 
-const gchar * dataset_get_label_string(Dataset * dataset, gpointer label) {
+const gchar * dataset_get_label_string(Dataset * dataset, gconstpointer label) {
 	UnionPtr str;
 
 	str.const_ptr = g_quark_to_string(GPOINTER_TO_INT(label));
 	return str.ptr;
 }
 
-gpointer dataset_get_string_label(Dataset * dataset, gchar * label) {
-	GQuark qq;
-       
-	qq = g_quark_from_string(label);
+gpointer dataset_get_string_label(Dataset * dataset, const gchar * label) {
+	const GQuark qq = g_quark_from_string(label);
 	return GINT_TO_POINTER(qq);
 }
 

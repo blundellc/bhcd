@@ -17,8 +17,8 @@ gboolean dataset_get(Dataset *, gpointer, gpointer, gboolean *);
 
 gboolean dataset_is_missing(Dataset *, gpointer, gpointer);
 GList * dataset_get_labels(Dataset *);
-const gchar * dataset_get_label_string(Dataset *, gpointer);
-gpointer dataset_get_string_label(Dataset *, gchar *);
+const gchar * dataset_get_label_string(Dataset *, gconstpointer);
+gpointer dataset_get_string_label(Dataset *, const gchar *);
 
 guint dataset_num_labels(Dataset *);
 void dataset_println(Dataset *, const gchar *);
