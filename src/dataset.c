@@ -5,6 +5,7 @@
 #define	DATASET_VALUE_SHIFT	0x10
 struct Dataset_t {
 	guint		ref_count;
+	gboolean	symmetric;
 	GHashTable *	labels;
 	GHashTable *	cells;
 };
@@ -15,12 +16,13 @@ typedef struct {
 } Dataset_Key;
 
 
-static Dataset_Key * dataset_key(gpointer *, gpointer *, gboolean);
+static Dataset_Key * dataset_key(Dataset *, gpointer *, gpointer *);
 static guint dataset_key_hash(gconstpointer);
 static gboolean dataset_key_eq(gconstpointer, gconstpointer);
+static gint dataset_label_cmp(gconstpointer, gconstpointer);
 static void dataset_add_label(Dataset *, gpointer);
 
-static Dataset_Key * dataset_key(gpointer *psrc, gpointer *pdst, gboolean fast) {
+static Dataset_Key * dataset_key(Dataset * dd, gpointer *psrc, gpointer *pdst) {
 	Dataset_Key * key;
 	GQuark src;
 	GQuark dst;
@@ -30,7 +32,7 @@ static Dataset_Key * dataset_key(gpointer *psrc, gpointer *pdst, gboolean fast) 
 	src = GPOINTER_TO_INT(psrc);
 	dst = GPOINTER_TO_INT(pdst);
 
-	if (src < dst) {
+	if (!dd->symmetric || src < dst) {
 		key->src = src;
 		key->dst = dst;
 	} else {
@@ -52,9 +54,20 @@ static gboolean dataset_key_eq(gconstpointer paa, gconstpointer pbb) {
 	return aa->src == bb->src && aa->dst == bb->dst;
 }
 
-Dataset* dataset_new(void) {
+static gint dataset_label_cmp(gconstpointer paa, gconstpointer pbb) {
+	/* compare the strings of the labels pointed to lexically */
+	const gchar *aa;
+	const gchar *bb;
+
+	aa = g_quark_to_string(GPOINTER_TO_INT(paa));
+	bb = g_quark_to_string(GPOINTER_TO_INT(pbb));
+	return strcmp(aa, bb);
+}
+
+Dataset* dataset_new(gboolean symmetric) {
 	Dataset * data = g_new(Dataset, 1);
 	data->ref_count = 1;
+	data->symmetric = symmetric;
 	data->cells = g_hash_table_new_full(
 				dataset_key_hash,
 				dataset_key_eq,
@@ -96,14 +109,14 @@ gpointer dataset_add_string_label(Dataset * dataset, gchar * label) {
 }
 
 gboolean dataset_is_missing(Dataset * dataset, gpointer src, gpointer dst) {
-	Dataset_Key * key = dataset_key(src, dst, TRUE);
+	Dataset_Key * key = dataset_key(dataset, src, dst);
 	gboolean is_missing = !g_hash_table_lookup_extended(dataset->cells, key, NULL, NULL);
 	g_free(key);
 	return is_missing;
 }
 
 void dataset_set(Dataset * dataset, gpointer src, gpointer dst, gboolean value) {
-	Dataset_Key * key = dataset_key(src, dst, FALSE);
+	Dataset_Key * key = dataset_key(dataset, src, dst);
 	g_hash_table_replace(dataset->cells, key, GINT_TO_POINTER(value+DATASET_VALUE_SHIFT));
 	dataset_add_label(dataset, src);
 	dataset_add_label(dataset, dst);
@@ -134,7 +147,7 @@ gboolean dataset_get(Dataset * dataset, gpointer src, gpointer dst, gboolean *mi
 	Dataset_Key * key;
 	gpointer ptr;
 
-	key = dataset_key(src, dst, TRUE);
+	key = dataset_key(dataset, src, dst);
 	ptr = g_hash_table_lookup(dataset->cells, key);
 	g_free(key);
 	if (ptr == NULL) {
@@ -169,7 +182,7 @@ Dataset * dataset_gen_speckle(GRand * rng, guint num_items, gdouble prob_one) {
 	Dataset * dd;
 	guint ii, jj;
 
-	dd = dataset_new();
+	dd = dataset_new(TRUE);
 	for (ii = 0; ii < num_items; ii++) {
 		gchar *name_ii = num_to_string(ii);
 		gpointer label_ii = dataset_add_string_label(dd, name_ii);
@@ -191,7 +204,7 @@ Dataset * dataset_gen_blocks(GRand * rng, guint num_items, guint block_width, gd
 	guint ii, jj;
 	guint value;
 
-	dd = dataset_new();
+	dd = dataset_new(TRUE);
 	for (ii = 0; ii < num_items; ii++) {
 		gchar *name_ii = num_to_string(ii);
 		gpointer label_ii = dataset_add_string_label(dd, name_ii);
@@ -234,7 +247,8 @@ void dataset_tostring(Dataset * dataset, GString *str) {
 	gboolean value;
 
 	labels = g_hash_table_get_keys(dataset->labels);
-	max_len = 5;
+	labels = g_list_sort(labels, dataset_label_cmp);
+	max_len = 1;
 	for (xx = labels; xx != NULL; xx = g_list_next(xx)) {
 		qxx = GPOINTER_TO_INT(xx->data);
 		len = strlen(g_quark_to_string(qxx));
@@ -272,7 +286,7 @@ Dataset * dataset_gen_toy3(void) {
 	gpointer bb;
 	gpointer cc;
 
-	dataset = dataset_new();
+	dataset = dataset_new(TRUE);
 	/*     aa   bb   cc
 	 * aa   _    1    0
 	 * bb   1    _    0

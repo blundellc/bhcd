@@ -6,7 +6,7 @@
 struct Dataset_t;
 typedef struct Dataset_t Dataset;
 
-Dataset * dataset_new(void);
+Dataset * dataset_new(gboolean);
 void dataset_ref(Dataset *);
 void dataset_unref(Dataset *);
 
