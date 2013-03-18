@@ -9,7 +9,7 @@ typedef struct Dataset_t Dataset;
 Dataset * dataset_new(gboolean);
 void dataset_ref(Dataset *);
 void dataset_unref(Dataset *);
-
+gboolean dataset_is_symmetric(Dataset *);
 void dataset_set(Dataset *, gpointer, gpointer, gboolean);
 gpointer dataset_add_string_label(Dataset *, gchar *);
 

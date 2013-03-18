@@ -83,6 +83,10 @@ Dataset* dataset_new(gboolean symmetric) {
 	return data;
 }
 
+gboolean dataset_is_symmetric(Dataset * dataset) {
+	return dataset->symmetric;
+}
+
 guint dataset_num_labels(Dataset * dataset) {
 	return g_hash_table_size(dataset->labels);
 }
