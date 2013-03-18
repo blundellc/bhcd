@@ -268,6 +268,9 @@ void dataset_tostring(Dataset * dataset, GString *str) {
 
 Dataset * dataset_gen_toy3(void) {
 	Dataset * dataset;
+	gpointer aa;
+	gpointer bb;
+	gpointer cc;
 
 	dataset = dataset_new();
 	/*     aa   bb   cc
@@ -275,9 +278,12 @@ Dataset * dataset_gen_toy3(void) {
 	 * bb   1    _    0
 	 * cc   0    0    _
 	 */
-	dataset_set(dataset, "aa", "bb", TRUE);
-	dataset_set(dataset, "aa", "cc", FALSE);
-	dataset_set(dataset, "bb", "cc", FALSE);
+	aa = dataset_get_string_label(dataset, "aa");
+	bb = dataset_get_string_label(dataset, "bb");
+	cc = dataset_get_string_label(dataset, "cc");
+	dataset_set(dataset, aa, bb, TRUE);
+	dataset_set(dataset, aa, cc, FALSE);
+	dataset_set(dataset, bb, cc, FALSE);
 	return dataset;
 }
 
