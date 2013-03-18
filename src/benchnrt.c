@@ -21,7 +21,7 @@ void run_rand(GRand * rng, guint num_items, gdouble sparsity, guint verbose) {
 
 	dataset_unref(dataset);
 
-	root = build(params, labels);
+	root = build(rng, params, labels);
 
 	if (verbose) {
 		tree_println(root, "result: ");

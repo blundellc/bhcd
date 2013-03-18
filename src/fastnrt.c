@@ -16,7 +16,7 @@ void run(GRand * rng, Dataset * dataset, gboolean verbose) {
 
 	labels = dataset_get_labels(dataset);
 
-	root = build(params, labels);
+	root = build_repeat(rng, params, labels, 1000);
 
 	tree_println(root, "result: ");
 

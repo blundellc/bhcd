@@ -10,18 +10,21 @@ typedef struct {
 	guint jj;
 	Tree * tree;
 	gdouble score;
+	/* break equal scores at random */
+	gint sym_break;
 } Merge;
 
 
-Merge * merge_new(Params * params, guint ii, Tree * aa, guint jj, Tree * bb, Tree * mm);
+Merge * merge_new(GRand * rng, Params * params, guint ii, Tree * aa, guint jj, Tree * bb, Tree * mm);
 void merge_free(Merge * merge);
 void merge_free1(gpointer merge, gpointer data);
 
+Merge * merge_best(GRand *, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
+Merge * merge_absorb(GRand *, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
+Merge * merge_join(GRand *, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
+
 void merge_println(Merge * merge, const gchar * prefix);
 void merge_tostring(Merge * merge, GString * out);
-Merge * merge_best(Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
 gint merge_cmp_score(gconstpointer paa, gconstpointer pbb, gpointer userdata);
-Merge * merge_absorb(Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
-Merge * merge_join(Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
 
 #endif /*MERGE_H*/

@@ -13,7 +13,7 @@ GPtrArray * build_init_trees(Params * params, GList * labels) {
 }
 
 
-GSequence * build_init_merges(Params * params, GPtrArray * trees) {
+GSequence * build_init_merges(GRand * rng, Params * params, GPtrArray * trees) {
 	GSequence * merges;
 	Merge * new_merge;
 	Tree * aa;
@@ -27,8 +27,8 @@ GSequence * build_init_merges(Params * params, GPtrArray * trees) {
 		aa = g_ptr_array_index(trees, ii);
 		for (jj = ii + 1; jj < trees->len; jj++) {
 			bb = g_ptr_array_index(trees, jj);
-			new_merge = merge_best(params, ii, aa, jj, bb);
-			merge_println(new_merge, "\tadd merge: ");
+			new_merge = merge_best(rng, params, ii, aa, jj, bb);
+			/*merge_println(new_merge, "\tadd merge: ");*/
 			g_sequence_insert_sorted(merges, new_merge, merge_cmp_score, NULL);
 		}
 	}
@@ -43,7 +43,7 @@ void build_remove_tree(GPtrArray * trees, guint ii) {
 	*tii = NULL;
 }
 
-void build_add_merges(Params * params, GSequence * merges, GPtrArray * trees, Tree * tkk) {
+void build_add_merges(GRand * rng, Params * params, GSequence * merges, GPtrArray * trees, Tree * tkk) {
 	Tree *tll;
 	Merge * new_merge;
 	guint ll, kk;
@@ -55,13 +55,13 @@ void build_add_merges(Params * params, GSequence * merges, GPtrArray * trees, Tr
 		}
 
 		tll = g_ptr_array_index(trees, ll);
-		new_merge = merge_best(params, kk, tkk, ll, tll);
-		merge_println(new_merge, "\tadd merge: ");
+		new_merge = merge_best(rng, params, kk, tkk, ll, tll);
+		/*merge_println(new_merge, "\tadd merge: ");*/
 		g_sequence_insert_sorted(merges, new_merge, merge_cmp_score, NULL);
 	}
 }
 
-void build_greedy(Params * params, GPtrArray * trees, GSequence * merges) {
+void build_greedy(GRand * rng, Params * params, GPtrArray * trees, GSequence * merges) {
 	Merge * cur;
 	GSequenceIter * head;
 	guint live_trees;
@@ -78,12 +78,12 @@ void build_greedy(Params * params, GPtrArray * trees, GSequence * merges) {
 			goto again;
 		}
 
-		merge_println(cur, "best merge: ");
+		/*merge_println(cur, "best merge: ");*/
 
 		build_remove_tree(trees, cur->ii);
 		build_remove_tree(trees, cur->jj);
 		live_trees--;
-		build_add_merges(params, merges, trees, cur->tree);
+		build_add_merges(rng, params, merges, trees, cur->tree);
 		g_ptr_array_add(trees, cur->tree);
 		tree_ref(cur->tree);
 again:
@@ -91,15 +91,15 @@ again:
 	}
 }
 
-Tree * build(Params * params, GList * labels) {
+Tree * build(GRand * rng, Params * params, GList * labels) {
 	GPtrArray * trees;
 	GSequence * merges;
 	Tree * root;
 
 	trees = build_init_trees(params, labels);
-	merges = build_init_merges(params, trees);
+	merges = build_init_merges(rng, params, trees);
 
-	build_greedy(params, trees, merges);
+	build_greedy(rng, params, trees, merges);
 
 	root = g_ptr_array_index(trees, trees->len - 1);
 	tree_ref(root);
@@ -108,5 +108,23 @@ Tree * build(Params * params, GList * labels) {
 	g_sequence_foreach(merges, merge_free1, NULL);
 	g_sequence_free(merges);
 	return root;
+}
+
+
+Tree * build_repeat(GRand * rng, Params * params, GList * labels, guint num_repeats) {
+	Tree * best;
+	Tree * root;
+
+	best = NULL;
+	for (; num_repeats > 0; num_repeats--) {
+		root = build(rng, params, labels);
+		if (best == NULL || tree_get_logprob(root) > tree_get_logprob(best)) {
+			tree_unref(best);
+			best = root;
+		} else {
+			tree_unref(root);
+		}
+	}
+	return best;
 }
 

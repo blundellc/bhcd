@@ -106,6 +106,7 @@ void test_tree_logprob3(void) {
 
 
 void test_merge_score3(void) {
+	GRand * rng;
 	Params * params;
 	Tree *laa, *lbb, *lcc;
 	Tree *tab, *tabc;
@@ -114,6 +115,7 @@ void test_merge_score3(void) {
 	gdouble score_tabc, correct_tab;
 
 	prec = 1e-4;
+	rng = g_rand_new();
 	init_test_toy3(&laa, &lbb, &lcc);
 	params = tree_get_params(laa);
 
@@ -125,7 +127,7 @@ void test_merge_score3(void) {
 	branch_add_child(tabc, tab);
 	branch_add_child(tabc, lcc);
 
-	merge = merge_new(params, 0, tab, 1, lcc, tabc);
+	merge = merge_new(rng, params, 0, tab, 1, lcc, tabc);
 
 	correct_tab =
 		log_add_exp(gsl_sf_log(0.4) + gsl_sf_lnbeta(1.0+1, 0.2+0) - gsl_sf_lnbeta(1.0, 0.2)
@@ -145,6 +147,7 @@ void test_merge_score3(void) {
 	tree_unref(laa);
 	tree_unref(lbb);
 	tree_unref(lcc);
+	g_rand_free(rng);
 }
 
 
