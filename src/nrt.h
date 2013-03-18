@@ -2,6 +2,7 @@
 #define NRT_H
 
 #include "dataset.h"
+#include "dataset_gml.h"
 #include "util.h"
 #include "counts.h"
 #include "params.h"

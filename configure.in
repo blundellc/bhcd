@@ -1,4 +1,4 @@
-AC_PREREQ([2.69])
+AC_PREREQ([2.68])
 
 AC_INIT([fastnrt], [1.0], [c.blundell@gatsby.ucl.ac.uk])
 
