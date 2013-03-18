@@ -229,10 +229,15 @@ void branch_add_child(Tree * branch, Tree * child) {
 	tree_ref(child);
 	branch->children = g_list_append(branch->children, child);
 
+	/* data on the new offset par takes in both the off and on suff stats of
+	 * the branch
+	 */
 	new_off = suff_stats_off_lookup(branch->params, branch->labels, child->labels);
 	suff_stats_add(branch->suff_stats_off, new_off);
-	suff_stats_unref(new_off);
 	suff_stats_add(branch->suff_stats_on, child->suff_stats_on);
+	suff_stats_add(branch->suff_stats_on, new_off);
+	suff_stats_unref(new_off);
+
 	for (labels = child->labels; labels != NULL; labels = g_list_next(labels)) {
 		branch->labels = g_list_insert_sorted(branch->labels,
 				labels->data, cmp_quark);
