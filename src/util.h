@@ -29,7 +29,7 @@ gint cmp_quark(gconstpointer, gconstpointer);
 				break;								\
 			}									\
 		}										\
-		g_error("%s:%d: assertion failed; %e too close to %e", 				\
+		g_error("%s:%d: assertion failed; %e not close to %e", 				\
 				__FILE__, __LINE__,						\
 				_assert_eqfloat_aa, _assert_eqfloat_bb);			\
 	} while (0)
