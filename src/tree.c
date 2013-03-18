@@ -249,6 +249,11 @@ void branch_add_child(Tree * branch, Tree * child) {
 	branch->logprob = tree_get_logprob(branch);
 }
 
+GList * branch_get_children(Tree * branch) {
+	g_assert(!tree_is_leaf(branch));
+	return branch->children;
+}
+
 static gdouble branch_log_not_pi(Tree * branch) {
 	gdouble num_children;
 

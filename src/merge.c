@@ -71,6 +71,28 @@ Merge * merge_absorb(GRand * rng, Params * params, guint ii, Tree * aa, guint jj
 	return merge;
 }
 
+Merge * merge_collapse(GRand * rng, Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
+	/* make children of aa and children of bb all children of a new node */
+	Tree * tree;
+	Merge * merge;
+	GList * child;
+
+	if (tree_is_leaf(aa)) {
+		return NULL;
+	}
+
+	tree = branch_new(params);
+	for (child = branch_get_children(aa); child != NULL; child = g_list_next(child)) {
+		branch_add_child(tree, child->data);
+	}
+	for (child = branch_get_children(bb); child != NULL; child = g_list_next(child)) {
+		branch_add_child(tree, child->data);
+	}
+	merge = merge_new(rng, params, ii, aa, jj, bb, tree);
+	tree_unref(tree);
+	return merge;
+}
+
 Merge * merge_best(GRand * rng, Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
 	Merge * merge;
 	Merge * best_merge;

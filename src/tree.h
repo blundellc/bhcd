@@ -16,6 +16,7 @@ void tree_unref(Tree * tree);
 void tree_assert(Tree * tree);
 
 void branch_add_child(Tree * branch, Tree * child);
+GList * branch_get_children(Tree * branch);
 
 gboolean tree_is_leaf(Tree * tree);
 GList * tree_get_labels(Tree * tree);
