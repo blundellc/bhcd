@@ -12,8 +12,8 @@ Merge * merge_new(Params * params, guint ii, Tree * aa, guint jj, Tree * bb, Tre
 	merge->jj = jj;
 	merge->tree = mm;
 	logprob_rel = merge_calc_logprob_rel(params, aa, bb);
-	merge->score = tree_logprob(merge->tree)
-	       		- tree_logprob(aa) - tree_logprob(bb) - logprob_rel;
+	merge->score = tree_get_logprob(merge->tree)
+	       		- tree_get_logprob(aa) - tree_get_logprob(bb) - logprob_rel;
 	return merge;
 }
 
@@ -25,6 +25,7 @@ void merge_free(Merge * merge) {
 void merge_free1(gpointer merge, gpointer data) {
 	merge_free(merge);
 }
+
 
 Merge * merge_join(Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
 	Tree * tree;

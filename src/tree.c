@@ -104,7 +104,7 @@ Tree * leaf_new(Params * params, gpointer label) {
 	leaf->suff_stats_on = suff_stats_from_label(params, label);
 	leaf->suff_stats_off = suff_stats_empty(params);
 	leaf->labels = g_list_append(NULL, label);
-	leaf->logprob = tree_logprob(leaf);
+	leaf->logprob = tree_get_logprob(leaf);
 	return leaf;
 }
 
@@ -116,7 +116,7 @@ Tree * branch_new(Params * params) {
 	branch->suff_stats_on = suff_stats_empty(params);
 	branch->suff_stats_off = suff_stats_empty(params);
 	branch->children = NULL;
-	branch->logprob = tree_logprob(branch);
+	branch->logprob = tree_get_logprob(branch);
 	return branch;
 }
 
@@ -234,7 +234,7 @@ void branch_add_child(Tree * branch, Tree * child) {
 				labels->data, cmp_quark);
 	}
 	branch->dirty = TRUE;
-	branch->logprob = tree_logprob(branch);
+	branch->logprob = tree_get_logprob(branch);
 }
 
 static gdouble branch_log_not_pi(Tree * branch) {
@@ -265,7 +265,7 @@ static gdouble branch_logprob(Tree * branch) {
 	branch->logprob_cluster = params_logprob_on(branch->params, branch->suff_stats_on);
 	branch->logprob_children = params_logprob_off(branch->params, branch->suff_stats_off);
 	for (child = branch->children; child != NULL; child = g_list_next(child)) {
-		branch->logprob_children += tree_logprob(child->data);
+		branch->logprob_children += tree_get_logprob(child->data);
 	}
 	branch->logprob = log_add_exp(
 			branch->log_pi + branch->logprob_cluster,
@@ -274,7 +274,7 @@ static gdouble branch_logprob(Tree * branch) {
 	return branch->logprob;
 }
 
-gdouble tree_logprob(Tree *tree) {
+gdouble tree_get_logprob(Tree *tree) {
 	if (!tree->dirty) {
 		return tree->logprob;
 	}
