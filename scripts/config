@@ -12,8 +12,9 @@ def main():
 
     mode = sys.argv[1]
     env = dict(os.environ)
-    env['CFLAGS'] = '-std=c89 -flto'
-    env['LDFLAGS'] = '-flto'
+    # -flto in cflags?
+    env['CFLAGS'] = '-std=c89 '
+    # env['LDFLAGS'] = '-flto'
     env['CFLAGS'] += ' -D_FORIFY_SOURCE=2 -Wformat -Wformat-security'
     if mode == "debug":
         env['CFLAGS'] += ' -pedantic -Wall -Wfloat-equal -Wbad-function-cast -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wdeclaration-after-statement -Wuninitialized -Wstrict-overflow=5 -Wextra -Wno-unused-parameter -Wfatal-errors'
