@@ -1,23 +1,20 @@
-AM_CFLAGS = -std=c89 -O2 -flto
-AM_LDFLAGS = -flto
+AM_CFLAGS = -Werror $(DEPS_CFLAGS)
+AM_LDADD = $(DEPS_LIBS)
 
-if DEBUG
+# AM_CFLAGS = -std=c89 -flto
+# AM_LDFLAGS = -flto
+
 # warnings
-AM_CFLAGS += -pedantic -Wall -Wfloat-equal -Wbad-function-cast -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wdeclaration-after-statement -Wuninitialized -Werror -Wstrict-overflow=5 -Wextra -Wno-unused-parameter -Wfatal-errors
+# AM_CFLAGS += -pedantic -Wall -Wfloat-equal -Wbad-function-cast -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wdeclaration-after-statement -Wuninitialized -Werror -Wstrict-overflow=5 -Wextra -Wno-unused-parameter -Wfatal-errors
 
-AM_CFLAGS += -D_FORIFY_SOURCE=2 -Wformat -Wformat-security
+# AM_CFLAGS += -D_FORIFY_SOURCE=2 -Wformat -Wformat-security
 # AM_LDADD += -pie -fPIE -Wl,-z,relro -Wl,-z,now -fstack-protector
 
 # debug
-AM_CFLAGS += -g
-AM_LDFLAGS += -g
-endif
+# AM_CFLAGS += -g
+# AM_LDFLAGS += -g
 
-if PROFILE
-AM_CFLAGS += -pg
-AM_LDFLAGS += -pg
-endif
-
-AM_CFLAGS += $(DEPS_CFLAGS)
+# AM_CFLAGS += -pg
+# AM_LDFLAGS += -pg
 
 

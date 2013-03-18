@@ -1,0 +1,30 @@
+#!/usr/bin/python
+
+import sys, subprocess, os
+
+def usage():
+    print "config <debug|release>"
+    sys.exit(1)
+
+def main():
+    if len(sys.argv) < 2:
+        usage()
+
+    mode = sys.argv[1]
+    env = dict(os.environ)
+    env['CFLAGS'] = '-std=c89 -flto'
+    env['LDFLAGS'] = '-flto'
+    env['CFLAGS'] += ' -D_FORIFY_SOURCE=2 -Wformat -Wformat-security'
+    if mode == "debug":
+        env['CFLAGS'] += ' -pedantic -Wall -Wfloat-equal -Wbad-function-cast -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wdeclaration-after-statement -Wuninitialized -Wstrict-overflow=5 -Wextra -Wno-unused-parameter -Wfatal-errors'
+        env['CFLAGS'] += ' -g'
+    elif mode == "release":
+        pass
+    else:
+        usage()
+
+    subprocess.call(["./configure"], env=env)
+
+if __name__ == '__main__':
+    main()
+
