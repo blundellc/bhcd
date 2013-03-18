@@ -1,6 +1,7 @@
 #ifndef	MERGE_H
 #define	MERGE_H
 
+#include <glib.h>
 #include "params.h"
 #include "tree.h"
 
@@ -16,6 +17,8 @@ Merge * merge_new(Params * params, guint ii, Tree * aa, guint jj, Tree * bb, Tre
 void merge_free(Merge * merge);
 void merge_free1(gpointer merge, gpointer data);
 
+void merge_println(Merge * merge, const gchar * prefix);
+void merge_tostring(Merge * merge, GString * out);
 Merge * merge_best(Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
 gint merge_cmp_score(gconstpointer paa, gconstpointer pbb, gpointer userdata);
 Merge * merge_absorb(Params * params, guint ii, Tree * aa, guint jj, Tree * bb);

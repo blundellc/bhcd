@@ -27,6 +27,20 @@ void merge_free1(gpointer merge, gpointer data) {
 }
 
 
+void merge_println(Merge * merge, const gchar * prefix) {
+	GString * out;
+
+	out = g_string_new(prefix);
+	merge_tostring(merge, out);
+	g_print("%s\n", out->str);
+	g_string_free(out, TRUE);
+}
+
+void merge_tostring(Merge * merge, GString * out) {
+	g_string_append_printf(out, "%d + %d (%2.2e)-> ", merge->ii, merge->jj, merge->score);
+	tree_tostring(merge->tree, out);
+}
+
 Merge * merge_join(Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
 	Tree * tree;
 
