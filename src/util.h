@@ -11,6 +11,16 @@ typedef union {
 	gconstpointer const_ptr;
 } UnionPtr;
 
+typedef struct {
+	gpointer fst;
+	gpointer snd;
+} Pair;
+
+typedef void (*IOFunc)(gpointer, GIOChannel *);
+
+Pair *pair_new(gpointer fst, gpointer snd);
+void pair_free(Pair *pair);
+
 gdouble log_add_exp(gdouble, gdouble);
 gchar * num_to_string(guint);
 gint cmp_quark(gconstpointer, gconstpointer);

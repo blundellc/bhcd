@@ -4,6 +4,19 @@
 #include "util.h"
 
 
+Pair *pair_new(gpointer fst, gpointer snd) {
+	Pair * pair;
+
+	pair = g_new(Pair, 1);
+	pair->fst = fst;
+	pair->snd = snd;
+	return pair;
+}
+
+void pair_free(Pair *pair) {
+	g_free(pair);
+}
+
 gdouble log_add_exp(gdouble xx, gdouble yy) {
 	gdouble diff = xx - yy;
 	if (diff >= 0) {
