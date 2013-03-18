@@ -34,7 +34,7 @@ int main(int argc, char * argv[]) {
 
 	fname = argv[1];
 
-	rng = g_rand_new();
+	rng = g_rand_new_with_seed(0x2a23b6bb);
 	timer = g_timer_new();
 	dataset = dataset_gml_load(fname);
 
