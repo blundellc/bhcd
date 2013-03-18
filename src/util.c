@@ -1,5 +1,6 @@
 #include <gsl/gsl_sf_log.h>
 #include <gsl/gsl_sf_exp.h>
+#include <glib/gprintf.h>
 #include "util.h"
 
 
@@ -39,4 +40,21 @@ gint cmp_quark(gconstpointer paa, gconstpointer pbb) {
 	return (gint)aa - (gint)bb;
 }
 
+void io_printf(GIOChannel *io, const gchar *fmt, ...) {
+	va_list ap;
+	gchar *msg;
+	GError *error;
+	
+	va_start(ap, fmt);
+	g_vasprintf(&msg, fmt, ap);
+	va_end(ap);
+
+	error = NULL;
+	g_io_channel_write_chars(io, msg, -1, NULL, &error);
+	if (error != NULL) {
+		g_error("g_io_channel_write_chars: %s", error->message);
+	}
+	g_free(msg);
+
+}
 

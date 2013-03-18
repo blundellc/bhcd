@@ -1,6 +1,7 @@
 #include <string.h>
 #include "dataset_gml.h"
 #include "tokens.h"
+#include "util.h"
 
 
 static void parse_node(Tokens * toks, Dataset * dd, GHashTable * id_labels);
@@ -135,6 +136,51 @@ static void parse_edge(Tokens * toks, Dataset * dd, GHashTable * id_labels) {
 	g_free(weight);
 }
 
+
+
 void dataset_gml_save(Dataset * dataset, const gchar *fname) {
+	GIOChannel *io;
+	GError *error;
+	error = NULL;
+	io = g_io_channel_new_file(fname, "w", &error);
+	if (error != NULL) {
+		g_error("open `%s': %s", fname, error->message);
+	}
+	dataset_gml_save_io(dataset, io);
+	g_io_channel_shutdown(io, TRUE, &error);
+	if (error != NULL) {
+		g_error("shutdown `%s': %s", fname, error->message);
+	}
+	g_io_channel_unref(io);
+}
+
+void dataset_gml_save_io(Dataset * dataset, GIOChannel * io) {
+	GList * labels;
+	GList * src;
+	GList * dst;
+
+	io_printf(io, "graph [\n");
+
+	labels = dataset_get_labels(dataset);
+	for (src = labels; src != NULL; src = g_list_next(src))  {
+		io_printf(io, "\tnode [ id %d label \"%s\" ]\n",
+				GPOINTER_TO_INT(src->data),
+				dataset_get_label_string(dataset, src->data));
+	}
+	for (src = labels; src != NULL; src = g_list_next(src)) {
+		for (dst = labels; dst != NULL; dst = g_list_next(dst)) {
+			gboolean missing;
+			gboolean value;
+
+			value = dataset_get(dataset, src->data, dst->data, &missing);
+			if (!missing) {
+				io_printf(io, "\tedge [ source %d target %d weight %d ]\n",
+						GPOINTER_TO_INT(src->data),
+						GPOINTER_TO_INT(dst->data),
+						value);
+			}
+		}
+	}
+	io_printf(io, "]\n");
 }
 
