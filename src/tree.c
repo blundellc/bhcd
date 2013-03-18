@@ -281,8 +281,10 @@ static gdouble branch_logprob(Tree * branch) {
 	branch->log_pi = branch_log_pi(branch, branch->log_not_pi);
 	branch->logprob_cluster = params_logprob_on(branch->params, branch->suff_stats_on);
 	branch->logprob_children = params_logprob_off(branch->params, branch->suff_stats_off);
+	/* g_print("children 0: %2.2e\n", branch->logprob_children); */
 	for (child = branch->children; child != NULL; child = g_list_next(child)) {
 		branch->logprob_children += tree_get_logprob(child->data);
+		/* g_print("children n: %2.2e\n", branch->logprob_children); */
 	}
 	branch->logprob = log_add_exp(
 			branch->log_pi + branch->logprob_cluster,
