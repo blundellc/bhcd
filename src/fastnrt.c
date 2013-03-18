@@ -20,6 +20,8 @@ void run(GRand * rng, Dataset * dataset, gboolean verbose) {
 
 	tree_println(root, "result: ");
 
+	io_stdout((IOFunc)tree_io_save_io, root);
+
 	g_assert(tree_num_leaves(root) == dataset_num_labels(dataset));
 	tree_unref(root);
 	g_list_free(labels);
