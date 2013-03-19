@@ -17,13 +17,13 @@ typedef struct {
 } Dataset_Key;
 
 
-static Dataset_Key * dataset_key(Dataset *, gpointer *, gpointer *);
+static Dataset_Key * dataset_key(Dataset *, gconstpointer, gconstpointer);
 static guint dataset_key_hash(gconstpointer);
 static gboolean dataset_key_eq(gconstpointer, gconstpointer);
 static gint dataset_label_cmp(gconstpointer, gconstpointer);
 static void dataset_label_assert(Dataset *, gconstpointer);
 
-static Dataset_Key * dataset_key(Dataset * dd, gpointer *psrc, gpointer *pdst) {
+static Dataset_Key * dataset_key(Dataset * dd, gconstpointer psrc, gconstpointer pdst) {
 	Dataset_Key * key;
 	GQuark src;
 	GQuark dst;
@@ -146,7 +146,7 @@ const gchar * dataset_get_label_string(Dataset * dataset, gconstpointer label) {
 	return g_quark_to_string(GPOINTER_TO_INT(label));
 }
 
-gboolean dataset_get(Dataset * dataset, gpointer src, gpointer dst, gboolean *missing) {
+gboolean dataset_get(Dataset * dataset, gconstpointer src, gconstpointer dst, gboolean *missing) {
 	gboolean value;
 	Dataset_Key * key;
 	gpointer ptr;

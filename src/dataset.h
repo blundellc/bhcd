@@ -24,7 +24,7 @@ const gchar * dataset_get_label_string(Dataset *, gconstpointer);
 gpointer dataset_get_string_label(Dataset *, const gchar *);
 
 gboolean dataset_is_missing(Dataset *, gpointer, gpointer);
-gboolean dataset_get(Dataset *, gpointer, gpointer, gboolean *);
+gboolean dataset_get(Dataset *, gconstpointer, gconstpointer, gboolean *);
 const gchar * dataset_get_filename(Dataset *);
 void dataset_set_filename(Dataset *, const gchar *);
 
