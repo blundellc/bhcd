@@ -306,11 +306,43 @@ void test_merge_score3(void) {
 }
 
 
+void test_sscache_stats(void) {
+	Tree *laa;
+	Tree *lbb;
+	Tree *lcc;
+	Tree *ldd;
+	SSCache *cache;
+	Counts * counts;
+
+	init_test_toy4(&laa, &lbb, &lcc, &ldd);
+	cache = sscache_new(tree_get_params(laa)->dataset);
+
+	counts = sscache_get_label(cache, leaf_get_label(laa));
+	g_assert(counts->num_ones == 1);
+	g_assert(counts->num_total == 1);
+
+	counts = sscache_get_label(cache, leaf_get_label(lbb));
+	g_assert(counts->num_ones == 0);
+	g_assert(counts->num_total == 0);
+
+	counts = sscache_get_label(cache, leaf_get_label(lcc));
+	g_assert(counts->num_ones == 0);
+	g_assert(counts->num_total == 1);
+
+	tree_unref(laa);
+	tree_unref(lbb);
+	tree_unref(lcc);
+	tree_unref(ldd);
+	sscache_unref(cache);
+}
+
+
 int main(int argc, char *argv[]) {
 	g_test_init(&argc, &argv, NULL);
 	g_test_add_func("/tree/logprob3", test_tree_logprob3);
 	g_test_add_func("/tree/logprob4", test_tree_logprob4);
 	g_test_add_func("/merge/score3", test_merge_score3);
+	g_test_add_func("/sscache/stats", test_sscache_stats);
 	g_test_run();
 	return 0;
 }

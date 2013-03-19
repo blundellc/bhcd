@@ -8,8 +8,8 @@ struct SSCache_t;
 typedef struct SSCache_t SSCache;
 
 SSCache * sscache_new(Dataset *);
-gpointer sscache_get_label(SSCache *cache, gpointer label);
-gpointer sscache_get_offblock(SSCache *cache, gpointer root, GList * children);
+gpointer sscache_get_label(SSCache *cache, gconstpointer label);
+gpointer sscache_get_offblock(SSCache *cache, GList * root, GList * child);
 void sscache_unref(SSCache *cache);
 
 gpointer suffstats_new_empty(void);

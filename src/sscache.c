@@ -1,4 +1,5 @@
 #include "sscache.h"
+#include "util.h"
 #include "counts.h"
 
 
@@ -6,8 +7,21 @@ struct SSCache_t {
 	guint		ref_count;
 	Dataset *	dataset;
 	GHashTable *	suffstats_labels;
+	GHashTable *	suffstats_offblocks;
 };
 
+
+typedef struct {
+	guint hash;
+	gboolean copy;
+	GList *fst;
+	GList *snd;
+} Offblock_Key;
+
+static Offblock_Key * offblock_key_new(GList * fst, GList * snd, gboolean copy);
+static void offblock_key_free(gpointer pkey);
+static gboolean offblock_key_equal(gconstpointer paa, gconstpointer pbb);
+static guint offblock_key_hash(gconstpointer pkey);
 
 static void suffstats_add_triangles(Counts *, Dataset * dataset, GList * srcs, GList * dsts);
 
@@ -19,12 +33,16 @@ SSCache * sscache_new(Dataset *dataset) {
 	cache->dataset = dataset;
 	dataset_ref(cache->dataset);
 	cache->suffstats_labels = g_hash_table_new_full(NULL, NULL, NULL, suffstats_unref);
+	cache->suffstats_offblocks = g_hash_table_new_full(
+			offblock_key_hash, offblock_key_equal,
+			offblock_key_free, suffstats_unref);
 	return cache;
 }
 
 void sscache_unref(SSCache *cache) {
 	if (cache->ref_count <= 1) {
 		g_hash_table_unref(cache->suffstats_labels);
+		g_hash_table_unref(cache->suffstats_offblocks);
 		dataset_unref(cache->dataset);
 		g_free(cache);
 	} else {
@@ -32,7 +50,7 @@ void sscache_unref(SSCache *cache) {
 	}
 }
 
-gpointer sscache_get_label(SSCache *cache, gpointer label) {
+gpointer sscache_get_label(SSCache *cache, gconstpointer label) {
 	gpointer suffstats;
 
 	if (!g_hash_table_lookup_extended(cache->suffstats_labels,
@@ -46,15 +64,81 @@ gpointer sscache_get_label(SSCache *cache, gpointer label) {
 		} else {
 			suffstats = counts_new(value, 1);
 		}
-		g_hash_table_insert(cache->suffstats_labels, label, suffstats);
+		/* the ptr2int int2ptr dance is to express that we are really
+		 * respecting the const annotation above... oh gcc.
+		 */
+		g_hash_table_insert(cache->suffstats_labels,
+				GINT_TO_POINTER(GPOINTER_TO_INT(label)),
+				suffstats);
 	}
 	return suffstats;
 
 }
 
+static Offblock_Key * offblock_key_new(GList * fst, GList * snd, gboolean copy) {
+	Offblock_Key * key;
+	guint hash_fst;
+	guint hash_snd;
 
-gpointer sscache_get_offblock(SSCache *cache, gpointer root, GList * children) {
-	return NULL;
+	list_assert_sorted(fst, cmp_quark);
+	list_assert_sorted(snd, cmp_quark);
+	hash_fst = list_hash(fst, g_direct_hash);
+	hash_snd = list_hash(fst, g_direct_hash);
+	if (hash_fst < hash_snd) {
+		GList * tmp;
+		tmp = fst;
+		fst = snd;
+		snd = tmp;
+	}
+	if (copy) {
+		fst = g_list_copy(fst);
+		snd = g_list_copy(snd);
+	}
+	key = g_new(Offblock_Key, 1);
+	key->copy = copy;
+	key->hash = hash_fst ^ hash_snd;
+	key->fst = fst;
+	key->snd = snd;
+	return key;
+}
+
+static void offblock_key_free(gpointer pkey) {
+	Offblock_Key *key = pkey;
+
+	if (key->copy) {
+		g_list_free(key->fst);
+		g_list_free(key->snd);
+	}
+	g_free(key);
+}
+
+static guint offblock_key_hash(gconstpointer pkey) {
+	const Offblock_Key *key = pkey;
+	return key->hash;
+}
+
+static gboolean offblock_key_equal(gconstpointer paa, gconstpointer pbb) {
+	const Offblock_Key *aa = paa;
+	const Offblock_Key *bb = pbb;
+
+	if (aa->hash != bb->hash) {
+		return FALSE;
+	}
+	return	list_equal(aa->fst, bb->fst, g_direct_equal) &&
+		list_equal(aa->snd, bb->snd, g_direct_equal);
+}
+
+gpointer sscache_get_offblock(SSCache *cache, GList * root, GList * child) {
+	gpointer suffstats;
+	Offblock_Key * key;
+
+	key = offblock_key_new(root, child, FALSE);
+	if (!g_hash_table_lookup_extended(cache->suffstats_offblocks,
+				key, NULL, &suffstats)) {
+		return NULL;
+	}
+	offblock_key_free(key);
+	return suffstats;
 }
 
 gpointer suffstats_new_empty(void) {
