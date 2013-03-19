@@ -248,7 +248,9 @@ void test_tree_logprob4(void) {
 	tree_unref(laa);
 	tree_unref(lbb);
 	tree_unref(lcc);
+	tree_unref(ldd);
 	tree_unref(tab);
+	tree_unref(tac);
 	tree_unref(tcd);
 	tree_unref(tbalance);
 	tree_unref(tflat);
