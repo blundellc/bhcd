@@ -52,7 +52,9 @@ static void parse_node(Tokens * toks, Dataset * dd, GHashTable * id_labels) {
 		if (strcmp(next, "id") == 0) {
 			id = tokens_next(toks);
 		} else if (strcmp(next, "label") == 0) {
-			node_label = tokens_next(toks);
+			node_label = tokens_next_quoted(toks);
+		} else {
+			tokens_fail(toks, "unexpected token `%s'", next);
 		}
 		g_free(next);
 	}
@@ -66,15 +68,14 @@ static void parse_node(Tokens * toks, Dataset * dd, GHashTable * id_labels) {
 }
 
 static void parse_edge(Tokens * toks, Dataset * dd, GHashTable * id_labels) {
-	gchar * weight;
 	gpointer src;
 	gpointer dst;
-	gboolean value_weight;
+	gint weight;
 	gchar *next;
 
 	src = NULL;
 	dst = NULL;
-	weight = NULL;
+	weight = TRUE;
 
 	tokens_expect(toks, "[");
 	while (!tokens_peek_test(toks, "]")) {
@@ -98,7 +99,9 @@ static void parse_edge(Tokens * toks, Dataset * dd, GHashTable * id_labels) {
 			}
 			g_free(dst_id);
 		} else if (strcmp(next, "weight") == 0) {
-			weight = tokens_next(toks);
+			weight = tokens_next_int(toks);
+		} else {
+			tokens_fail(toks, "unexpected token `%s'", next);
 		}
 		g_free(next);
 	}
@@ -107,19 +110,7 @@ static void parse_edge(Tokens * toks, Dataset * dd, GHashTable * id_labels) {
 		tokens_fail(toks, "missing source/target");
 	}
 
-	if (weight == NULL) {
-		value_weight = TRUE;
-	} else if (strcmp(weight, "0") == 0) {
-		value_weight = FALSE;
-	} else if (strcmp(weight, "1") == 0) {
-		value_weight = TRUE;
-	} else {
-		value_weight = FALSE;
-		tokens_fail(toks, "invalid weight");
-	}
-
-	dataset_set(dd, src, dst, value_weight);
-	g_free(weight);
+	dataset_set(dd, src, dst, weight > 0);
 }
 
 

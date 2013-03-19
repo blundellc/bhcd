@@ -12,6 +12,7 @@ void tokens_close(Tokens * toks);
 
 gboolean tokens_has_next(Tokens * toks);
 gchar * tokens_next(Tokens * toks);
+gchar * tokens_next_quoted(Tokens * toks);
 gdouble tokens_next_double(Tokens * toks);
 gint64 tokens_next_int(Tokens * toks);
 

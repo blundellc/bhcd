@@ -128,6 +128,25 @@ gchar * tokens_next(Tokens * toks) {
 	return next;
 }
 
+gchar * tokens_next_quoted(Tokens * toks) {
+	gchar *next;
+	gchar *rest;
+	gchar *tmp;
+	gint len;
+
+	next = tokens_next(toks);
+	len = strlen(next);
+	while (next[0] == '"' &&
+		(len == 1 || next[len-1] != '"')) {
+		rest = tokens_next(toks);
+		tmp = next;
+		next = g_strconcat(next, " ", rest, NULL);
+		g_free(tmp);
+		g_free(rest);
+		len = strlen(next);
+	}
+	return next;
+}
 
 gdouble tokens_next_double(Tokens * toks) {
 	gdouble next;
