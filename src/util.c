@@ -91,3 +91,32 @@ gchar * strip_quotes(gchar *str) {
 	}
 	return str;
 }
+
+
+void list_assert_sorted(GList * list, GCompareFunc cmp) {
+	GList *prev;
+
+	prev = list;
+	for (list = g_list_next(list); list != NULL; list = g_list_next(list)) {
+		g_assert(cmp(prev->data, list->data) <= 0);
+		prev = list;
+	}
+}
+
+guint list_hash(GList * list, GHashFunc hash_func) {
+	guint hash;
+
+	hash = 0;
+	for (; list != NULL; list = g_list_next(list)) {
+		hash ^= hash_func(list->data);
+	}
+	return hash;
+}
+
+gboolean list_equal(GList *aa, GList *bb, GEqualFunc equal) {
+	for (; aa != NULL && bb != NULL; aa = g_list_next(aa), bb = g_list_next(bb)) {
+		if (!equal(aa->data, bb->data))
+			return FALSE;
+	}
+	return aa == bb;
+}
