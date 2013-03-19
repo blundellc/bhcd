@@ -13,16 +13,25 @@ def main():
     mode = sys.argv[1]
     env = dict(os.environ)
     # -flto in cflags?
-    env['CFLAGS'] = '-std=c89 '
+    env['CFLAGS'] = '-std=c89'
     # env['LDFLAGS'] = '-flto'
     env['CFLAGS'] += ' -D_FORIFY_SOURCE=2 -Wformat -Wformat-security'
-    if mode == "debug":
-        env['CFLAGS'] += ' -pedantic -Wall -Wfloat-equal -Wbad-function-cast -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wdeclaration-after-statement -Wuninitialized -Wstrict-overflow=5 -Wextra -Wno-unused-parameter -Wfatal-errors'
-        env['CFLAGS'] += ' -g'
-    elif mode == "release":
-        pass
-    else:
-        usage()
+    env['LDFLAGS'] = ''
+
+    for mode in sys.argv[1:]:
+        if mode == "debug":
+            env['CFLAGS'] += ' -pedantic -Wall -Wfloat-equal -Wbad-function-cast -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wdeclaration-after-statement -Wuninitialized -Wstrict-overflow=5 -Wextra -Wno-unused-parameter -Wfatal-errors'
+            env['CFLAGS'] += ' -g'
+        elif mode == "profile":
+            env['CFLAGS'] += ' -pg'
+            env['LDFLAGS'] += ' -pg'
+        elif mode == "opt2":
+            env['CFLAGS'] += ' -O2'
+            env['LDFLAGS'] += ' -O2'
+        elif mode == "release":
+            pass
+        else:
+            usage()
 
     subprocess.call(["./configure"], env=env)
 
