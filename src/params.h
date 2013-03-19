@@ -22,14 +22,15 @@ Params * params_default(Dataset * dataset);
 void params_ref(Params * params);
 void params_unref(Params * params);
 
-gdouble params_logprob_off(Params * params, gpointer pcounts);
-gdouble params_logprob_on(Params * params, gpointer pcounts);
 
-gpointer suff_stats_empty(Params * params);
-gpointer suff_stats_from_label(Params * params, gpointer label);
-gpointer suff_stats_off_lookup(Params * params, GList * srcs, GList * dsts);
-void suff_stats_add(gpointer pdst, gpointer psrc);
-gpointer suff_stats_copy(gpointer src);
-void suff_stats_unref(gpointer ss);
+gpointer suffstats_empty(Params * params);
+gpointer suffstats_from_label(Params * params, gpointer label);
+gpointer suffstats_copy(gpointer src);
+void suffstats_unref(gpointer ss);
+
+gdouble suffstats_logprob_off(gpointer, Params *);
+gdouble suffstats_logprob_on(gpointer, Params * );
+gpointer suffstats_off_lookup(Params * params, GList * srcs, GList * dsts);
+void suffstats_add(gpointer pdst, gpointer psrc);
 
 #endif

@@ -24,8 +24,10 @@ gboolean tree_is_leaf(Tree * tree);
 GList * tree_get_labels(Tree * tree);
 Params * tree_get_params(Tree * tree);
 gdouble tree_get_logprob(Tree *tree);
+
 guint tree_num_intern(Tree * tree);
 guint tree_num_leaves(Tree * tree);
+
 void tree_println(Tree * tree, const gchar *prefix);
 void tree_tostring(Tree * tree, GString *str);
 void tree_struct_print(Tree * tree, GString *str);

@@ -31,8 +31,8 @@ static gdouble leaf_logprob(Tree * leaf);
 void tree_assert(Tree * tree) {
 	g_assert(tree->ref_count >= 1);
 	g_assert(tree->params != NULL);
-	g_assert(tree->suff_stats_on != NULL);
-	g_assert(tree->suff_stats_off != NULL);
+	g_assert(tree->suffstats_on != NULL);
+	g_assert(tree->suffstats_off != NULL);
 	g_assert(tree->logprob <= 0.0);
 	if (tree->children == NULL) {
 		g_assert(g_list_length(tree->labels) == 1);
@@ -54,8 +54,8 @@ static Tree * tree_new(Params * params) {
 	tree->is_leaf = TRUE;
 	tree->params = params;
 	params_ref(tree->params);
-	tree->suff_stats_on = NULL;
-	tree->suff_stats_off = NULL;
+	tree->suffstats_on = NULL;
+	tree->suffstats_off = NULL;
 	tree->children = NULL;
 	tree->labels = NULL;
 
@@ -79,8 +79,8 @@ Tree * tree_copy(Tree * orig) {
 	tree->params = orig->params;
 	params_ref(tree->params);
 
-	tree->suff_stats_on = suff_stats_copy(orig->suff_stats_on);
-	tree->suff_stats_off = suff_stats_copy(orig->suff_stats_off);
+	tree->suffstats_on = suffstats_copy(orig->suffstats_on);
+	tree->suffstats_off = suffstats_copy(orig->suffstats_off);
 	tree->labels = g_list_copy(orig->labels);
 	tree->children = g_list_copy(orig->children);
 	for (child = tree->children; child != NULL; child = g_list_next(child)) {
@@ -101,8 +101,8 @@ Tree * leaf_new(Params * params, gpointer label) {
 	Tree * leaf;
 
 	leaf = tree_new(params);
-	leaf->suff_stats_on = suff_stats_from_label(params, label);
-	leaf->suff_stats_off = suff_stats_empty(params);
+	leaf->suffstats_on = suffstats_from_label(params, label);
+	leaf->suffstats_off = suffstats_empty(params);
 	leaf->labels = g_list_append(NULL, label);
 	leaf->logprob = tree_get_logprob(leaf);
 	return leaf;
@@ -113,8 +113,8 @@ Tree * branch_new(Params * params) {
 
 	branch = tree_new(params);
 	branch->is_leaf = FALSE;
-	branch->suff_stats_on = suff_stats_empty(params);
-	branch->suff_stats_off = suff_stats_empty(params);
+	branch->suffstats_on = suffstats_empty(params);
+	branch->suffstats_off = suffstats_empty(params);
 	branch->children = NULL;
 	branch->logprob = tree_get_logprob(branch);
 	return branch;
@@ -208,8 +208,8 @@ void tree_unref(Tree * tree) {
 			g_list_free_full(tree->children, (GDestroyNotify)tree_unref);
 		}
 		g_list_free(tree->labels);
-		suff_stats_unref(tree->suff_stats_on);
-		suff_stats_unref(tree->suff_stats_off);
+		suffstats_unref(tree->suffstats_on);
+		suffstats_unref(tree->suffstats_off);
 		params_unref(tree->params);
 		g_free(tree);
 	} else {
@@ -225,7 +225,7 @@ gconstpointer leaf_get_label(Tree * leaf) {
 
 static gdouble leaf_logprob(Tree * leaf) {
 	g_assert(tree_is_leaf(leaf));
-	leaf->logprob = params_logprob_on(leaf->params, leaf->suff_stats_on);
+	leaf->logprob = suffstats_logprob_on(leaf->suffstats_on, leaf->params);
 	leaf->dirty = FALSE;
 	return leaf->logprob;
 }
@@ -241,11 +241,11 @@ void branch_add_child(Tree * branch, Tree * child) {
 	/* data on the new offset par takes in both the off and on suff stats of
 	 * the branch
 	 */
-	new_off = suff_stats_off_lookup(branch->params, branch->labels, child->labels);
-	suff_stats_add(branch->suff_stats_off, new_off);
-	suff_stats_add(branch->suff_stats_on, child->suff_stats_on);
-	suff_stats_add(branch->suff_stats_on, new_off);
-	suff_stats_unref(new_off);
+	new_off = suffstats_off_lookup(branch->params, branch->labels, child->labels);
+	suffstats_add(branch->suffstats_off, new_off);
+	suffstats_add(branch->suffstats_on, child->suffstats_on);
+	suffstats_add(branch->suffstats_on, new_off);
+	suffstats_unref(new_off);
 
 	for (labels = child->labels; labels != NULL; labels = g_list_next(labels)) {
 		branch->labels = g_list_insert_sorted(branch->labels,
@@ -285,8 +285,8 @@ static gdouble branch_logprob(Tree * branch) {
 
 	branch->log_not_pi = branch_log_not_pi(branch);
 	branch->log_pi = branch_log_pi(branch, branch->log_not_pi);
-	branch->logprob_cluster = params_logprob_on(branch->params, branch->suff_stats_on);
-	branch->logprob_children = params_logprob_off(branch->params, branch->suff_stats_off);
+	branch->logprob_cluster = suffstats_logprob_on(branch->suffstats_on, branch->params);
+	branch->logprob_children = suffstats_logprob_off(branch->suffstats_off, branch->params);
 	/* g_print("children 0: %2.2e\n", branch->logprob_children); */
 	for (child = branch->children; child != NULL; child = g_list_next(child)) {
 		branch->logprob_children += tree_get_logprob(child->data);
