@@ -7,8 +7,8 @@ struct Tree_t {
 	guint		ref_count;
 	gboolean	is_leaf;
 	Params *	params;
-	gpointer	suff_stats_on;
-	gpointer	suff_stats_off;
+	gpointer	suffstats_on;
+	gpointer	suffstats_off;
 	GList *		children;
 	GList *		labels;
 
