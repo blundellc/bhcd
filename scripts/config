@@ -16,18 +16,15 @@ def main():
     env['CFLAGS'] = '-std=c89'
     # env['LDFLAGS'] = '-flto'
     env['CFLAGS'] += ' -D_FORIFY_SOURCE=2 -Wformat -Wformat-security'
-    env['LDFLAGS'] = ''
 
     for mode in sys.argv[1:]:
         if mode == "debug":
-            env['CFLAGS'] += ' -pedantic -Wall -Wfloat-equal -Wbad-function-cast -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wdeclaration-after-statement -Wuninitialized -Wstrict-overflow=5 -Wextra -Wno-unused-parameter -Wfatal-errors'
+            env['CFLAGS'] += ' -pedantic -Wall -Wfloat-equal -Wbad-function-cast -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wdeclaration-after-statement -Wuninitialized -Wstrict-overflow=5 -Wextra -Wno-unused-parameter -Wfatal-errors -Wwrite-strings -Wunreachable-code'
             env['CFLAGS'] += ' -g'
         elif mode == "profile":
-            env['CFLAGS'] += ' -pg'
-            env['LDFLAGS'] += ' -pg'
+            env['CFLAGS'] += ' -pg -finstrument-functions'
         elif mode == "opt2":
             env['CFLAGS'] += ' -O2'
-            env['LDFLAGS'] += ' -O2'
         elif mode == "release":
             pass
         else:
