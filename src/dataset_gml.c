@@ -60,7 +60,7 @@ static void parse_node(Tokens * toks, Dataset * dd, GHashTable * id_labels) {
 	if (id == NULL || node_label == NULL) {
 		tokens_fail(toks, "missing id/label");
 	}
-	label = dataset_add_string_label(dd, strip_quotes(node_label));
+	label = dataset_label_lookup(dd, strip_quotes(node_label));
 	g_free(node_label);
 	g_hash_table_insert(id_labels, id, label);
 }

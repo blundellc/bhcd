@@ -11,14 +11,20 @@ void dataset_ref(Dataset *);
 void dataset_unref(Dataset *);
 gboolean dataset_is_symmetric(Dataset *);
 void dataset_set(Dataset *, gpointer, gpointer, gboolean);
+
+/* labels on rows/columns */
+guint dataset_num_labels(Dataset *);
+GList * dataset_get_labels(Dataset *);
+/* inserts label if it does not already exist */
+gpointer dataset_label_lookup(Dataset *, const gchar *);
+const gchar * dataset_label_to_string(Dataset *, gpointer);
+
 gpointer dataset_add_string_label(Dataset *, gchar *);
+const gchar * dataset_get_label_string(Dataset *, gconstpointer);
+gpointer dataset_get_string_label(Dataset *, const gchar *);
 
 gboolean dataset_is_missing(Dataset *, gpointer, gpointer);
 gboolean dataset_get(Dataset *, gpointer, gpointer, gboolean *);
-GList * dataset_get_labels(Dataset *);
-const gchar * dataset_get_label_string(Dataset *, gconstpointer);
-gpointer dataset_get_string_label(Dataset *, const gchar *);
-guint dataset_num_labels(Dataset *);
 const gchar * dataset_get_filename(Dataset *);
 void dataset_set_filename(Dataset *, const gchar *);
 

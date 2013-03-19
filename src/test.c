@@ -12,9 +12,9 @@ void init_test_toy3(Tree **laa, Tree **lbb, Tree **lcc) {
 
 	dataset = dataset_gen_toy3();
 	/*dataset_println(dataset, "");*/
-	aa = dataset_get_string_label(dataset, "aa");
-	bb = dataset_get_string_label(dataset, "bb");
-	cc = dataset_get_string_label(dataset, "cc");
+	aa = dataset_label_lookup(dataset, "aa");
+	bb = dataset_label_lookup(dataset, "bb");
+	cc = dataset_label_lookup(dataset, "cc");
 	params = params_default(dataset);
 
 	/* leaves */
@@ -33,10 +33,10 @@ void init_test_toy4(Tree **laa, Tree **lbb, Tree **lcc, Tree **ldd) {
 
 	dataset = dataset_gen_toy4();
 	/* dataset_println(dataset, ""); */
-	aa = dataset_get_string_label(dataset, "aa");
-	bb = dataset_get_string_label(dataset, "bb");
-	cc = dataset_get_string_label(dataset, "cc");
-	dd = dataset_get_string_label(dataset, "dd");
+	aa = dataset_label_lookup(dataset, "aa");
+	bb = dataset_label_lookup(dataset, "bb");
+	cc = dataset_label_lookup(dataset, "cc");
+	dd = dataset_label_lookup(dataset, "dd");
 	params = params_default(dataset);
 
 	/* leaves */
