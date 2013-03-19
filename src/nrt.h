@@ -4,6 +4,7 @@
 #include "dataset.h"
 #include "dataset_gml.h"
 #include "util.h"
+#include "sscache.h"
 #include "counts.h"
 #include "params.h"
 #include "tree.h"

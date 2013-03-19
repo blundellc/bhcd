@@ -27,7 +27,7 @@ GSequence * build_init_merges(GRand * rng, Params * params, GPtrArray * trees) {
 		aa = g_ptr_array_index(trees, ii);
 		for (jj = ii + 1; jj < trees->len; jj++) {
 			bb = g_ptr_array_index(trees, jj);
-			new_merge = merge_best(rng, params, ii, aa, jj, bb);
+			new_merge = merge_join(rng, params, ii, aa, jj, bb);
 			/*merge_println(new_merge, "\tadd merge: ");*/
 			g_sequence_insert_sorted(merges, new_merge, merge_cmp_score, NULL);
 		}

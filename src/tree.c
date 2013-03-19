@@ -1,6 +1,7 @@
 #include <gsl/gsl_sf_log.h>
 #include <gsl/gsl_sf_exp.h>
 #include "tree.h"
+#include "sscache.h"
 #include "util.h"
 
 struct Tree_t {
@@ -101,8 +102,9 @@ Tree * leaf_new(Params * params, gpointer label) {
 	Tree * leaf;
 
 	leaf = tree_new(params);
-	leaf->suffstats_on = suffstats_from_label(params, label);
-	leaf->suffstats_off = suffstats_empty(params);
+	leaf->suffstats_on = sscache_get_label(params->sscache, label);
+	suffstats_ref(leaf->suffstats_on);
+	leaf->suffstats_off = suffstats_new_empty();
 	leaf->labels = g_list_append(NULL, label);
 	leaf->logprob = tree_get_logprob(leaf);
 	return leaf;
@@ -113,11 +115,33 @@ Tree * branch_new(Params * params) {
 
 	branch = tree_new(params);
 	branch->is_leaf = FALSE;
-	branch->suffstats_on = suffstats_empty(params);
-	branch->suffstats_off = suffstats_empty(params);
+	branch->suffstats_on = suffstats_new_empty();
+	branch->suffstats_off = suffstats_new_empty();
 	branch->children = NULL;
 	branch->logprob = tree_get_logprob(branch);
 	return branch;
+}
+
+void tree_ref(Tree * tree) {
+	tree->ref_count++;
+}
+
+void tree_unref(Tree * tree) {
+	if (tree == NULL) {
+		return;
+	}
+	if (tree->ref_count <= 1) {
+		if (!tree_is_leaf(tree)) {
+			g_list_free_full(tree->children, (GDestroyNotify)tree_unref);
+		}
+		g_list_free(tree->labels);
+		suffstats_unref(tree->suffstats_on);
+		suffstats_unref(tree->suffstats_off);
+		params_unref(tree->params);
+		g_free(tree);
+	} else {
+		tree->ref_count--;
+	}
 }
 
 gboolean tree_is_leaf(Tree * tree) {
@@ -195,28 +219,6 @@ void tree_tostring(Tree * tree, GString *str) {
 	tree_struct_print(tree, str);
 }
 
-void tree_ref(Tree * tree) {
-	tree->ref_count++;
-}
-
-void tree_unref(Tree * tree) {
-	if (tree == NULL) {
-		return;
-	}
-	if (tree->ref_count <= 1) {
-		if (!tree_is_leaf(tree)) {
-			g_list_free_full(tree->children, (GDestroyNotify)tree_unref);
-		}
-		g_list_free(tree->labels);
-		suffstats_unref(tree->suffstats_on);
-		suffstats_unref(tree->suffstats_off);
-		params_unref(tree->params);
-		g_free(tree);
-	} else {
-		tree->ref_count--;
-	}
-}
-
 
 gconstpointer leaf_get_label(Tree * leaf) {
 	g_assert(tree_is_leaf(leaf));
@@ -225,7 +227,7 @@ gconstpointer leaf_get_label(Tree * leaf) {
 
 static gdouble leaf_logprob(Tree * leaf) {
 	g_assert(tree_is_leaf(leaf));
-	leaf->logprob = suffstats_logprob_on(leaf->suffstats_on, leaf->params);
+	leaf->logprob = params_logprob_on(leaf->params, leaf->suffstats_on);
 	leaf->dirty = FALSE;
 	return leaf->logprob;
 }
@@ -241,7 +243,7 @@ void branch_add_child(Tree * branch, Tree * child) {
 	/* data on the new offset par takes in both the off and on suff stats of
 	 * the branch
 	 */
-	new_off = suffstats_off_lookup(branch->params, branch->labels, child->labels);
+	new_off = suffstats_new_offblock(branch->params->dataset, branch->labels, child->labels);
 	suffstats_add(branch->suffstats_off, new_off);
 	suffstats_add(branch->suffstats_on, child->suffstats_on);
 	suffstats_add(branch->suffstats_on, new_off);
@@ -285,8 +287,8 @@ static gdouble branch_logprob(Tree * branch) {
 
 	branch->log_not_pi = branch_log_not_pi(branch);
 	branch->log_pi = branch_log_pi(branch, branch->log_not_pi);
-	branch->logprob_cluster = suffstats_logprob_on(branch->suffstats_on, branch->params);
-	branch->logprob_children = suffstats_logprob_off(branch->suffstats_off, branch->params);
+	branch->logprob_cluster = params_logprob_on(branch->params, branch->suffstats_on);
+	branch->logprob_children = params_logprob_off(branch->params, branch->suffstats_off);
 	/* g_print("children 0: %2.2e\n", branch->logprob_children); */
 	for (child = branch->children; child != NULL; child = g_list_next(child)) {
 		branch->logprob_children += tree_get_logprob(child->data);

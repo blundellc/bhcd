@@ -1,4 +1,5 @@
 #include "merge.h"
+#include "sscache.h"
 
 static gdouble merge_calc_logprob_rel(Params * params, Tree * aa, Tree * bb);
 
@@ -123,8 +124,8 @@ static gdouble merge_calc_logprob_rel(Params * params, Tree * aa, Tree * bb) {
 	gpointer offblock;
 	gdouble logprob_rel;
 
-	offblock = suffstats_off_lookup(params, tree_get_labels(aa), tree_get_labels(bb));
-	logprob_rel = suffstats_logprob_off(offblock, params);
+	offblock = suffstats_new_offblock(params->dataset, tree_get_labels(aa), tree_get_labels(bb));
+	logprob_rel = params_logprob_off(params, offblock);
 	suffstats_unref(offblock);
 	return logprob_rel;
 }
