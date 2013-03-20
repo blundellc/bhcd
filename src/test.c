@@ -343,7 +343,7 @@ void test_sscache_stats(void) {
 	dst = list_new(bb);
 	counts = sscache_get_offblock_full(cache, src, dst);
 	g_assert(counts->num_ones == 0);
-	g_assert(counts->num_total == 1);
+	g_assert(counts->num_total == 2);
 	g_list_free(src);
 	g_list_free(dst);
 
@@ -351,7 +351,7 @@ void test_sscache_stats(void) {
 	dst = list_new(cc);
 	counts = sscache_get_offblock_full(cache, src, dst);
 	g_assert(counts->num_ones == 1);
-	g_assert(counts->num_total == 1);
+	g_assert(counts->num_total == 2);
 	g_list_free(src);
 	g_list_free(dst);
 
