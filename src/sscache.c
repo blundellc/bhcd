@@ -135,6 +135,7 @@ gpointer sscache_get_offblock(SSCache *cache, GList * root, GList * child) {
 	key = offblock_key_new(root, child, FALSE);
 	if (!g_hash_table_lookup_extended(cache->suffstats_offblocks,
 				key, NULL, &suffstats)) {
+		offblock_key_free(key);
 		return NULL;
 	}
 	offblock_key_free(key);
