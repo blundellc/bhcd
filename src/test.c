@@ -311,23 +311,56 @@ void test_sscache_stats(void) {
 	Tree *lbb;
 	Tree *lcc;
 	Tree *ldd;
+	gconstpointer aa;
+	gconstpointer bb;
+	gconstpointer cc;
+	gconstpointer dd;
 	SSCache *cache;
 	Counts * counts;
+	GList * src;
+	GList * dst;
 
 	init_test_toy4(&laa, &lbb, &lcc, &ldd);
 	cache = sscache_new(tree_get_params(laa)->dataset);
 
-	counts = sscache_get_label(cache, leaf_get_label(laa));
+	counts = sscache_get_label(cache, aa = leaf_get_label(laa));
 	g_assert(counts->num_ones == 1);
 	g_assert(counts->num_total == 1);
 
-	counts = sscache_get_label(cache, leaf_get_label(lbb));
+	counts = sscache_get_label(cache, bb = leaf_get_label(lbb));
 	g_assert(counts->num_ones == 0);
 	g_assert(counts->num_total == 0);
 
-	counts = sscache_get_label(cache, leaf_get_label(lcc));
+	counts = sscache_get_label(cache, cc = leaf_get_label(lcc));
 	g_assert(counts->num_ones == 0);
 	g_assert(counts->num_total == 1);
+
+	counts = sscache_get_label(cache, dd = leaf_get_label(ldd));
+	g_assert(counts->num_ones == 0);
+	g_assert(counts->num_total == 0);
+
+	src = list_new(aa);
+	dst = list_new(bb);
+	counts = sscache_get_offblock_full(cache, src, dst);
+	g_assert(counts->num_ones == 0);
+	g_assert(counts->num_total == 1);
+	g_list_free(src);
+	g_list_free(dst);
+
+	src = list_new(dd);
+	dst = list_new(cc);
+	counts = sscache_get_offblock_full(cache, src, dst);
+	g_assert(counts->num_ones == 1);
+	g_assert(counts->num_total == 1);
+	g_list_free(src);
+	g_list_free(dst);
+
+	src = list_new(aa);
+	dst = list_new(dd);
+	counts = sscache_get_offblock(cache, src, dst);
+	g_assert(counts == NULL);
+	g_list_free(src);
+	g_list_free(dst);
 
 	tree_unref(laa);
 	tree_unref(lbb);

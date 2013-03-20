@@ -142,6 +142,33 @@ gpointer sscache_get_offblock(SSCache *cache, GList * root, GList * child) {
 	return suffstats;
 }
 
+gpointer sscache_get_offblock_full(SSCache *cache, GList * root, GList * child) {
+	gpointer suffstats;
+	Offblock_Key * key;
+	gboolean missing;
+	gboolean value;
+
+
+	suffstats = sscache_get_offblock(cache, root, child);
+	if (suffstats != NULL) {
+		return suffstats;
+	}
+	// look up the element in dataset. we should only ever have to do this
+	// for singletons. so check...
+	g_assert(g_list_next(root) == NULL);
+	g_assert(g_list_next(child) == NULL);
+
+	value = dataset_get(cache->dataset, root->data, child->data, &missing);
+	if (missing) {
+		suffstats = suffstats_new_empty();
+	} else {
+		suffstats = counts_new(value, 1);
+	}
+	key = offblock_key_new(root, child, TRUE);
+	g_hash_table_insert(cache->suffstats_offblocks, key, suffstats);
+	return suffstats;
+}
+
 gpointer suffstats_new_empty(void) {
 	return counts_new(0, 0);
 }
