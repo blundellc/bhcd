@@ -92,6 +92,22 @@ gchar * strip_quotes(gchar *str) {
 	return str;
 }
 
+GList * list_new_full(gpointer last, ...) {
+	va_list ap;
+	gpointer elem;
+	GList * list;
+
+	list = NULL;
+	va_start(ap, last);
+	do {
+		elem = va_arg(ap, gpointer);
+		list = g_list_prepend(list, elem);
+	} while (elem != last);
+	va_end(ap);
+	list = g_list_reverse(list);
+	return list;
+}
+
 
 void list_assert_sorted(GList * list, GCompareFunc cmp) {
 	GList *prev;

@@ -45,10 +45,12 @@ gint cmp_quark(gconstpointer, gconstpointer);
 void io_printf(GIOChannel *io, const gchar *fmt, ...);
 void io_stdout(IOFunc func, gpointer user_data);
 
+GList * list_new_full(gpointer last, ...);
+#define list_new(...)   list_new_full(NULL, __VA_ARGS__)
 void list_assert_sorted(GList * list, GCompareFunc cmp);
 gboolean list_equal(GList *aa, GList *bb, GEqualFunc equal);
 guint list_hash(GList * list, GHashFunc hash_func);
 
 gchar * strip_quotes(gchar *str);
 
-#endif
+#endif  /*UTIL_H*/
