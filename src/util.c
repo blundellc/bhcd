@@ -94,15 +94,16 @@ gchar * strip_quotes(gchar *str) {
 
 GList * list_new_full(gpointer last, ...) {
 	va_list ap;
-	gpointer elem;
 	GList * list;
 
 	list = NULL;
 	va_start(ap, last);
-	do {
-		elem = va_arg(ap, gpointer);
+	for (gpointer elem = va_arg(ap, gpointer);
+	     elem != last;
+	     elem = va_arg(ap, gpointer)) {
+
 		list = g_list_prepend(list, elem);
-	} while (elem != last);
+	}
 	va_end(ap);
 	list = g_list_reverse(list);
 	return list;
@@ -113,7 +114,7 @@ void list_assert_sorted(GList * list, GCompareFunc cmp) {
 	GList *prev;
 
 	prev = list;
-	for (list = g_list_next(list); list != NULL; list = g_list_next(list)) {
+	for (list = g_list_next(list); prev != NULL && list != NULL; list = g_list_next(list)) {
 		g_assert(cmp(prev->data, list->data) <= 0);
 		prev = list;
 	}
@@ -136,3 +137,4 @@ gboolean list_equal(GList *aa, GList *bb, GEqualFunc equal) {
 	}
 	return aa == bb;
 }
+
