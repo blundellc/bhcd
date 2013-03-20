@@ -13,7 +13,7 @@ def main():
     mode = sys.argv[1]
     env = dict(os.environ)
     # -flto in cflags?
-    env['CFLAGS'] = '-std=c89'
+    env['CFLAGS'] = '-std=c99'
     # env['LDFLAGS'] = '-flto'
     env['CFLAGS'] += ' -D_FORIFY_SOURCE=2 -Wformat -Wformat-security'
 
