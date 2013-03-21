@@ -11,8 +11,8 @@ typedef struct SSCache_t SSCache;
 SSCache * sscache_new(Dataset *);
 gpointer sscache_get_label(SSCache *cache, gconstpointer label);
 gpointer sscache_get_offblock(SSCache *cache, GList * xx, GList * yy);
-gpointer sscache_get_offblock_simple(SSCache *cache, Labelset * xx, Labelset * yy);
 gpointer sscache_get_offblock_full(SSCache *cache, gconstpointer ii, gconstpointer jj);
+void sscache_println(SSCache * cache, const gchar * prefix);
 void sscache_unref(SSCache *cache);
 
 gpointer suffstats_new_empty(void);

@@ -24,6 +24,7 @@ static void offblock_key_free(gpointer pkey);
 static gboolean offblock_key_equal(gconstpointer paa, gconstpointer pbb);
 static guint offblock_key_hash(gconstpointer pkey);
 static gpointer sscache_get_offblock_ordered(SSCache *cache, GList * kk, GList * zz);
+static gpointer sscache_get_offblock_simple(SSCache *cache, Labelset * xx, Labelset * yy);
 
 SSCache * sscache_new(Dataset *dataset) {
 	SSCache * cache;
@@ -209,7 +210,7 @@ error:
 	return NULL;
 }
 
-gpointer sscache_get_offblock_simple(SSCache *cache, Labelset * ii, Labelset * jj) {
+static gpointer sscache_get_offblock_simple(SSCache *cache, Labelset * ii, Labelset * jj) {
 	gpointer suffstats;
 	Offblock_Key * key;
 
