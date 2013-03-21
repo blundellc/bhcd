@@ -49,6 +49,22 @@ gboolean bitset_equal(Bitset *aa, Bitset *bb) {
 	return TRUE;
 }
 
+gboolean bitset_is_singleton(Bitset *bitset) {
+	/* could speed up with a population count */
+	gboolean found_one = FALSE;
+	for (guint32 ii = 0; ii < bitset->size; ii++) {
+		guint64 elem = bitset->elems[ii];
+		gint offset = g_bit_nth_lsf(elem, -1);
+		if (offset != -1) {
+			if (found_one) {
+				return FALSE;
+			}
+			found_one = TRUE;
+		}
+	}
+	return found_one;
+}
+
 guint bitset_hash(Bitset * bitset) {
 	guint32 hash = 0;
 
@@ -71,6 +87,18 @@ static inline void bitset_get_bit(guint32 index, guint32 * elem_index, guint64 *
 	*elem_index = index >> SHIFT_ELEM;
 }
 
+
+guint32 bitset_any(Bitset *bitset) {
+	for (guint32 ii = 0; ii < bitset->size; ii++) {
+		guint64 elem = bitset->elems[ii];
+		gint offset = g_bit_nth_lsf(elem, -1);
+		if (offset != -1) {
+			return offset + ii*BITS_PER_ELEM;
+		}
+	}
+	g_assert_not_reached();
+	return 0;
+}
 
 void bitset_set(Bitset *bitset, guint32 index) {
 	guint64 bit;

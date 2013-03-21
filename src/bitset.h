@@ -10,9 +10,11 @@ Bitset * bitset_new(guint32 max_index);
 void bitset_ref(Bitset *);
 void bitset_unref(Bitset *);
 
+gboolean bitset_is_singleton(Bitset *);
 gboolean bitset_equal(Bitset *aa, Bitset *bb);
 guint bitset_hash(Bitset * bitset);
 
+guint32 bitset_any(Bitset *);
 void bitset_set(Bitset *bitset, guint32 index);
 void bitset_clear(Bitset *bitset, guint32 index);
 gboolean bitset_contains(Bitset *bitset, guint32 index);

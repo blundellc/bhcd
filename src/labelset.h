@@ -9,13 +9,16 @@
 struct Labelset_t;
 typedef struct Labelset_t Labelset;
 
-Labelset * labelset_new(Dataset * dataset);
+Labelset * labelset_new_full(Dataset * dataset, ...);
+#define	labelset_new(...)	labelset_new_full(__VA_ARGS__, NULL)
 void labelset_ref(Labelset * lset);
 void labelset_unref(Labelset * lset);
 
+gboolean labelset_is_singleton(Labelset * lset);
 gboolean labelset_equal(Labelset *aa, Labelset *bb);
 guint labelset_hash(Labelset * lset);
 
+gpointer labelset_any_label(Labelset * lset);
 void labelset_add(Labelset *lset, gconstpointer label);
 gboolean labelset_contains(Labelset *lset, gconstpointer label);
 void labelset_del(Labelset *lset, gconstpointer label);

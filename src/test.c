@@ -432,15 +432,17 @@ void test_labelset(void) {
 	Tree *laa, *lbb, *lcc;
 	gconstpointer aa, bb, cc;
 	Labelset *seta, *setb, *setc;
+	Dataset * dataset;
 
 	init_test_toy3(&laa, &lbb, &lcc);
 	aa = leaf_get_label(laa);
 	bb = leaf_get_label(lbb);
 	cc = leaf_get_label(lcc);
 
-	seta = labelset_new(tree_get_params(laa)->dataset);
-	setb = labelset_new(tree_get_params(laa)->dataset);
-	setc = labelset_new(tree_get_params(laa)->dataset);
+	dataset = tree_get_params(laa)->dataset;
+	seta = labelset_new(dataset);
+	setb = labelset_new(dataset);
+	setc = labelset_new(dataset);
 
 	g_assert(labelset_equal(seta, setb));
 	g_assert(labelset_equal(seta, seta));

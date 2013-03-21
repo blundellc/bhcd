@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include "labelset.h"
 
 struct Labelset_t {
@@ -7,14 +8,21 @@ struct Labelset_t {
 };
 
 
-Labelset * labelset_new(Dataset * dataset) {
+Labelset * labelset_new_full(Dataset * dataset, ...) {
 	Labelset * lset;
+	va_list ap;
 
 	lset = g_new(Labelset, 1);
 	lset->ref_count = 1;
 	lset->dataset = dataset;
 	dataset_ref(dataset);
 	lset->bits = bitset_new(dataset_num_labels(dataset));
+
+	va_start(ap, dataset);
+	for (gpointer label = va_arg(ap, gpointer); label != NULL; label = va_arg(ap, gpointer)) {
+		labelset_add(lset, label);
+	}
+	va_end(ap);
 	return lset;
 }
 
@@ -31,6 +39,15 @@ void labelset_unref(Labelset * lset) {
 	} else {
 		lset->ref_count--;
 	}
+}
+
+gboolean labelset_is_singleton(Labelset * lset) {
+	return bitset_is_singleton(lset->bits);
+}
+
+gpointer labelset_any_label(Labelset * lset) {
+	guint32 any_int = bitset_any(lset->bits);
+	return GINT_TO_POINTER(any_int);
 }
 
 gboolean labelset_equal(Labelset *aa, Labelset *bb) {
