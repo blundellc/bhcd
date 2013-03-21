@@ -530,6 +530,10 @@ void test_labelset(void) {
 	labelset_add(setb, cc);
 	g_assert(labelset_equal(setc, setb));
 
+	labelset_unref(seta);
+	seta = labelset_copy(setc);
+	labelset_del(seta, aa);
+
 	{
 		GString *out = g_string_new("");
 		labelset_tostring(setc, out);

@@ -15,7 +15,6 @@ struct Tree_t {
 	/* elements shared */
 	GList *		children;
 
-	/* shared */
 	Labelset *	labels;
 	/* elements shared */
 	GList *		labelsets;
@@ -42,7 +41,7 @@ void tree_assert(Tree * tree) {
 	g_assert(tree->suffstats_on != NULL);
 	g_assert(tree->suffstats_off != NULL);
 	g_assert(tree->logprob <= 0.0);
-	if (tree->children == NULL) {
+	if (tree_is_leaf(tree)) {
 		g_assert(labelset_is_singleton(tree->labels));
 		g_assert(g_list_length(tree->labelsets) == 1);
 		g_assert(labelset_equal(tree->labels, tree->labelsets->data));
@@ -100,8 +99,7 @@ Tree * tree_copy(Tree * orig) {
 
 	tree->suffstats_on = suffstats_copy(orig->suffstats_on);
 	tree->suffstats_off = suffstats_copy(orig->suffstats_off);
-	tree->labels = orig->labels;
-	labelset_ref(tree->labels);
+	tree->labels = labelset_copy(orig->labels);
 	tree->labelsets = g_list_copy(orig->labelsets);
 	for (child = tree->labelsets; child != NULL; child = g_list_next(child)) {
 		labelset_ref(child->data);
@@ -118,6 +116,7 @@ Tree * tree_copy(Tree * orig) {
 	tree->logprob_children = orig->logprob_children;
 	tree->logprob = orig->logprob;
 
+	tree_assert(tree);
 	return tree;
 }
 
@@ -132,6 +131,7 @@ Tree * leaf_new(Params * params, gpointer label) {
 	leaf->labelsets = list_new(leaf->labels);
 	labelset_ref(leaf->labels);
 	leaf->logprob = tree_get_logprob(leaf);
+	tree_assert(leaf);
 	return leaf;
 }
 
@@ -146,6 +146,7 @@ Tree * branch_new(Params * params) {
 	branch->labels = labelset_new(params->dataset);
 	branch->labelsets = NULL;
 	branch->logprob = tree_get_logprob(branch);
+	tree_assert(branch);
 	return branch;
 }
 
@@ -312,6 +313,7 @@ void branch_add_child(Tree * branch, Tree * child) {
 	labelset_ref(child->labels);
 	branch->dirty = TRUE;
 	branch->logprob = tree_get_logprob(branch);
+	tree_assert(branch);
 }
 
 GList * branch_get_children(Tree * branch) {

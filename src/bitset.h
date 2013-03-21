@@ -7,6 +7,7 @@ struct Bitset_t;
 typedef struct Bitset_t Bitset;
 
 Bitset * bitset_new(guint32 max_index);
+Bitset * bitset_copy(Bitset *);
 void bitset_ref(Bitset *);
 void bitset_unref(Bitset *);
 

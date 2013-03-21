@@ -27,6 +27,14 @@ Labelset * labelset_new_full(Dataset * dataset, ...) {
 }
 
 
+Labelset * labelset_copy(Labelset *other) {
+	Labelset * lset = labelset_new(other->dataset);
+	bitset_unref(lset->bits);
+	lset->bits = bitset_copy(other->bits);
+	return lset;
+}
+
+
 void labelset_ref(Labelset * lset) {
 	lset->ref_count++;
 }

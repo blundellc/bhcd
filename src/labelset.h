@@ -11,6 +11,7 @@ typedef struct Labelset_t Labelset;
 
 Labelset * labelset_new_full(Dataset * dataset, ...);
 #define	labelset_new(...)	labelset_new_full(__VA_ARGS__, NULL)
+Labelset * labelset_copy(Labelset *);
 void labelset_ref(Labelset * lset);
 void labelset_unref(Labelset * lset);
 

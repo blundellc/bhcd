@@ -24,6 +24,15 @@ Bitset * bitset_new(guint32 max_index) {
 	return bitset;
 }
 
+Bitset * bitset_copy(Bitset *other) {
+	Bitset * bitset = bitset_new((other->size-1)*BITS_PER_ELEM);
+	g_assert(bitset->size == other->size);
+	for (guint32 ii = 0; ii < bitset->size; ii++) {
+		bitset->elems[ii] = other->elems[ii];
+	}
+	return bitset;
+}
+
 void bitset_ref(Bitset * bitset) {
 	bitset->ref_count++;
 }
