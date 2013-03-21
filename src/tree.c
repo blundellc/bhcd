@@ -379,3 +379,14 @@ gdouble tree_get_logprob(Tree *tree) {
 	return branch_logprob(tree);
 }
 
+gdouble tree_get_logresponse(Tree *tree) {
+	gdouble logprob;
+
+	if (tree_is_leaf(tree)) {
+		return 0.0;
+	} else {
+		logprob = tree_get_logprob(tree);
+		return tree->log_pi + tree->logprob_cluster - logprob;
+	}
+}
+

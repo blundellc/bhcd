@@ -29,6 +29,7 @@ Labelset * tree_get_labels(Tree * tree);
 GList * tree_get_labelsets(Tree * tree);
 Params * tree_get_params(Tree * tree);
 gdouble tree_get_logprob(Tree *tree);
+gdouble tree_get_logresponse(Tree *tree);
 
 guint tree_num_intern(Tree * tree);
 guint tree_num_leaves(Tree * tree);

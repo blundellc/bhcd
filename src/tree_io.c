@@ -56,10 +56,11 @@ void tree_io_save_io(Tree *root, GIOChannel *io) {
 		tree = cur->snd;
 
 		if (tree_is_leaf(tree)) {
-			io_printf(io, "\tleaf [ parent %d label \"%s\" logprob %1.17e ]\n",
+			io_printf(io, "\tleaf [ logprob %1.17e logresp %1.17e parent %d label \"%s\" ]\n",
+					tree_get_logprob(tree),
+					tree_get_logresponse(tree),
 					parent_index,
-					dataset_label_to_string(dataset, leaf_get_label(tree)),
-					tree_get_logprob(tree)
+					dataset_label_to_string(dataset, leaf_get_label(tree))
 				);
 		} else {
 			GList * child;
@@ -69,9 +70,18 @@ void tree_io_save_io(Tree *root, GIOChannel *io) {
 			next_index++;
 
 			if (parent_index == -1) {
-				io_printf(io, "\troot [ id %d logprob %1.17e ]\n", my_index, tree_get_logprob(tree));
+				io_printf(io, "\troot [ logprob %1.17e logresp %1.17e id %d ]\n",
+						tree_get_logprob(tree),
+						tree_get_logresponse(tree),
+						my_index
+					);
 			} else {
-				io_printf(io, "\tstem [ parent %d child %d logprob %1.17e ]\n", parent_index, my_index, tree_get_logprob(tree));
+				io_printf(io, "\tstem [ logprob %1.17e logresp %1.17e parent %d child %d ]\n",
+						tree_get_logprob(tree),
+						tree_get_logresponse(tree),
+						parent_index,
+						my_index
+					);
 			}
 			child = branch_get_children(tree);
 			for (; child != NULL; child = g_list_next(child)) {
