@@ -40,7 +40,7 @@ void tree_assert(Tree * tree) {
 	g_assert(tree->params != NULL);
 	g_assert(tree->suffstats_on != NULL);
 	g_assert(tree->suffstats_off != NULL);
-	g_assert(tree->logprob <= 0.0);
+	assert_lefloat(tree->logprob, 0.0, EQFLOAT_DEFAULT_PREC);
 	if (tree_is_leaf(tree)) {
 		g_assert(labelset_count(tree->labels) == 1);
 		g_assert(g_list_length(tree->labelsets) == 1);

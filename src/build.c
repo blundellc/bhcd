@@ -1,6 +1,8 @@
 #include "build.h"
 #include "merge.h"
 
+static const gboolean build_debug = FALSE;
+
 GPtrArray * build_init_trees(Params * params, GList * labels) {
 	GPtrArray * trees;
 
@@ -28,7 +30,9 @@ GSequence * build_init_merges(GRand * rng, Params * params, GPtrArray * trees) {
 		for (jj = ii + 1; jj < trees->len; jj++) {
 			bb = g_ptr_array_index(trees, jj);
 			new_merge = merge_join(rng, params, ii, aa, jj, bb);
-			// merge_println(new_merge, "\tadd init merge: ");
+			if (build_debug) {
+				merge_println(new_merge, "\tadd init merge: ");
+			}
 			g_sequence_insert_sorted(merges, new_merge, merge_cmp_score, NULL);
 		}
 	}
@@ -56,7 +60,9 @@ void build_add_merges(GRand * rng, Params * params, GSequence * merges, GPtrArra
 
 		tll = g_ptr_array_index(trees, ll);
 		new_merge = merge_best(rng, params, kk, tkk, ll, tll);
-		// merge_println(new_merge, "\tadd merge: ");
+		if (build_debug) {
+			merge_println(new_merge, "\tadd merge: ");
+		}
 		g_sequence_insert_sorted(merges, new_merge, merge_cmp_score, NULL);
 	}
 }
@@ -78,7 +84,9 @@ void build_greedy(GRand * rng, Params * params, GPtrArray * trees, GSequence * m
 			goto again;
 		}
 
-		// merge_println(cur, "best merge: ");
+		if (build_debug) {
+			merge_println(cur, "best merge: ");
+		}
 
 		build_remove_tree(trees, cur->ii);
 		build_remove_tree(trees, cur->jj);

@@ -6,12 +6,13 @@
 #include <gsl/gsl_math.h>
 #include "labelset.h"
 
+#define	EQFLOAT_DEFAULT_PREC	1e-4
 #define	assert_eqfloat(expa, expb, prec)							\
 	do {											\
 		gdouble _assert_eqfloat_aa = (expa);						\
 		gdouble _assert_eqfloat_bb = (expb);						\
-		if (fabs(_assert_eqfloat_aa) < prec ||					\
-		    fabs(_assert_eqfloat_bb) < prec) {					\
+		if (fabs(_assert_eqfloat_aa) < prec ||						\
+		    fabs(_assert_eqfloat_bb) < prec) {						\
 			if (fabs(_assert_eqfloat_aa-_assert_eqfloat_bb) < prec) {		\
 				break;								\
 			}									\
@@ -21,6 +22,25 @@
 			}									\
 		}										\
 		g_error("%s:%d: assertion failed; %e not close to %e", 				\
+				__FILE__, __LINE__,						\
+				_assert_eqfloat_aa, _assert_eqfloat_bb);			\
+	} while (0)
+
+#define	assert_lefloat(expa, expb, prec)							\
+	do {											\
+		gdouble _assert_eqfloat_aa = (expa);						\
+		gdouble _assert_eqfloat_bb = (expb);						\
+		if (fabs(_assert_eqfloat_aa) < prec ||						\
+		    fabs(_assert_eqfloat_bb) < prec) {						\
+			if (_assert_eqfloat_aa-_assert_eqfloat_bb <= prec) {			\
+				break;								\
+			}									\
+		} else {									\
+			if (gsl_fcmp(_assert_eqfloat_aa, _assert_eqfloat_bb, prec) <= 0) { 	\
+				break;								\
+			}									\
+		}										\
+		g_error("%s:%d: assertion failed; %e not close to less or equal %e", 		\
 				__FILE__, __LINE__,						\
 				_assert_eqfloat_aa, _assert_eqfloat_bb);			\
 	} while (0)

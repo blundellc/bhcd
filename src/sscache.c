@@ -174,6 +174,7 @@ gpointer sscache_get_offblock(SSCache *cache, GList * kk, GList * zz) {
 		g_print(" <-> ");
 		list_labelset_print(zz);
 		g_print("\n");
+		sscache_println(cache, "sscache: ");
 		g_error("theorem failure?!");
 	}
 	return suffstats;

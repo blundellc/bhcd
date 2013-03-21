@@ -98,6 +98,11 @@ static void labelset_tostring_append(gpointer pargs, guint32 labelint) {
 	Dataset * dataset = args->fst;
 	GString * out = args->snd;
 	gpointer label = GINT_TO_POINTER(labelint);
+	/*
+	g_string_append_printf(out, "%s(%d) ",
+			dataset_label_to_string(dataset, label),
+			labelint);
+			*/
 	g_string_append(out, dataset_label_to_string(dataset, label));
 	g_string_append(out, " ");
 }
