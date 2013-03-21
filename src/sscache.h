@@ -3,6 +3,7 @@
 
 #include <glib.h>
 #include "dataset.h"
+#include "labelset.h"
 
 struct SSCache_t;
 typedef struct SSCache_t SSCache;
@@ -10,8 +11,8 @@ typedef struct SSCache_t SSCache;
 SSCache * sscache_new(Dataset *);
 gpointer sscache_get_label(SSCache *cache, gconstpointer label);
 gpointer sscache_get_offblock(SSCache *cache, GList * root, GList * child);
-gpointer sscache_get_offblock_simple(SSCache *cache, GList * root, GList * child);
-gpointer sscache_get_offblock_full(SSCache *cache, GList * root, GList * child);
+gpointer sscache_get_offblock_simple(SSCache *cache, Labelset * root, Labelset * child);
+gpointer sscache_get_offblock_full(SSCache *cache, Labelset * root, Labelset * child);
 void sscache_unref(SSCache *cache);
 
 gpointer suffstats_new_empty(void);

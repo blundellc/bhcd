@@ -316,12 +316,16 @@ void test_sscache_stats(void) {
 	gconstpointer cc;
 	gconstpointer dd;
 	SSCache *cache;
+	Dataset * dataset;
 	Counts * counts;
 	GList * src;
 	GList * dst;
+	Labelset * src_set;
+	Labelset * dst_set;
 
 	init_test_toy4(&laa, &lbb, &lcc, &ldd);
 	cache = sscache_new(tree_get_params(laa)->dataset);
+	dataset = tree_get_params(laa)->dataset;
 
 	counts = sscache_get_label(cache, aa = leaf_get_label(laa));
 	g_assert(counts->num_ones == 1);
@@ -339,28 +343,98 @@ void test_sscache_stats(void) {
 	g_assert(counts->num_ones == 0);
 	g_assert(counts->num_total == 0);
 
-	src = list_new(aa);
-	dst = list_new(bb);
-	counts = sscache_get_offblock_full(cache, src, dst);
+	src_set = labelset_new(dataset, aa);
+	dst_set = labelset_new(dataset, bb);
+	counts = sscache_get_offblock_full(cache, src_set, dst_set);
+	g_assert(counts != NULL);
 	g_assert(counts->num_ones == 0);
 	g_assert(counts->num_total == 2);
-	g_list_free(src);
-	g_list_free(dst);
+	labelset_unref(src_set);
+	labelset_unref(dst_set);
 
-	src = list_new(dd);
-	dst = list_new(cc);
-	counts = sscache_get_offblock_full(cache, src, dst);
+	src_set = labelset_new(dataset, aa);
+	dst_set = labelset_new(dataset, cc);
+	counts = sscache_get_offblock_full(cache, src_set, dst_set);
+	g_assert(counts != NULL);
 	g_assert(counts->num_ones == 1);
 	g_assert(counts->num_total == 2);
-	g_list_free(src);
-	g_list_free(dst);
+	labelset_unref(src_set);
+	labelset_unref(dst_set);
 
-	src = list_new(aa);
-	dst = list_new(dd);
+	src_set = labelset_new(dataset, aa);
+	dst_set = labelset_new(dataset, dd);
+	counts = sscache_get_offblock_full(cache, src_set, dst_set);
+	g_assert(counts != NULL);
+	g_assert(counts->num_ones == 1);
+	g_assert(counts->num_total == 2);
+	labelset_unref(src_set);
+	labelset_unref(dst_set);
+
+	src_set = labelset_new(dataset, cc);
+	dst_set = labelset_new(dataset, bb);
+	counts = sscache_get_offblock_full(cache, src_set, dst_set);
+	g_assert(counts != NULL);
+	g_assert(counts->num_ones == 2);
+	g_assert(counts->num_total == 2);
+	labelset_unref(src_set);
+	labelset_unref(dst_set);
+
+	src_set = labelset_new(dataset, dd);
+	dst_set = labelset_new(dataset, bb);
+	counts = sscache_get_offblock_full(cache, src_set, dst_set);
+	g_assert(counts != NULL);
+	g_assert(counts->num_ones == 0);
+	g_assert(counts->num_total == 1);
+	labelset_unref(src_set);
+	labelset_unref(dst_set);
+
+	src = list_new(labelset_new(dataset, cc));
+	dst = list_new(labelset_new(dataset, dd));
 	counts = sscache_get_offblock(cache, src, dst);
 	g_assert(counts == NULL);
-	g_list_free(src);
-	g_list_free(dst);
+	g_list_free_full(src, (GDestroyNotify)labelset_unref);
+	g_list_free_full(dst, (GDestroyNotify)labelset_unref);
+
+	src_set = labelset_new(dataset, dd);
+	dst_set = labelset_new(dataset, cc);
+	counts = sscache_get_offblock_full(cache, src_set, dst_set);
+	g_assert(counts != NULL);
+	g_assert(counts->num_ones == 1);
+	g_assert(counts->num_total == 2);
+	labelset_unref(src_set);
+	labelset_unref(dst_set);
+
+
+	/* act as if {a,b} is a node */
+	src = list_new(labelset_new(dataset, aa), labelset_new(dataset, bb));
+	dst = list_new(labelset_new(dataset, cc));
+	counts = sscache_get_offblock(cache, src, dst);
+	g_assert(counts != NULL);
+	g_assert(counts->num_ones == 3);
+	g_assert(counts->num_total == 4);
+	g_list_free_full(src, (GDestroyNotify)labelset_unref);
+	g_list_free_full(dst, (GDestroyNotify)labelset_unref);
+
+	src = list_new(labelset_new(dataset, aa), labelset_new(dataset, bb));
+	dst = list_new(labelset_new(dataset, dd));
+	counts = sscache_get_offblock(cache, src, dst);
+	g_assert(counts != NULL);
+	g_assert(counts->num_ones == 1);
+	g_assert(counts->num_total == 3);
+	g_list_free_full(src, (GDestroyNotify)labelset_unref);
+	g_list_free_full(dst, (GDestroyNotify)labelset_unref);
+
+	/* then suppose {c,d} is a node */
+
+	/* now test */
+	src = list_new(labelset_new(dataset, aa), labelset_new(dataset, bb));
+	dst = list_new(labelset_new(dataset, cc), labelset_new(dataset, dd));
+	counts = sscache_get_offblock(cache, src, dst);
+	g_assert(counts != NULL);
+	g_assert(counts->num_ones == 4);
+	g_assert(counts->num_total == 7);
+	g_list_free_full(src, (GDestroyNotify)labelset_unref);
+	g_list_free_full(dst, (GDestroyNotify)labelset_unref);
 
 	tree_unref(laa);
 	tree_unref(lbb);
@@ -491,7 +565,7 @@ int main(int argc, char *argv[]) {
 	g_test_add_func("/merge/score3", test_merge_score3);
 	g_test_add_func("/bitset", test_bitset);
 	g_test_add_func("/labelset", test_labelset);
-	//g_test_add_func("/sscache/stats", test_sscache_stats);
+	g_test_add_func("/sscache/stats", test_sscache_stats);
 	g_test_run();
 	return 0;
 }

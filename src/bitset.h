@@ -23,7 +23,7 @@ void bitset_union(Bitset *dst, Bitset *src);
 typedef void (*BitsetFunc)(gpointer, guint32);
 void bitset_foreach(Bitset *bitset, BitsetFunc func, gpointer user_data);
 
-void bitset_println(Bitset *bitset, const gchar *prefix);
+void bitset_print(Bitset *bitset);
 void bitset_tostring(Bitset * bitset, GString * out);
 
 #endif /*BITSET_H*/

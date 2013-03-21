@@ -143,12 +143,12 @@ void bitset_foreach(Bitset *bitset, BitsetFunc func, gpointer user_data) {
 	}
 }
 
-void bitset_println(Bitset * bitset, const gchar *prefix) {
+void bitset_print(Bitset * bitset) {
         GString * out;
 
-        out = g_string_new(prefix);
+        out = g_string_new("");
         bitset_tostring(bitset, out);
-        g_print("%s\n", out->str);
+        g_print("%s", out->str);
         g_string_free(out, TRUE);
 }
 

@@ -76,12 +76,12 @@ void labelset_union(Labelset *aa, Labelset *bb) {
 }
 
 
-void labelset_println(Labelset * lset, const gchar * prefix) {
+void labelset_print(Labelset * lset) {
 	GString * out;
 	
-	out = g_string_new(prefix);
+	out = g_string_new("");
 	labelset_tostring(lset, out);
-	g_print("%s\n", out->str);
+	g_print("%s", out->str);
 	g_string_free(out, TRUE);
 }
 

@@ -24,7 +24,7 @@ gboolean labelset_contains(Labelset *lset, gconstpointer label);
 void labelset_del(Labelset *lset, gconstpointer label);
 void labelset_union(Labelset *aa, Labelset *bb);
 
-void labelset_println(Labelset * lset, const gchar *prefix);
+void labelset_print(Labelset * lset);
 void labelset_tostring(Labelset * lset, GString * out);
 void labelset_union(Labelset *aa, Labelset *bb);
 
