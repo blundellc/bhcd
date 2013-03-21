@@ -55,6 +55,7 @@ void tree_assert(Tree * tree) {
 			labelset_union(combined, child->data);
 		}
 		g_assert(labelset_equal(combined, tree->labels));
+		labelset_unref(combined);
 
 		for (child = tree->children; child != NULL; child = g_list_next(child)) {
 			tree_assert(child->data);
