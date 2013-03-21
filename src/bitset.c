@@ -55,7 +55,7 @@ gboolean bitset_is_singleton(Bitset *bitset) {
 	for (guint32 ii = 0; ii < bitset->size; ii++) {
 		guint64 elem = bitset->elems[ii];
 		gint offset = g_bit_nth_lsf(elem, -1);
-		if (offset != -1) {
+		for (;offset != -1; offset = g_bit_nth_lsf(elem, offset)) {
 			if (found_one) {
 				return FALSE;
 			}

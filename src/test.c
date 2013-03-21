@@ -525,10 +525,12 @@ void test_labelset(void) {
 	labelset_add(setb, bb);
 	labelset_add(setc, cc);
 
+	g_assert(labelset_is_singleton(seta));
 	g_assert(!labelset_equal(seta, setb));
 	g_assert(!labelset_equal(setc, setb));
 
 	labelset_union(seta, setb);
+	g_assert(!labelset_is_singleton(seta));
 	g_assert(!labelset_equal(seta, setb));
 	labelset_union(setb, seta);
 	g_assert(labelset_equal(seta, setb));
