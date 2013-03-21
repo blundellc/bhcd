@@ -23,6 +23,8 @@ def main():
             env['CFLAGS'] += ' -g'
         elif mode == "profile":
             env['CFLAGS'] += ' -pg -finstrument-functions'
+        elif mode == "release":
+            env['CFLAGS'] += ' -DG_DISABLE_ASSERT'
         elif mode == "opt2":
             env['CFLAGS'] += ' -O2'
         elif mode == "release":
