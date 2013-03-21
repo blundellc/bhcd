@@ -1,4 +1,5 @@
 #include "bitset.h"
+#include "util.h"
 
 #define	BITS_PER_ELEM		64
 #define	MASK_ELEM		(BITS_PER_ELEM-1)
@@ -58,20 +59,12 @@ gboolean bitset_equal(Bitset *aa, Bitset *bb) {
 	return TRUE;
 }
 
-gboolean bitset_is_singleton(Bitset *bitset) {
-	/* could speed up with a population count */
-	gboolean found_one = FALSE;
+guint32 bitset_count(Bitset *bitset) {
+	guint32 count = 0;
 	for (guint32 ii = 0; ii < bitset->size; ii++) {
-		guint64 elem = bitset->elems[ii];
-		gint offset = g_bit_nth_lsf(elem, -1);
-		for (;offset != -1; offset = g_bit_nth_lsf(elem, offset)) {
-			if (found_one) {
-				return FALSE;
-			}
-			found_one = TRUE;
-		}
+		count += pop_count(bitset->elems[ii]);
 	}
-	return found_one;
+	return count;
 }
 
 guint bitset_hash(Bitset * bitset) {

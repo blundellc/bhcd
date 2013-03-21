@@ -15,7 +15,7 @@ Labelset * labelset_copy(Labelset *);
 void labelset_ref(Labelset * lset);
 void labelset_unref(Labelset * lset);
 
-gboolean labelset_is_singleton(Labelset * lset);
+guint32 labelset_count(Labelset * lset);
 gboolean labelset_equal(Labelset *aa, Labelset *bb);
 guint labelset_hash(Labelset * lset);
 

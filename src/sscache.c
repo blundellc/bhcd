@@ -141,8 +141,8 @@ gpointer sscache_get_offblock(SSCache *cache, GList * kk, GList * zz) {
 	 * not really any way around that...
 	 */
 	if (g_list_next(kk) == NULL && g_list_next(zz) == NULL &&
-			labelset_is_singleton(kk->data) &&
-			labelset_is_singleton(zz->data)) {
+			labelset_count(kk->data) == 1 &&
+			labelset_count(zz->data) == 1) {
 		return sscache_get_offblock_full(cache,
 				labelset_any_label(kk->data),
 				labelset_any_label(zz->data));

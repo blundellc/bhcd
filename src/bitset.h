@@ -11,7 +11,7 @@ Bitset * bitset_copy(Bitset *);
 void bitset_ref(Bitset *);
 void bitset_unref(Bitset *);
 
-gboolean bitset_is_singleton(Bitset *);
+guint32 bitset_count(Bitset *);
 gboolean bitset_equal(Bitset *aa, Bitset *bb);
 guint bitset_hash(Bitset * bitset);
 

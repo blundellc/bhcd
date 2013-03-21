@@ -55,4 +55,15 @@ guint list_hash(GList * list, GHashFunc hash_func);
 void list_labelset_print(GList *);
 gchar * strip_quotes(gchar *str);
 
+static inline guint32 pop_count(guint64 xx) {
+	/* simple divide and conquer (hd) */
+	xx = (xx & 0x5555555555555555ULL) + ((xx >>  1) & 0x5555555555555555ULL);
+	xx = (xx & 0x3333333333333333ULL) + ((xx >>  2) & 0x3333333333333333ULL);
+	xx = (xx & 0x0f0f0f0f0f0f0f0fULL) + ((xx >>  4) & 0x0f0f0f0f0f0f0f0fULL);
+	xx = (xx & 0x00ff00ff00ff00ffULL) + ((xx >>  8) & 0x00ff00ff00ff00ffULL);
+	xx = (xx & 0x0000ffff0000ffffULL) + ((xx >> 16) & 0x0000ffff0000ffffULL);
+	xx = (xx & 0x00000000ffffffffULL) + ((xx >> 32) & 0x00000000ffffffffULL);
+	return xx;
+}
+
 #endif  /*UTIL_H*/

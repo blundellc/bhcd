@@ -42,7 +42,7 @@ void tree_assert(Tree * tree) {
 	g_assert(tree->suffstats_off != NULL);
 	g_assert(tree->logprob <= 0.0);
 	if (tree_is_leaf(tree)) {
-		g_assert(labelset_is_singleton(tree->labels));
+		g_assert(labelset_count(tree->labels) == 1);
 		g_assert(g_list_length(tree->labelsets) == 1);
 		g_assert(labelset_equal(tree->labels, tree->labelsets->data));
 	} else {

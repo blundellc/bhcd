@@ -49,8 +49,8 @@ void labelset_unref(Labelset * lset) {
 	}
 }
 
-gboolean labelset_is_singleton(Labelset * lset) {
-	return bitset_is_singleton(lset->bits);
+guint32 labelset_count(Labelset * lset) {
+	return bitset_count(lset->bits);
 }
 
 gpointer labelset_any_label(Labelset * lset) {

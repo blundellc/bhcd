@@ -476,6 +476,7 @@ void test_bitset(void) {
 	for (ii = 0; ii < size; ii += 6) {
 		bitset_clear(bb, ii);
 	}
+	g_assert(bitset_count(bb) == 2);
 
 	{
 		GString *out = g_string_new("");
@@ -511,12 +512,12 @@ void test_labelset(void) {
 	labelset_add(setb, bb);
 	labelset_add(setc, cc);
 
-	g_assert(labelset_is_singleton(seta));
+	g_assert(labelset_count(seta) == 1);
 	g_assert(!labelset_equal(seta, setb));
 	g_assert(!labelset_equal(setc, setb));
 
 	labelset_union(seta, setb);
-	g_assert(!labelset_is_singleton(seta));
+	g_assert(labelset_count(seta) == 2);
 	g_assert(!labelset_equal(seta, setb));
 	labelset_union(setb, seta);
 	g_assert(labelset_equal(seta, setb));
@@ -550,12 +551,37 @@ void test_labelset(void) {
 }
 
 
+void test_bitset_popcount(void) {
+	guint64 test[] = {
+		0x5555555555555555ULL, 32,
+		0x3333333333333333ULL, 32,
+		0x123456789abcdef0ULL, 32,
+		0x123456789abcdef0ULL, 32,
+		0x501ad1e3dc77bf5eULL, 37,
+		0x3b3a24293bd8, 23,
+		0x19b12e6f, 17,
+		0x2009a88, 7,
+		0x7, 3,
+		0x6, 2,
+		0x5, 2,
+		0x4, 1,
+		0x3, 2,
+		0x2, 1,
+		0x1, 1,
+		0x0, 0
+	};
+	for (guint ii = 0; ii < sizeof(test)/sizeof(test[0]); ii += 2) {
+		g_assert(pop_count(test[ii]) == test[ii+1]);
+	}
+}
+
 int main(int argc, char *argv[]) {
 	g_test_init(&argc, &argv, NULL);
 	g_test_add_func("/tree/logprob3", test_tree_logprob3);
 	g_test_add_func("/tree/logprob4", test_tree_logprob4);
 	g_test_add_func("/merge/score3", test_merge_score3);
 	g_test_add_func("/bitset", test_bitset);
+	g_test_add_func("/bitset/popcount", test_bitset_popcount);
 	g_test_add_func("/labelset", test_labelset);
 	g_test_add_func("/sscache/stats", test_sscache_stats);
 	g_test_run();
