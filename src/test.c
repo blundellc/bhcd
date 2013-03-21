@@ -370,12 +370,126 @@ void test_sscache_stats(void) {
 }
 
 
+void test_bitset(void) {
+	Bitset * aa;
+	Bitset * bb;
+	Bitset * cc;
+	const guint size = 130;
+	guint ii;
+
+	aa = bitset_new(size);
+	bitset_set(aa, 23);
+	g_assert(bitset_contains(aa, 23));
+	for (ii = 0; ii < size; ii++) {
+		g_assert(bitset_contains(aa, ii) == (ii == 23));
+	}
+	bitset_clear(aa, 23);
+	bitset_set(aa, 123);
+	g_assert(bitset_contains(aa, 123));
+	for (ii = 0; ii < size; ii++) {
+		g_assert(bitset_contains(aa, ii) == (ii == 123));
+	}
+	bitset_ref(aa);
+	bitset_unref(aa);
+
+	bb = bitset_new(size);
+	bitset_union(bb, aa);
+	g_assert(bitset_equal(aa, bb));
+	g_assert(bitset_hash(aa) == bitset_hash(bb));
+
+	cc = bitset_new(size);
+	g_assert(!bitset_equal(aa, cc));
+	g_assert(bitset_hash(cc) != bitset_hash(aa));
+
+	bitset_clear(aa, 123);
+	g_assert(!bitset_contains(aa, 123));
+	g_assert(bitset_equal(aa, cc));
+	g_assert(!bitset_equal(aa, bb));
+
+	for (ii = 0; ii < size; ii += 3) {
+		bitset_set(aa, ii);
+	}
+	for (ii = 0; ii < size; ii++) {
+		g_assert(bitset_contains(aa, ii) == ((ii % 3) == 0));
+	}
+
+	bitset_foreach(aa, (BitsetFunc)bitset_set, cc);
+	g_assert(bitset_equal(aa, cc));
+
+	bitset_set(bb, 29);
+	{
+		GString *out = g_string_new("");
+		bitset_tostring(bb, out);
+		g_assert_cmpstr(out->str, ==, "29 123 ");
+		g_string_free(out, TRUE);
+	}
+	bitset_unref(aa);
+	bitset_unref(bb);
+	bitset_unref(cc);
+}
+
+void test_labelset(void) {
+	Tree *laa, *lbb, *lcc;
+	gconstpointer aa, bb, cc;
+	Labelset *seta, *setb, *setc;
+
+	init_test_toy3(&laa, &lbb, &lcc);
+	aa = leaf_get_label(laa);
+	bb = leaf_get_label(lbb);
+	cc = leaf_get_label(lcc);
+
+	seta = labelset_new(tree_get_params(laa)->dataset);
+	setb = labelset_new(tree_get_params(laa)->dataset);
+	setc = labelset_new(tree_get_params(laa)->dataset);
+
+	g_assert(labelset_equal(seta, setb));
+	g_assert(labelset_equal(seta, seta));
+
+	labelset_add(seta, aa);
+	labelset_add(setb, bb);
+	labelset_add(setc, cc);
+
+	g_assert(!labelset_equal(seta, setb));
+	g_assert(!labelset_equal(setc, setb));
+
+	labelset_union(seta, setb);
+	g_assert(!labelset_equal(seta, setb));
+	labelset_union(setb, seta);
+	g_assert(labelset_equal(seta, setb));
+
+	// setaa = {aa, bb}
+	labelset_del(seta, aa);
+	g_assert(!labelset_equal(seta, setb));
+	labelset_add(seta, aa);
+	g_assert(labelset_equal(seta, setb));
+	labelset_union(setc, seta);
+	labelset_add(setb, cc);
+	g_assert(labelset_equal(setc, setb));
+
+	{
+		GString *out = g_string_new("");
+		labelset_tostring(setc, out);
+		g_assert_cmpstr(out->str, ==, "aa bb cc ");
+		g_string_free(out, TRUE);
+	}
+
+	labelset_unref(seta);
+	labelset_unref(setb);
+	labelset_unref(setc);
+	tree_unref(laa);
+	tree_unref(lbb);
+	tree_unref(lcc);
+}
+
+
 int main(int argc, char *argv[]) {
 	g_test_init(&argc, &argv, NULL);
 	g_test_add_func("/tree/logprob3", test_tree_logprob3);
 	g_test_add_func("/tree/logprob4", test_tree_logprob4);
 	g_test_add_func("/merge/score3", test_merge_score3);
-	g_test_add_func("/sscache/stats", test_sscache_stats);
+	g_test_add_func("/bitset", test_bitset);
+	g_test_add_func("/labelset", test_labelset);
+	//g_test_add_func("/sscache/stats", test_sscache_stats);
 	g_test_run();
 	return 0;
 }

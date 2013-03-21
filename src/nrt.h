@@ -11,5 +11,7 @@
 #include "tree_io.h"
 #include "merge.h"
 #include "build.h"
+#include "bitset.h"
+#include "labelset.h"
 
 #endif
