@@ -131,6 +131,16 @@ void bitset_union(Bitset *dst, Bitset *src) {
 	}
 }
 
+gboolean bitset_disjoint(Bitset *aa, Bitset *bb) {
+	guint32 min_size = MIN(aa->size, bb->size);
+	for (guint ii = 0; ii < min_size; ii++) {
+		if ((aa->elems[ii] & bb->elems[ii]) != 0) {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
 void bitset_foreach(Bitset *bitset, BitsetFunc func, gpointer user_data) {
 	for (guint32 ii = 0; ii < bitset->size; ii++) {
 		guint64 elem = bitset->elems[ii];

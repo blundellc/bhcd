@@ -27,6 +27,7 @@ void labelset_union(Labelset *aa, Labelset *bb);
 void labelset_print(Labelset * lset);
 void labelset_tostring(Labelset * lset, GString * out);
 void labelset_union(Labelset *aa, Labelset *bb);
+gboolean labelset_disjoint(Labelset *aa, Labelset *bb);
 
 
 #endif /*LABELSET_H*/

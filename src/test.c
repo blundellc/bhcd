@@ -440,7 +440,9 @@ void test_bitset(void) {
 	bitset_unref(aa);
 
 	bb = bitset_new(size);
+	g_assert(bitset_disjoint(aa, bb));
 	bitset_union(bb, aa);
+	g_assert(!bitset_disjoint(aa, bb));
 	g_assert(bitset_equal(aa, bb));
 	g_assert(bitset_hash(aa) == bitset_hash(bb));
 
@@ -459,11 +461,22 @@ void test_bitset(void) {
 	for (ii = 0; ii < size; ii++) {
 		g_assert(bitset_contains(aa, ii) == ((ii % 3) == 0));
 	}
+	for (ii = 0; ii < size; ii += 6) {
+		bitset_set(bb, ii);
+	}
+	for (ii = 0; ii < size; ii++) {
+		g_assert(bitset_contains(bb, ii) == ((ii % 6) == 0) || ii == 123);
+	}
+	g_assert(!bitset_disjoint(aa, bb));
 
 	bitset_foreach(aa, (BitsetFunc)bitset_set, cc);
 	g_assert(bitset_equal(aa, cc));
 
 	bitset_set(bb, 29);
+	for (ii = 0; ii < size; ii += 6) {
+		bitset_clear(bb, ii);
+	}
+
 	{
 		GString *out = g_string_new("");
 		bitset_tostring(bb, out);

@@ -100,3 +100,7 @@ void labelset_tostring(Labelset * lset, GString * out) {
 	pair_free(args);
 }
 
+gboolean labelset_disjoint(Labelset *aa, Labelset *bb) {
+	return bitset_disjoint(aa->bits, bb->bits);
+}
+
