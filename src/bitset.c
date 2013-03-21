@@ -72,7 +72,7 @@ guint bitset_hash(Bitset * bitset) {
 
 	for (guint32 ii = 0; ii < bitset->size; ii++) {
 		const guint64 elem = bitset->elems[ii];
-		hash ^= elem & 0xffffff;
+		hash ^= elem & 0xffffffff;
 		hash ^= elem >> 32;
 	}
 	return hash;
