@@ -32,7 +32,9 @@ def main():
         else:
             usage()
 
+    subprocess.call(["make", "clean"])
     subprocess.call(["./configure"], env=env)
+    subprocess.call(["make", "-j120"])
 
 if __name__ == '__main__':
     main()
