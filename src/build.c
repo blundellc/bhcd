@@ -125,6 +125,7 @@ Tree * build_repeat(GRand * rng, Params * params, GList * labels, guint num_repe
 
 	best = NULL;
 	for (; num_repeats > 0; num_repeats--) {
+		params_reset_cache(params);
 		root = build(rng, params, labels);
 		if (best == NULL || tree_get_logprob(root) > tree_get_logprob(best)) {
 			tree_unref(best);

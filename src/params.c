@@ -26,6 +26,11 @@ Params * params_default(Dataset * dataset) {
 			  0.2, 1.0);
 }
 
+void params_reset_cache(Params *params) {
+	sscache_unref(params->sscache);
+	params->sscache = sscache_new(params->dataset);
+}
+
 void params_ref(Params * params) {
 	params->ref_count++;
 }

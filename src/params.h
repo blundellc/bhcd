@@ -21,6 +21,7 @@ typedef struct {
 
 Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble beta, gdouble delta, gdouble lambda);
 Params * params_default(Dataset * dataset);
+void params_reset_cache(Params *);
 void params_ref(Params * params);
 void params_unref(Params * params);
 
