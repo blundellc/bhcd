@@ -167,8 +167,15 @@ gpointer sscache_get_offblock(SSCache *cache, GList * kk, GList * zz) {
 	if (suffstats == NULL) {
 		suffstats = sscache_get_offblock_ordered(cache, zz, kk);
 	}
-	// thm failure
-	g_assert(suffstats != NULL);
+	if (suffstats == NULL) {
+		// thm failure
+		g_print("failed offblock: ");
+		list_labelset_print(kk);
+		g_print(" <-> ");
+		list_labelset_print(zz);
+		g_print("\n");
+		g_error("theorem failure?!");
+	}
 	return suffstats;
 }
 
@@ -277,6 +284,23 @@ out:
 	labelset_unref(xx);
 	labelset_unref(yy);
 	return suffstats;
+}
+
+
+void sscache_println(SSCache * cache, const gchar * prefix) {
+	GList * keys = g_hash_table_get_keys(cache->suffstats_offblocks);
+	for (; keys != NULL; keys = g_list_next(keys)) {
+		Offblock_Key *key = keys->data;
+		g_print(" (");
+		labelset_print(key->fst);
+		g_print(", ");
+		labelset_print(key->snd);
+		g_print(")");
+		if (g_list_next(keys) != NULL) {
+			g_print(", ");
+		}
+	}
+	g_print("\n");
 }
 
 gpointer suffstats_new_empty(void) {
