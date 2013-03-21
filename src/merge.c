@@ -16,7 +16,7 @@ Merge * merge_new(GRand * rng, Params * params, guint ii, Tree * aa, guint jj, T
 	logprob_rel = merge_calc_logprob_rel(params, aa, bb);
 	merge->score = tree_get_logprob(merge->tree)
 	       		- tree_get_logprob(aa) - tree_get_logprob(bb) - logprob_rel;
-	merge->sym_break = g_rand_int(rng);
+	merge->sym_break = g_rand_double(rng);
 	return merge;
 }
 
@@ -40,7 +40,7 @@ void merge_println(Merge * merge, const gchar * prefix) {
 }
 
 void merge_tostring(Merge * merge, GString * out) {
-	g_string_append_printf(out, "%d + %d (%2.2e/%d)-> ", merge->ii, merge->jj, merge->score, merge->sym_break);
+	g_string_append_printf(out, "%d + %d (%2.2e/%2.2f)-> ", merge->ii, merge->jj, merge->score, merge->sym_break);
 	tree_tostring(merge->tree, out);
 }
 
@@ -134,7 +134,11 @@ gint merge_cmp_score(gconstpointer paa, gconstpointer pbb, gpointer userdata) {
 	const Merge * bb = pbb;
 	gint diff = bb->score - aa->score;
 	if (diff == 0) {
-		return bb->sym_break - aa->sym_break;
+		if (bb->sym_break < aa->sym_break) {
+			return -1;
+		} else if (bb->sym_break >= aa->sym_break) {
+			return 1;
+		}
 	}
 	return diff;
 }

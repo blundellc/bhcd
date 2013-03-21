@@ -79,6 +79,11 @@ void build_greedy(GRand * rng, Params * params, GPtrArray * trees, GSequence * m
 		cur = g_sequence_get(head);
 		g_sequence_remove(head);
 
+		if (build_debug && g_sequence_get_length(merges) > 0) {
+			Merge * cur_next = g_sequence_get(g_sequence_get_begin_iter(merges));
+			g_assert(merge_cmp_score(cur, cur_next, NULL) != 0);
+		}
+
 		if (g_ptr_array_index(trees, cur->ii) == NULL ||
 		    g_ptr_array_index(trees, cur->jj) == NULL) {
 			goto again;
