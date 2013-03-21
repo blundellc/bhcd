@@ -42,17 +42,26 @@ void params_unref(Params * params) {
 
 gdouble params_logprob_on(Params * params, gpointer pcounts) {
 	Counts * counts = pcounts;
-	gdouble a1 = params->alpha + counts->num_ones;
-	gdouble b0 = params->beta  + counts->num_total - counts->num_ones;
-	gdouble logprob = gsl_sf_lnbeta(a1, b0) - gsl_sf_lnbeta(params->alpha, params->beta);
+	gdouble a1, b0, logprob;
+
+	if (counts->num_total == 0) {
+		return 0.0;
+	}
+	a1 = params->alpha + counts->num_ones;
+	b0 = params->beta  + counts->num_total - counts->num_ones;
+	logprob = gsl_sf_lnbeta(a1, b0) - gsl_sf_lnbeta(params->alpha, params->beta);
 	return logprob;
 }
 
 gdouble params_logprob_off(Params * params, gpointer pcounts) {
 	Counts * counts = pcounts;
-	gdouble d1 = params->delta + counts->num_ones;
-	gdouble l0 = params->lambda  + counts->num_total - counts->num_ones;
-	gdouble logprob = gsl_sf_lnbeta(d1, l0) - gsl_sf_lnbeta(params->delta, params->lambda);
-	/* g_print("off: %2.2e %2.2e / %2.2e %2.2e = %2.2e", d1, l0, params->delta, params->lambda, logprob); */
+	gdouble d1, l0, logprob;
+
+	if (counts->num_total == 0) {
+		return 0.0;
+	}
+	d1 = params->delta + counts->num_ones;
+	l0 = params->lambda  + counts->num_total - counts->num_ones;
+	logprob = gsl_sf_lnbeta(d1, l0) - gsl_sf_lnbeta(params->delta, params->lambda);
 	return logprob;
 }

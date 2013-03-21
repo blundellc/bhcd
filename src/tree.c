@@ -341,7 +341,14 @@ static gdouble branch_log_pi(Tree * branch, gdouble log_not_pi) {
 static gdouble branch_logprob(Tree * branch) {
 	GList * child;
 
-	if (g_list_length(branch->children) < 2) {
+	/* if fewer than two children, do nothing */
+	if (branch->children == NULL || 
+	    g_list_next(branch->children) == NULL) {
+		branch->log_not_pi = 0.0;
+		branch->log_pi = 0.0;
+		branch->logprob_cluster = 0.0;
+		branch->logprob_children = 0.0;
+		branch->dirty = FALSE;
 		return 0.0;
 	}
 
