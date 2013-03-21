@@ -124,9 +124,8 @@ static gdouble merge_calc_logprob_rel(Params * params, Tree * aa, Tree * bb) {
 	gpointer offblock;
 	gdouble logprob_rel;
 
-	offblock = suffstats_new_offblock(params->dataset, tree_get_labels(aa), tree_get_labels(bb));
+	offblock = sscache_get_offblock(params->sscache, tree_get_labelsets(aa), tree_get_labelsets(bb));
 	logprob_rel = params_logprob_off(params, offblock);
-	suffstats_unref(offblock);
 	return logprob_rel;
 }
 

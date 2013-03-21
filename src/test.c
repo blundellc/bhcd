@@ -73,6 +73,9 @@ void test_tree_logprob3(void) {
 	branch_add_child(tab, laa);
 	branch_add_child(tab, lbb);
 
+	g_assert(g_list_length(tree_get_labelsets(tab)) == 2);
+	g_assert(g_list_length(tree_get_labelsets(laa)) == 1);
+
 	correct_tab =
 		log_add_exp(gsl_sf_log(0.4) + gsl_sf_lnbeta(1.0+1, 0.2+0) - gsl_sf_lnbeta(1.0, 0.2)
 			   ,gsl_sf_log(1.0 - 0.4) + gsl_sf_lnbeta(0.2+1, 1.0+0) - gsl_sf_lnbeta(0.2, 1.0)
@@ -159,10 +162,7 @@ void test_tree_logprob4(void) {
 	assert_eqfloat(tree_get_logprob(ldd), 0.0, prec);
 
 	/* pair */
-	tab = branch_new(params);
-	branch_add_child(tab, laa);
-	branch_add_child(tab, lbb);
-
+	tab = branch_new_full(params, laa, lbb);
 	correct_tab =
 		log_add_exp(gsl_sf_log(0.4) + gsl_sf_lnbeta(1.0+1, 0.2+2) - gsl_sf_lnbeta(1.0, 0.2)
 			   ,gsl_sf_log(1.0 - 0.4) + gsl_sf_lnbeta(0.2, 1.0+2) - gsl_sf_lnbeta(0.2, 1.0)
@@ -170,9 +170,7 @@ void test_tree_logprob4(void) {
 			   );
 	assert_eqfloat(tree_get_logprob(tab), correct_tab, prec);
 
-	tac = branch_new(params);
-	branch_add_child(tac, laa);
-	branch_add_child(tac, lcc);
+	tac = branch_new_full(params, laa, lcc);
 	correct_tac =
 		log_add_exp(gsl_sf_log(0.4) + gsl_sf_lnbeta(1.0+2, 0.2+2) - gsl_sf_lnbeta(1.0, 0.2)
 			   ,gsl_sf_log(1.0 - 0.4) + gsl_sf_lnbeta(0.2+1, 1.0+1) - gsl_sf_lnbeta(0.2, 1.0)
@@ -180,9 +178,7 @@ void test_tree_logprob4(void) {
 			   );
 	assert_eqfloat(tree_get_logprob(tac), correct_tac, prec);
 
-	tcd = branch_new(params);
-	branch_add_child(tcd, lcc);
-	branch_add_child(tcd, ldd);
+	tcd = branch_new_full(params, lcc, ldd);
 	correct_tcd =
 		log_add_exp(gsl_sf_log(0.4) + gsl_sf_lnbeta(1.0+1, 0.2+2) - gsl_sf_lnbeta(1.0, 0.2)
 			   ,gsl_sf_log(1.0 - 0.4) + gsl_sf_lnbeta(0.2+1, 1.0+1) - gsl_sf_lnbeta(0.2, 1.0)
@@ -190,6 +186,14 @@ void test_tree_logprob4(void) {
 			   );
 	assert_eqfloat(tree_get_logprob(tcd), correct_tcd, prec);
 
+	/* 3-trees: useful stepping stones for 4-trees */
+
+	/* NOTE: these affect the sscache */
+	tree_unref(branch_new_full(params, lbb, lcc));
+	tree_unref(branch_new_full(params, lbb, ldd));
+	tree_unref(branch_new_full(params, laa, ldd));
+	tree_unref(branch_new_full(params, tab, lcc));
+	tree_unref(branch_new_full(params, tab, ldd));
 
 	/* 4-balance */
 	correct_tbalance_children = gsl_sf_lnbeta(0.2+4, 1.0+3) - gsl_sf_lnbeta(0.2, 1.0) + correct_tab + correct_tcd;
@@ -197,9 +201,7 @@ void test_tree_logprob4(void) {
 		log_add_exp(gsl_sf_log(0.4) + gsl_sf_lnbeta(1.0+6, 0.2+7) - gsl_sf_lnbeta(1.0, 0.2)
 			   ,gsl_sf_log(1.0 - 0.4) + correct_tbalance_children
 			   );
-	tbalance = branch_new(params);
-	branch_add_child(tbalance, tab);
-	branch_add_child(tbalance, tcd);
+	tbalance = branch_new_full(params, tab, tcd);
 	assert_eqfloat(tree_get_logprob(tbalance), correct_tbalance, prec);
 
 	/* 4-flat */
@@ -278,6 +280,10 @@ void test_merge_score3(void) {
 	branch_add_child(tab, laa);
 	branch_add_child(tab, lbb);
 
+	/* need to update cache with these merges first */
+	tree_unref(branch_new_full(params, laa, lcc));
+	tree_unref(branch_new_full(params, lbb, lcc));
+
 	tabc = branch_new(params);
 	branch_add_child(tabc, tab);
 	branch_add_child(tabc, lcc);
@@ -320,8 +326,6 @@ void test_sscache_stats(void) {
 	Counts * counts;
 	GList * src;
 	GList * dst;
-	Labelset * src_set;
-	Labelset * dst_set;
 
 	init_test_toy4(&laa, &lbb, &lcc, &ldd);
 	cache = sscache_new(tree_get_params(laa)->dataset);
@@ -343,66 +347,35 @@ void test_sscache_stats(void) {
 	g_assert(counts->num_ones == 0);
 	g_assert(counts->num_total == 0);
 
-	src_set = labelset_new(dataset, aa);
-	dst_set = labelset_new(dataset, bb);
-	counts = sscache_get_offblock_full(cache, src_set, dst_set);
+	counts = sscache_get_offblock_full(cache, aa, bb);
 	g_assert(counts != NULL);
 	g_assert(counts->num_ones == 0);
 	g_assert(counts->num_total == 2);
-	labelset_unref(src_set);
-	labelset_unref(dst_set);
 
-	src_set = labelset_new(dataset, aa);
-	dst_set = labelset_new(dataset, cc);
-	counts = sscache_get_offblock_full(cache, src_set, dst_set);
+	counts = sscache_get_offblock_full(cache, aa, cc);
 	g_assert(counts != NULL);
 	g_assert(counts->num_ones == 1);
 	g_assert(counts->num_total == 2);
-	labelset_unref(src_set);
-	labelset_unref(dst_set);
 
-	src_set = labelset_new(dataset, aa);
-	dst_set = labelset_new(dataset, dd);
-	counts = sscache_get_offblock_full(cache, src_set, dst_set);
+	counts = sscache_get_offblock_full(cache, aa, dd);
 	g_assert(counts != NULL);
 	g_assert(counts->num_ones == 1);
 	g_assert(counts->num_total == 2);
-	labelset_unref(src_set);
-	labelset_unref(dst_set);
 
-	src_set = labelset_new(dataset, cc);
-	dst_set = labelset_new(dataset, bb);
-	counts = sscache_get_offblock_full(cache, src_set, dst_set);
+	counts = sscache_get_offblock_full(cache, cc, bb);
 	g_assert(counts != NULL);
 	g_assert(counts->num_ones == 2);
 	g_assert(counts->num_total == 2);
-	labelset_unref(src_set);
-	labelset_unref(dst_set);
 
-	src_set = labelset_new(dataset, dd);
-	dst_set = labelset_new(dataset, bb);
-	counts = sscache_get_offblock_full(cache, src_set, dst_set);
+	counts = sscache_get_offblock_full(cache, dd, bb);
 	g_assert(counts != NULL);
 	g_assert(counts->num_ones == 0);
 	g_assert(counts->num_total == 1);
-	labelset_unref(src_set);
-	labelset_unref(dst_set);
 
-	src = list_new(labelset_new(dataset, cc));
-	dst = list_new(labelset_new(dataset, dd));
-	counts = sscache_get_offblock(cache, src, dst);
-	g_assert(counts == NULL);
-	g_list_free_full(src, (GDestroyNotify)labelset_unref);
-	g_list_free_full(dst, (GDestroyNotify)labelset_unref);
-
-	src_set = labelset_new(dataset, dd);
-	dst_set = labelset_new(dataset, cc);
-	counts = sscache_get_offblock_full(cache, src_set, dst_set);
+	counts = sscache_get_offblock_full(cache, dd, cc);
 	g_assert(counts != NULL);
 	g_assert(counts->num_ones == 1);
 	g_assert(counts->num_total == 2);
-	labelset_unref(src_set);
-	labelset_unref(dst_set);
 
 
 	/* act as if {a,b} is a node */

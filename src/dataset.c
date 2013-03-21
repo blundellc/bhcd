@@ -21,7 +21,6 @@ static Dataset_Key * dataset_key(Dataset *, gconstpointer, gconstpointer);
 static guint dataset_key_hash(gconstpointer);
 static gboolean dataset_key_eq(gconstpointer, gconstpointer);
 static gint dataset_label_cmp(gconstpointer, gconstpointer);
-static void dataset_label_assert(Dataset *, gconstpointer);
 
 static Dataset_Key * dataset_key(Dataset * dd, gconstpointer psrc, gconstpointer pdst) {
 	Dataset_Key * key;
@@ -68,7 +67,7 @@ static gint dataset_label_cmp(gconstpointer paa, gconstpointer pbb) {
 	return strcmp(aa, bb);
 }
 
-static void dataset_label_assert(Dataset *dataset, gconstpointer label) {
+void dataset_label_assert(Dataset *dataset, gconstpointer label) {
 	g_assert(g_hash_table_lookup_extended(dataset->labels, label, NULL, NULL));
 }
 

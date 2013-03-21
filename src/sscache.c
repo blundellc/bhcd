@@ -24,9 +24,6 @@ static void offblock_key_free(gpointer pkey);
 static gboolean offblock_key_equal(gconstpointer paa, gconstpointer pbb);
 static guint offblock_key_hash(gconstpointer pkey);
 static gpointer sscache_get_offblock_ordered(SSCache *cache, GList * kk, GList * zz);
-static void list_labelset_print(SSCache *, GList *);
-
-static void suffstats_add_triangles(Counts *, Dataset * dataset, GList * srcs, GList * dsts);
 
 SSCache * sscache_new(Dataset *dataset) {
 	SSCache * cache;
@@ -125,18 +122,32 @@ static gboolean offblock_key_equal(gconstpointer paa, gconstpointer pbb) {
 		labelset_equal(aa->snd, bb->snd);
 }
 
-static void list_labelset_print(SSCache * cache, GList * list) {
-	for (GList * pp = list; pp != NULL; pp = g_list_next(pp)) {
-		g_print("{ ");
-		labelset_print(pp->data);
-		g_print("}");
-		if (g_list_next(pp) != NULL) {
-			g_print(", ");
-		}
-	}
-}
 
 gpointer sscache_get_offblock(SSCache *cache, GList * kk, GList * zz) {
+	gpointer suffstats;
+
+	g_assert(kk != NULL);
+	g_assert(zz != NULL);
+
+	if (cache->debug) {
+		g_print("sscache_get_offblock: {");
+		list_labelset_print(zz);
+		g_print("} ** {");
+		list_labelset_print(kk);
+		g_print("}\n");
+	}
+
+	/* if both are singletons, then let's go visit the full data matrix
+	 * not really any way around that...
+	 */
+	if (g_list_next(kk) == NULL && g_list_next(zz) == NULL &&
+			labelset_is_singleton(kk->data) &&
+			labelset_is_singleton(zz->data)) {
+		return sscache_get_offblock_full(cache,
+				labelset_any_label(kk->data),
+				labelset_any_label(zz->data));
+	}
+
 	/*
 	 * thm. if k = {i,j} and z = {x, y}
 	 * then either sigma_{kx} and sigma_{ky} 
@@ -152,21 +163,12 @@ gpointer sscache_get_offblock(SSCache *cache, GList * kk, GList * zz) {
 	 * note that i,j,x,y and k_i and z_x are all sets of labels.
 	 * ergo, we need two lists of sets of labels: kk and zz.
 	 */
-	gpointer suffstats;
-
-	if (cache->debug) {
-		g_print("sscache_get_offblock: {");
-		list_labelset_print(cache, zz);
-		g_print("} ** {");
-		list_labelset_print(cache, kk);
-		g_print("}\n");
-	}
 	suffstats = sscache_get_offblock_ordered(cache, kk, zz);
 	if (suffstats == NULL) {
 		suffstats = sscache_get_offblock_ordered(cache, zz, kk);
 	}
 	// thm failure
-	// g_assert(suffstats != NULL);
+	g_assert(suffstats != NULL);
 	return suffstats;
 }
 
@@ -215,32 +217,41 @@ gpointer sscache_get_offblock_simple(SSCache *cache, Labelset * ii, Labelset * j
 	if (!g_hash_table_lookup_extended(cache->suffstats_offblocks,
 				key, NULL, &suffstats)) {
 		offblock_key_free(key);
+		if (cache->debug) {
+			g_print("sscache_get_offblock_simple end: fail\n");
+		}
 		return NULL;
+	}
+	if (cache->debug) {
+		g_print("sscache_get_offblock_simple end: ");
+		suffstats_print(suffstats);
+		g_print("\n");
 	}
 	offblock_key_free(key);
 	return suffstats;
 }
 
-gpointer sscache_get_offblock_full(SSCache *cache, Labelset * xx, Labelset * yy) {
+gpointer sscache_get_offblock_full(SSCache *cache, gconstpointer ii, gconstpointer jj) {
 	Counts * suffstats;
-	gpointer ii;
-	gpointer jj;
 	Offblock_Key * key;
 	gboolean missing;
 	gboolean value;
+	Labelset * xx;
+	Labelset * yy;
 
+	dataset_label_assert(cache->dataset, ii);
+	dataset_label_assert(cache->dataset, jj);
+	g_assert(ii != jj);
+
+	/* look up the element in dataset. we should only ever have to do this
+	 * for singletons.
+	 */
+	xx = labelset_new(cache->dataset, ii);
+	yy = labelset_new(cache->dataset, jj);
 	suffstats = sscache_get_offblock_simple(cache, xx, yy);
 	if (suffstats != NULL) {
-		return suffstats;
+		goto out;
 	}
-	// look up the element in dataset. we should only ever have to do this
-	// for singletons. so check...
-	g_assert(labelset_is_singleton(xx));
-	g_assert(labelset_is_singleton(yy));
-
-	ii = labelset_any_label(xx);
-	jj = labelset_any_label(yy);
-
 	value = dataset_get(cache->dataset, ii, jj, &missing);
 	if (missing) {
 		suffstats = suffstats_new_empty();
@@ -255,8 +266,16 @@ gpointer sscache_get_offblock_full(SSCache *cache, Labelset * xx, Labelset * yy)
 			suffstats->num_total += 1;
 		}
 	}
+	if (cache->debug) {
+		g_print("sscache_get_offblock_full: ");
+		suffstats_print(suffstats);
+		g_print("\n");
+	}
 	key = offblock_key_new(xx, yy);
 	g_hash_table_insert(cache->suffstats_offblocks, key, suffstats);
+out:
+	labelset_unref(xx);
+	labelset_unref(yy);
 	return suffstats;
 }
 
@@ -286,41 +305,8 @@ void suffstats_add(gpointer pdst, gpointer psrc) {
 }
 
 
-static void suffstats_add_triangles(Counts * counts, Dataset * dataset, GList * srcs, GList * dsts) {
-	GList * src;
-	GList * dst;
-	gboolean missing;
-	gboolean value;
-
-	for (src = srcs; src != NULL; src = g_list_next(src)) {
-		for (dst = g_list_first(dsts); dst != NULL; dst = g_list_next(dst)) {
-			value = dataset_get(dataset, src->data, dst->data, &missing);
-			/*
-			g_print("off: %s -> %s = %d, %d\n",
-					dataset_get_label_string(params->dataset, src->data),
-					dataset_get_label_string(params->dataset, dst->data),
-					value,
-					missing);
-					*/
-			if (!missing) {
-				counts->num_ones += value;
-				counts->num_total++;
-			}
-		}
-	}
+void suffstats_print(gpointer ss) {
+	Counts * cc = ss;
+	g_print("<0: %d, 1: %d>", cc->num_ones, cc->num_total-cc->num_ones);
 }
-
-gpointer suffstats_new_offblock(Dataset * dataset, GList * srcs, GList * dsts) {
-	Counts * counts;
-
-	counts = counts_new(0, 0);
-	suffstats_add_triangles(counts, dataset, srcs, dsts);
-	if (!dataset_is_symmetric(dataset)) {
-		/* see how the other half live. */
-		suffstats_add_triangles(counts, dataset, dsts, srcs);
-	}
-	return counts;
-}
-
-
 

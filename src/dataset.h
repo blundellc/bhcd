@@ -13,6 +13,7 @@ gboolean dataset_is_symmetric(Dataset *);
 void dataset_set(Dataset *, gpointer, gpointer, gboolean);
 
 /* labels on rows/columns */
+void dataset_label_assert(Dataset *, gconstpointer);
 guint dataset_num_labels(Dataset *);
 GList * dataset_get_labels(Dataset *);
 /* inserts label if it does not already exist */

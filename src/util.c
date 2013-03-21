@@ -138,3 +138,14 @@ gboolean list_equal(GList *aa, GList *bb, GEqualFunc equal) {
 	return aa == bb;
 }
 
+
+void list_labelset_print(GList * list) {
+	for (GList * pp = list; pp != NULL; pp = g_list_next(pp)) {
+		g_print("{ ");
+		labelset_print(pp->data);
+		g_print("}");
+		if (g_list_next(pp) != NULL) {
+			g_print(", ");
+		}
+	}
+}
