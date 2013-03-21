@@ -58,7 +58,7 @@ void tree_io_save_io(Tree *root, GIOChannel *io) {
 		if (tree_is_leaf(tree)) {
 			io_printf(io, "\tleaf [ parent %d label \"%s\" logprob %1.17e ]\n",
 					parent_index,
-					dataset_get_label_string(dataset, leaf_get_label(tree)),
+					dataset_label_to_string(dataset, leaf_get_label(tree)),
 					tree_get_logprob(tree)
 				);
 		} else {

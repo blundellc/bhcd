@@ -142,7 +142,7 @@ void dataset_gml_save_io(Dataset * dataset, GIOChannel * io) {
 	for (src = labels; src != NULL; src = g_list_next(src))  {
 		io_printf(io, "\tnode [ id %d label \"%s\" ]\n",
 				GPOINTER_TO_INT(src->data),
-				dataset_get_label_string(dataset, src->data));
+				dataset_label_to_string(dataset, src->data));
 	}
 	for (src = labels; src != NULL; src = g_list_next(src)) {
 		for (dst = labels; dst != NULL; dst = g_list_next(dst)) {

@@ -141,7 +141,7 @@ gpointer dataset_label_lookup(Dataset * dataset, const gchar * slabel) {
 	return label;
 }
 
-const gchar * dataset_get_label_string(Dataset * dataset, gconstpointer label) {
+const gchar * dataset_label_to_string(Dataset * dataset, gconstpointer label) {
 	dataset_label_assert(dataset, label);
 	return g_quark_to_string(GPOINTER_TO_INT(label));
 }

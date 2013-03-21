@@ -17,11 +17,7 @@ guint dataset_num_labels(Dataset *);
 GList * dataset_get_labels(Dataset *);
 /* inserts label if it does not already exist */
 gpointer dataset_label_lookup(Dataset *, const gchar *);
-const gchar * dataset_label_to_string(Dataset *, gpointer);
-
-gpointer dataset_add_string_label(Dataset *, gchar *);
-const gchar * dataset_get_label_string(Dataset *, gconstpointer);
-gpointer dataset_get_string_label(Dataset *, const gchar *);
+const gchar * dataset_label_to_string(Dataset *, gconstpointer);
 
 gboolean dataset_is_missing(Dataset *, gpointer, gpointer);
 gboolean dataset_get(Dataset *, gconstpointer, gconstpointer, gboolean *);
