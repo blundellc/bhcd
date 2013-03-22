@@ -20,13 +20,12 @@ def main():
     for mode in sys.argv[1:]:
         if mode == "debug":
             env['CFLAGS'] += ' -pedantic -Wall -Wfloat-equal -Wbad-function-cast -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wdeclaration-after-statement -Wuninitialized -Wstrict-overflow=5 -Wextra -Wno-unused-parameter -Wfatal-errors -Wwrite-strings -Wunreachable-code'
-            env['CFLAGS'] += ' -g'
+            # some of the above do not work without -O2
+            env['CFLAGS'] += ' -g -O2'
         elif mode == "profile":
             env['CFLAGS'] += ' -pg -finstrument-functions'
         elif mode == "release":
-            env['CFLAGS'] += ' -DG_DISABLE_ASSERT'
-        elif mode == "opt2":
-            env['CFLAGS'] += ' -O2'
+            env['CFLAGS'] += ' -DG_DISABLE_ASSERT -O3'
         elif mode == "release":
             pass
         else:
