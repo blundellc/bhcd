@@ -7,6 +7,7 @@ struct Dataset_t {
 	guint		ref_count;
 	gchar *		filename;
 	gboolean	symmetric;
+	gint		omitted;
 	GHashTable *	labels;
 	GHashTable *	cells;
 };
@@ -21,6 +22,7 @@ static Dataset_Key * dataset_key(Dataset *, gconstpointer, gconstpointer);
 static guint dataset_key_hash(gconstpointer);
 static gboolean dataset_key_eq(gconstpointer, gconstpointer);
 static gint dataset_label_cmp(gconstpointer, gconstpointer);
+static void dataset_set_full(Dataset *, gpointer, gpointer, gint);
 
 static Dataset_Key * dataset_key(Dataset * dd, gconstpointer psrc, gconstpointer pdst) {
 	Dataset_Key * key;
@@ -76,6 +78,7 @@ Dataset* dataset_new(gboolean symmetric) {
 	data->ref_count = 1;
 	data->filename = NULL;
 	data->symmetric = symmetric;
+	data->omitted = -1;
 	data->cells = g_hash_table_new_full(
 				dataset_key_hash,
 				dataset_key_eq,
@@ -99,12 +102,10 @@ guint dataset_num_labels(Dataset * dataset) {
 	return g_hash_table_size(dataset->labels);
 }
 
-
 gboolean dataset_is_missing(Dataset * dataset, gpointer src, gpointer dst) {
-	Dataset_Key * key = dataset_key(dataset, src, dst);
-	gboolean is_missing = !g_hash_table_lookup_extended(dataset->cells, key, NULL, NULL);
-	g_free(key);
-	return is_missing;
+	gboolean missing;
+	dataset_get(dataset, src, dst, &missing);
+	return missing;
 }
 
 void dataset_set_filename(Dataset *dataset, const gchar *filename) {
@@ -117,9 +118,26 @@ const gchar * dataset_get_filename(Dataset * dataset) {
 }
 
 void dataset_set(Dataset * dataset, gpointer src, gpointer dst, gboolean value) {
-	Dataset_Key * key = dataset_key(dataset, src, dst);
-	g_hash_table_replace(dataset->cells, key, GINT_TO_POINTER(value+DATASET_VALUE_SHIFT));
+	g_assert(value == FALSE || value == TRUE);
+	dataset_set_full(dataset, src, dst, value);
 	g_assert(!dataset_is_missing(dataset, src, dst));
+}
+
+void dataset_set_missing(Dataset * dataset, gpointer src, gpointer dst) {
+	dataset_set_full(dataset, src, dst, -1);
+	g_assert(dataset_is_missing(dataset, src, dst));
+}
+
+static void dataset_set_full(Dataset * dataset, gpointer src, gpointer dst, gint value) {
+	Dataset_Key * key;
+
+	key = dataset_key(dataset, src, dst);
+	if (value == dataset->omitted) {
+		g_hash_table_remove(dataset->cells, key);
+		g_free(key);
+		return;
+	}
+	g_hash_table_replace(dataset->cells, key, GINT_TO_POINTER(value+DATASET_VALUE_SHIFT));
 }
 
 GList * dataset_get_labels(Dataset * dataset) {
@@ -146,7 +164,7 @@ const gchar * dataset_label_to_string(Dataset * dataset, gconstpointer label) {
 }
 
 gboolean dataset_get(Dataset * dataset, gconstpointer src, gconstpointer dst, gboolean *missing) {
-	gboolean value;
+	gint value;
 	Dataset_Key * key;
 	gpointer ptr;
 
@@ -154,15 +172,20 @@ gboolean dataset_get(Dataset * dataset, gconstpointer src, gconstpointer dst, gb
 	ptr = g_hash_table_lookup(dataset->cells, key);
 	g_free(key);
 	if (ptr == NULL) {
+		value = dataset->omitted;
+	} else {
+		value = GPOINTER_TO_INT(ptr) - DATASET_VALUE_SHIFT;
+		g_assert(value != dataset->omitted);
+	}
+
+	if (value < 0) {
 		g_assert(missing != NULL);
 		*missing = TRUE;
 		return FALSE;
 	}
-
 	if (missing != NULL) {
 		*missing = FALSE;
 	}
-	value = GPOINTER_TO_INT(ptr) - DATASET_VALUE_SHIFT;
 	return value;
 }
 
@@ -299,6 +322,9 @@ Dataset * dataset_gen_toy3(void) {
 	aa = dataset_label_lookup(dataset, "aa");
 	bb = dataset_label_lookup(dataset, "bb");
 	cc = dataset_label_lookup(dataset, "cc");
+	dataset_set_missing(dataset, aa, aa);
+	dataset_set_missing(dataset, bb, bb);
+	dataset_set_missing(dataset, cc, cc);
 	dataset_set(dataset, aa, bb, TRUE);
 	dataset_set(dataset, aa, cc, FALSE);
 	dataset_set(dataset, bb, cc, FALSE);
@@ -322,6 +348,11 @@ Dataset * dataset_gen_toy4(void) {
 	bb = dataset_label_lookup(dataset, "bb");
 	cc = dataset_label_lookup(dataset, "cc");
 	dd = dataset_label_lookup(dataset, "dd");
+
+	/* missing */
+	dataset_set_missing(dataset, bb, bb);
+	dataset_set_missing(dataset, bb, dd);
+	dataset_set_missing(dataset, dd, dd);
 
 	/* ones */
 	dataset_set(dataset, aa, aa, TRUE);

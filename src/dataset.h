@@ -11,6 +11,7 @@ void dataset_ref(Dataset *);
 void dataset_unref(Dataset *);
 gboolean dataset_is_symmetric(Dataset *);
 void dataset_set(Dataset *, gpointer, gpointer, gboolean);
+void dataset_set_missing(Dataset *, gpointer, gpointer);
 
 /* labels on rows/columns */
 void dataset_label_assert(Dataset *, gconstpointer);
