@@ -1,6 +1,7 @@
 #include <string.h>
 #include <gsl/gsl_sf_log.h>
 #include <gsl/gsl_sf_exp.h>
+#include <gsl/gsl_errno.h>
 #include <glib/gprintf.h>
 #include "util.h"
 
@@ -18,12 +19,26 @@ void pair_free(Pair *pair) {
 	g_free(pair);
 }
 
+
+gdouble log_1plus_exp(gdouble xx) {
+	gsl_sf_result exp_xx;
+	gsl_error_handler_t *old_handler = gsl_set_error_handler_off();
+	int status = gsl_sf_exp_e(xx, &exp_xx);
+	gsl_set_error_handler(old_handler);
+	if ((status == GSL_EUNDRFLW || status == GSL_EDOM || status == GSL_ERANGE) && xx < 0) {
+		return 0.0;
+	} else if (status) {
+		g_error("GSL error: %s", gsl_strerror(status));
+	}
+	return gsl_sf_log_1plusx(exp_xx.val);
+}
+
 gdouble log_add_exp(gdouble xx, gdouble yy) {
 	gdouble diff = xx - yy;
 	if (diff >= 0) {
-		return xx + gsl_sf_log_1plusx(gsl_sf_exp(-diff));
+		return xx + log_1plus_exp(-diff);
 	} else if (diff < 0) {
-		return yy + gsl_sf_log_1plusx(gsl_sf_exp(diff));
+		return yy + log_1plus_exp(diff);
 	} else {
 		/* inf/nan with same sign */
 		return xx + yy;

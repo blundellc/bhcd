@@ -1,5 +1,6 @@
 #include <glib.h>
 #include <gsl/gsl_sf_log.h>
+#include <gsl/gsl_sf_exp.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_sf_pow_int.h>
 #include "nrt.h"
@@ -619,6 +620,29 @@ void test_bitset_popcount(void) {
 	}
 }
 
+
+void test_log_add_exp(void) {
+	/* same as naive for basic values */
+	for (gdouble ii = 0.1; ii < 1.0; ii += 0.01) {
+		gdouble log_ii = gsl_sf_log(ii);
+		for (gdouble jj = 0.1; jj < 1.0; jj += 0.01) {
+			gdouble log_jj = gsl_sf_log(jj);
+
+			gdouble naive = gsl_sf_log(ii+jj);
+			gdouble test = log_add_exp(log_ii, log_jj);
+			assert_eqfloat(naive, test, EQFLOAT_DEFAULT_PREC);
+		}
+	}
+	for (gdouble log_ii = 0.0; log_ii > -100.0; log_ii -= 0.5) {
+		for (gdouble log_jj = 0.0; log_jj > -100.0; log_jj -= 0.5) {
+			gdouble naive = gsl_sf_log(gsl_sf_exp(log_ii)+gsl_sf_exp(log_jj));
+			gdouble test = log_add_exp(log_ii, log_jj);
+			assert_eqfloat(naive, test, EQFLOAT_DEFAULT_PREC);
+		}
+	}
+}
+
+
 int main(int argc, char *argv[]) {
 	g_test_init(&argc, &argv, NULL);
 	g_test_add_func("/tree/logprob3", test_tree_logprob3);
@@ -628,6 +652,7 @@ int main(int argc, char *argv[]) {
 	g_test_add_func("/bitset/popcount", test_bitset_popcount);
 	g_test_add_func("/labelset", test_labelset);
 	g_test_add_func("/sscache/stats", test_sscache_stats);
+	g_test_add_func("/util/log_add_exp", test_log_add_exp);
 	g_test_run();
 	return 0;
 }
