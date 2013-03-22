@@ -160,13 +160,13 @@ gpointer sscache_get_offblock(SSCache *cache, GList * kk, GList * zz) {
 		suffstats = sscache_get_offblock_ordered(cache, zz, kk);
 	}
 	if (suffstats == NULL) {
+		sscache_println(cache, "sscache: ");
 		// thm failure
 		g_print("failed offblock: ");
 		list_labelset_print(kk);
 		g_print(" <-> ");
 		list_labelset_print(zz);
 		g_print("\n");
-		sscache_println(cache, "sscache: ");
 		g_error("theorem failure?!");
 	}
 	return suffstats;
