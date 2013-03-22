@@ -71,3 +71,24 @@ gdouble params_logprob_off(Params * params, gpointer pcounts) {
 	logprob = gsl_sf_lnbeta(d1, l0) - gsl_sf_lnbeta(params->delta, params->lambda);
 	return logprob;
 }
+
+
+gdouble params_logpred_on(Params * params, gpointer pcounts, gboolean value) {
+	Counts * counts = pcounts;
+	gdouble a1, b0, logpred;
+
+	a1 = params->alpha + counts->num_ones;
+	b0 = params->beta  + counts->num_total - counts->num_ones;
+	logpred = gsl_sf_lnbeta(a1 + value, b0 + 1-value) - gsl_sf_lnbeta(a1, b0);
+	return logpred;
+}
+
+gdouble params_logpred_off(Params * params, gpointer pcounts, gboolean value) {
+	Counts * counts = pcounts;
+	gdouble d1, l0, logpred;
+
+	d1 = params->delta + counts->num_ones;
+	l0 = params->lambda  + counts->num_total - counts->num_ones;
+	logpred = gsl_sf_lnbeta(d1 + value, l0 + 1-value) - gsl_sf_lnbeta(d1, l0);
+	return logpred;
+}

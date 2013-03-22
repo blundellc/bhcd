@@ -390,3 +390,47 @@ gdouble tree_get_logresponse(Tree *tree) {
 	}
 }
 
+gdouble tree_get_lognotresponse(Tree *tree) {
+	gdouble logprob;
+
+	g_assert(!tree_is_leaf(tree));
+	logprob = tree_get_logprob(tree);
+	return tree->log_not_pi + tree->logprob_children - logprob;
+}
+
+gdouble tree_predict(Tree *tree, gpointer src, gpointer dst, gboolean value) {
+	GList * child_elem;
+	Tree * child;
+	gdouble logpred_on;
+	gdouble logpred_below;
+
+	g_assert(labelset_contains(tree->labels, src));
+	g_assert(labelset_contains(tree->labels, dst));
+
+	logpred_on = params_logpred_on(tree->params, tree->suffstats_on, value);
+	if (tree_is_leaf(tree)) {
+		return logpred_on;
+	}
+
+	for (child_elem = tree->children; child_elem != NULL; child_elem = g_list_next(child_elem)) {
+		child = child_elem->data;
+		if (labelset_contains(child->labels, src) &&
+		    labelset_contains(child->labels, dst)) {
+			break;
+		}
+	}
+
+	if (child == NULL) {
+		logpred_below = params_logpred_off(tree->params, tree->suffstats_off, value);
+		return log_add_exp(
+			  tree_get_logresponse(tree)    + logpred_on
+			, tree_get_lognotresponse(tree) + logpred_below
+			);
+	}
+	logpred_below = tree_predict(child, src, dst, value);
+	return log_add_exp(
+		  tree_get_logresponse(tree)    + logpred_on
+		, tree_get_lognotresponse(tree) + logpred_below
+		);
+}
+

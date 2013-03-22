@@ -137,6 +137,7 @@ void test_tree_logprob3(void) {
 	params_unref(params);
 }
 
+
 void test_tree_logprob4(void) {
 	Params * params;
 	Merge * merge;
