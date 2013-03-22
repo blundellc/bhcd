@@ -10,13 +10,24 @@ struct Labelset_t {
 
 Labelset * labelset_new_full(Dataset * dataset, ...) {
 	Labelset * lset;
+	GList * labels;
 	va_list ap;
+	guint max_label;
 
 	lset = g_new(Labelset, 1);
 	lset->ref_count = 1;
 	lset->dataset = dataset;
 	dataset_ref(dataset);
-	lset->bits = bitset_new(dataset_num_labels(dataset));
+	max_label = 0;
+	labels = dataset_get_labels(dataset);
+	for (GList * label = labels; label != NULL; label = g_list_next(label)) {
+		guint labelint = GPOINTER_TO_INT(label->data);
+		if (labelint > max_label) {
+			max_label = labelint;
+		}
+	}
+	g_list_free(labels);
+	lset->bits = bitset_new(max_label+1);
 
 	va_start(ap, dataset);
 	for (gpointer label = va_arg(ap, gpointer); label != NULL; label = va_arg(ap, gpointer)) {
@@ -102,7 +113,7 @@ static void labelset_tostring_append(gpointer pargs, guint32 labelint) {
 	g_string_append_printf(out, "%s(%d) ",
 			dataset_label_to_string(dataset, label),
 			labelint);
-			*/
+	*/
 	g_string_append(out, dataset_label_to_string(dataset, label));
 	g_string_append(out, " ");
 }
@@ -111,6 +122,7 @@ void labelset_tostring(Labelset * lset, GString * out) {
 	Pair *args = pair_new(lset->dataset, out);
 	bitset_foreach(lset->bits, labelset_tostring_append, args);
 	pair_free(args);
+	//g_string_append_printf(out, "(h:%x)", labelset_hash(lset));
 }
 
 gboolean labelset_disjoint(Labelset *aa, Labelset *bb) {

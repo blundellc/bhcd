@@ -13,6 +13,11 @@ void init_test_toy3(Tree **laa, Tree **lbb, Tree **lcc) {
 	dataset = dataset_gen_toy3();
 	/*dataset_println(dataset, "");*/
 	aa = dataset_label_lookup(dataset, "aa");
+	for (guint ii = 0; ii < 64; ii++) {
+		gchar *str = num_to_string(ii);
+		dataset_label_lookup(dataset, str);
+		g_free(str);
+	}
 	bb = dataset_label_lookup(dataset, "bb");
 	cc = dataset_label_lookup(dataset, "cc");
 	params = params_default(dataset);
@@ -421,10 +426,30 @@ void test_bitset(void) {
 	Bitset * aa;
 	Bitset * bb;
 	Bitset * cc;
-	const guint size = 130;
+	const guint size = 1300;
 	guint ii;
 
 	aa = bitset_new(size);
+	for (ii = 0; ii < size; ii++) {
+		g_assert(!bitset_contains(aa, ii));
+		g_assert(bitset_count(aa) == 0);
+		bitset_set(aa, ii);
+		g_assert(bitset_contains(aa, ii));
+		g_assert(bitset_count(aa) == 1);
+		bitset_clear(aa, ii);
+		g_assert(!bitset_contains(aa, ii));
+		g_assert(bitset_count(aa) == 0);
+	}
+	for (ii = 0; ii < size; ii++) {
+		g_assert(!bitset_contains(aa, ii));
+		g_assert(bitset_count(aa) == ii);
+		bitset_set(aa, ii);
+		g_assert(bitset_contains(aa, ii));
+		g_assert(bitset_count(aa) == ii+1);
+	}
+	for (ii = 0; ii < size; ii++) {
+		bitset_clear(aa, ii);
+	}
 	bitset_set(aa, 23);
 	g_assert(bitset_contains(aa, 23));
 	for (ii = 0; ii < size; ii++) {
@@ -441,6 +466,7 @@ void test_bitset(void) {
 
 	bb = bitset_new(size);
 	g_assert(bitset_disjoint(aa, bb));
+
 	bitset_union(bb, aa);
 	g_assert(!bitset_disjoint(aa, bb));
 	g_assert(bitset_equal(aa, bb));
@@ -484,6 +510,7 @@ void test_bitset(void) {
 		g_assert_cmpstr(out->str, ==, "29 123 ");
 		g_string_free(out, TRUE);
 	}
+
 	bitset_unref(aa);
 	bitset_unref(bb);
 	bitset_unref(cc);
@@ -507,6 +534,23 @@ void test_labelset(void) {
 
 	g_assert(labelset_equal(seta, setb));
 	g_assert(labelset_equal(seta, seta));
+
+	for (guint ii = 0; ii < 0x80 - 4; ii++) {
+		gchar *str = num_to_string(ii);
+		gpointer label = dataset_label_lookup(dataset, str);
+		g_assert(!labelset_contains(seta, label));
+		g_assert(labelset_count(seta) == ii);
+		labelset_add(seta, label);
+		g_assert(labelset_contains(seta, label));
+		g_assert(labelset_count(seta) == ii+1);
+		g_free(str);
+	}
+	for (guint ii = 0; ii < 0x80 - 4; ii++) {
+		gchar *str = num_to_string(ii);
+		gpointer label = dataset_label_lookup(dataset, str);
+		g_free(str);
+		labelset_del(seta, label);
+	}
 
 	labelset_add(seta, aa);
 	labelset_add(setb, bb);

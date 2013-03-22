@@ -13,11 +13,12 @@ struct Bitset_t {
 	guint64 *elems;
 };
 
-static inline void bitset_get_bit(guint32 index, guint32 * elem_index, guint64 * bit);
+static inline void bitset_get_bit(Bitset *bitset, guint32 index, guint32 * elem_index, guint64 * bit);
 
 Bitset * bitset_new(guint32 max_index) {
 	Bitset * bitset;
 
+	g_assert(max_index < 0xffffff);
 	bitset = g_new(Bitset, 1);
 	bitset->ref_count = 1;
 	bitset->size = 1 + max_index/BITS_PER_ELEM;
@@ -72,13 +73,12 @@ guint bitset_hash(Bitset * bitset) {
 
 	for (guint32 ii = 0; ii < bitset->size; ii++) {
 		const guint64 elem = bitset->elems[ii];
-		hash ^= elem & 0xffffffff;
-		hash ^= elem >> 32;
+		hash ^= (elem & 0xffffffff) ^ (elem >> 32);
 	}
 	return hash;
 }
 
-static inline void bitset_get_bit(guint32 index, guint32 * elem_index, guint64 * bit) {
+static inline void bitset_get_bit(Bitset * bitset, guint32 index, guint32 * elem_index, guint64 * bit) {
 	guint8 offset;
 
 	offset = index & MASK_ELEM;
@@ -87,6 +87,7 @@ static inline void bitset_get_bit(guint32 index, guint32 * elem_index, guint64 *
 	 */
 	*bit = ((guint64)1) << offset;
 	*elem_index = index >> SHIFT_ELEM;
+	g_assert(*elem_index < bitset->size);
 }
 
 
@@ -106,7 +107,7 @@ void bitset_set(Bitset *bitset, guint32 index) {
 	guint64 bit;
 	guint32 elem_index;
 
-	bitset_get_bit(index, &elem_index, &bit);
+	bitset_get_bit(bitset, index, &elem_index, &bit);
 	bitset->elems[elem_index] |= bit;
 }
 
@@ -114,7 +115,7 @@ void bitset_clear(Bitset *bitset, guint32 index) {
 	guint64 bit;
 	guint32 elem_index;
 
-	bitset_get_bit(index, &elem_index, &bit);
+	bitset_get_bit(bitset, index, &elem_index, &bit);
 	bitset->elems[elem_index] &= ~bit;
 }
 
@@ -122,7 +123,7 @@ gboolean bitset_contains(Bitset *bitset, guint32 index) {
 	guint64 bit;
 	guint32 elem_index;
 
-	bitset_get_bit(index, &elem_index, &bit);
+	bitset_get_bit(bitset, index, &elem_index, &bit);
 	return (bitset->elems[elem_index] & bit) != 0;
 }
 
