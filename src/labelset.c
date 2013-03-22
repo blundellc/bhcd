@@ -7,6 +7,7 @@ struct Labelset_t {
 	Dataset * dataset;
 };
 
+static const gboolean labelset_debug = FALSE;
 
 Labelset * labelset_new_full(Dataset * dataset, ...) {
 	Labelset * lset;
@@ -102,20 +103,23 @@ static void labelset_tostring_append(gpointer pargs, guint32 labelint) {
 	Dataset * dataset = args->fst;
 	GString * out = args->snd;
 	gpointer label = GINT_TO_POINTER(labelint);
-	/*
-	g_string_append_printf(out, "%s(%d) ",
-			dataset_label_to_string(dataset, label),
-			labelint);
-	*/
-	g_string_append(out, dataset_label_to_string(dataset, label));
-	g_string_append(out, " ");
+	if (labelset_debug) {
+		g_string_append_printf(out, "%s(%d) ",
+				dataset_label_to_string(dataset, label),
+				labelint);
+	} else {
+		g_string_append(out, dataset_label_to_string(dataset, label));
+		g_string_append(out, " ");
+	}
 }
 
 void labelset_tostring(Labelset * lset, GString * out) {
 	Pair *args = pair_new(lset->dataset, out);
 	bitset_foreach(lset->bits, labelset_tostring_append, args);
 	pair_free(args);
-	//g_string_append_printf(out, "(h:%x)", labelset_hash(lset));
+	if (labelset_debug) {
+		g_string_append_printf(out, "(h:%x)", labelset_hash(lset));
+	}
 }
 
 gboolean labelset_disjoint(Labelset *aa, Labelset *bb) {
