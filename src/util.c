@@ -31,14 +31,15 @@ gdouble log_add_exp(gdouble xx, gdouble yy) {
 }
 
 gchar * num_to_string(guint ii) {
-	static gchar base[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+	static const gchar base[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+	static const guint len = 36;
 	GString *out;
 
 	out = g_string_new("");
 
 	do {
-		g_string_append_c(out, base[ii % sizeof(base)]);
-		ii /= sizeof(base);
+		g_string_append_c(out, base[ii % len]);
+		ii /= len;
 	} while (ii != 0);
 
 	return g_string_free(out, FALSE);
