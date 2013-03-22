@@ -421,13 +421,11 @@ gdouble tree_predict(Tree *tree, gpointer src, gpointer dst, gboolean value) {
 	}
 
 	if (child == NULL) {
+		/* src,dst lies in the off block */
 		logpred_below = params_logpred_off(tree->params, tree->suffstats_off, value);
-		return log_add_exp(
-			  tree_get_logresponse(tree)    + logpred_on
-			, tree_get_lognotresponse(tree) + logpred_below
-			);
+	} else {
+		logpred_below = tree_predict(child, src, dst, value);
 	}
-	logpred_below = tree_predict(child, src, dst, value);
 	return log_add_exp(
 		  tree_get_logresponse(tree)    + logpred_on
 		, tree_get_lognotresponse(tree) + logpred_below
