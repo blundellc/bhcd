@@ -79,23 +79,14 @@ gpointer sscache_get_label(SSCache *cache, gconstpointer label) {
 
 static Offblock_Key * offblock_key_new(Labelset * fst, Labelset * snd) {
 	Offblock_Key * key;
-	guint hash_fst;
-	guint hash_snd;
 
-	hash_fst = labelset_hash(fst);
-	hash_snd = labelset_hash(snd);
-	if (hash_fst < hash_snd) {
-		Labelset * tmp;
-		tmp = fst;
-		fst = snd;
-		snd = tmp;
-	}
 	key = g_new(Offblock_Key, 1);
-	key->hash = hash_fst ^ hash_snd;
 	key->fst = fst;
 	labelset_ref(key->fst);
 	key->snd = snd;
 	labelset_ref(key->snd);
+	key->hash  = labelset_hash(key->fst);
+	key->hash ^= labelset_hash(key->snd);
 	return key;
 }
 
@@ -119,8 +110,8 @@ static gboolean offblock_key_equal(gconstpointer paa, gconstpointer pbb) {
 	if (aa->hash != bb->hash) {
 		return FALSE;
 	}
-	return	labelset_equal(aa->fst, bb->fst) &&
-		labelset_equal(aa->snd, bb->snd);
+	return	(labelset_equal(aa->fst, bb->fst) && labelset_equal(aa->snd, bb->snd)) ||
+		(labelset_equal(aa->fst, bb->snd) && labelset_equal(aa->snd, bb->fst));
 }
 
 
