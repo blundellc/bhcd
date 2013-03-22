@@ -144,6 +144,8 @@ Tree * build_repeat(GRand * rng, Params * params, guint num_repeats) {
 		if (best == NULL || tree_get_logprob(root) > tree_get_logprob(best)) {
 			tree_unref(best);
 			best = root;
+			g_print("better(%d): ", num_repeats);
+			tree_println(best, "");
 		} else {
 			tree_unref(root);
 		}
