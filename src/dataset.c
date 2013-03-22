@@ -73,6 +73,21 @@ const gchar * dataset_get_filename(Dataset * dataset) {
 	return dataset->filename;
 }
 
+void dataset_set_omitted(Dataset * dataset, gboolean omitted) {
+	g_assert(omitted == FALSE || omitted == TRUE);
+	dataset->omitted = omitted;
+}
+
+gboolean dataset_get_sparse(Dataset * dataset, gboolean * omitted) {
+	if (omitted != NULL) {
+		*omitted = dataset->omitted;
+	}
+	if (dataset->omitted < 0) {
+		return FALSE;
+	}
+	return TRUE;
+}
+
 gboolean dataset_get(Dataset * dataset, gconstpointer src, gconstpointer dst, gboolean *missing) {
 	gint value;
 	Dataset_Key * key;

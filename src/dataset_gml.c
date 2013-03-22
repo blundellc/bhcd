@@ -22,6 +22,8 @@ Dataset * dataset_gml_load(const gchar *fname) {
 		next = tokens_next(toks);
 		if (strcmp(next, "graph") == 0) {
 			tokens_expect(toks, "[");
+		} else if (strcmp(next, "sparse") == 0) {
+			dataset_set_omitted(dd, tokens_next_int(toks));
 		} else if (strcmp(next, "node") == 0) {
 			parse_node(toks, dd, id_labels);
 		} else if (strcmp(next, "edge") == 0) {
@@ -99,7 +101,18 @@ static void parse_edge(Tokens * toks, Dataset * dd, GHashTable * id_labels) {
 			}
 			g_free(dst_id);
 		} else if (strcmp(next, "weight") == 0) {
-			weight = tokens_next_int(toks);
+			if (tokens_peek_test(toks, "NA")) {
+				g_free(tokens_next(toks));
+				weight = -1;
+			} else {
+				weight = tokens_next_int(toks);
+				if (weight < 0) {
+					tokens_fail(toks, "unexpected negative weight `%d'", weight);
+				}
+				if (weight > 1) {
+					tokens_fail(toks, "unexpected weight `%d'", weight);
+				}
+			}
 		} else {
 			tokens_fail(toks, "unexpected token `%s'", next);
 		}
@@ -110,7 +123,11 @@ static void parse_edge(Tokens * toks, Dataset * dd, GHashTable * id_labels) {
 		tokens_fail(toks, "missing source/target");
 	}
 
-	dataset_set(dd, src, dst, weight > 0);
+	if (weight < 0) {
+		dataset_set_missing(dd, src, dst);
+	} else {
+		dataset_set(dd, src, dst, weight > 0);
+	}
 }
 
 
@@ -135,8 +152,15 @@ void dataset_gml_save_io(Dataset * dataset, GIOChannel * io) {
 	GList * labels;
 	GList * src;
 	GList * dst;
+	gboolean sparse;
+	gboolean omitted;
 
 	io_printf(io, "graph [\n");
+
+	sparse = dataset_get_sparse(dataset, &omitted);
+	if (sparse) {
+		io_printf(io, "\tsparse %d\n", omitted);
+	}
 
 	labels = dataset_get_labels(dataset);
 	for (src = labels; src != NULL; src = g_list_next(src))  {
@@ -150,11 +174,16 @@ void dataset_gml_save_io(Dataset * dataset, GIOChannel * io) {
 			gboolean value;
 
 			value = dataset_get(dataset, src->data, dst->data, &missing);
-			if (!missing) {
+			if ((!sparse && !missing) ||
+			    (sparse && value != omitted)) {
 				io_printf(io, "\tedge [ source %d target %d weight %d ]\n",
 						GPOINTER_TO_INT(src->data),
 						GPOINTER_TO_INT(dst->data),
 						value);
+			} else if (sparse && missing) {
+				io_printf(io, "\tedge [ source %d target %d weight NA ]\n",
+						GPOINTER_TO_INT(src->data),
+						GPOINTER_TO_INT(dst->data));
 			}
 		}
 	}
