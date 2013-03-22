@@ -26,6 +26,7 @@ guint dataset_num_labels(Dataset *);
 GList * dataset_get_labels(Dataset *);
 /* inserts label if it does not already exist */
 gpointer dataset_label_lookup(Dataset *, const gchar *);
+gpointer dataset_get_max_label(Dataset *);
 const gchar * dataset_label_to_string(Dataset *, gconstpointer);
 
 void dataset_println(Dataset *, const gchar *);

@@ -10,27 +10,20 @@ struct Labelset_t {
 
 Labelset * labelset_new_full(Dataset * dataset, ...) {
 	Labelset * lset;
-	GList * labels;
 	va_list ap;
 	guint max_label;
+	gpointer label;
 
 	lset = g_new(Labelset, 1);
 	lset->ref_count = 1;
 	lset->dataset = dataset;
 	dataset_ref(dataset);
-	max_label = 0;
-	labels = dataset_get_labels(dataset);
-	for (GList * label = labels; label != NULL; label = g_list_next(label)) {
-		guint labelint = GPOINTER_TO_INT(label->data);
-		if (labelint > max_label) {
-			max_label = labelint;
-		}
-	}
-	g_list_free(labels);
+	label = dataset_get_max_label(dataset);
+	max_label = GPOINTER_TO_INT(label);
 	lset->bits = bitset_new(max_label+1);
 
 	va_start(ap, dataset);
-	for (gpointer label = va_arg(ap, gpointer); label != NULL; label = va_arg(ap, gpointer)) {
+	for (label = va_arg(ap, gpointer); label != NULL; label = va_arg(ap, gpointer)) {
 		labelset_add(lset, label);
 	}
 	va_end(ap);

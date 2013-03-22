@@ -8,6 +8,7 @@ struct Dataset_t {
 	gchar *		filename;
 	gboolean	symmetric;
 	gint		omitted;
+	GQuark		max_qlabel;
 	GHashTable *	labels;
 	GHashTable *	cells;
 };
@@ -36,6 +37,7 @@ Dataset* dataset_new(gboolean symmetric) {
 				g_free,
 				NULL
 			);
+	data->max_qlabel = 0;
 	data->labels = g_hash_table_new_full(
 				NULL,
 				NULL,
@@ -151,18 +153,27 @@ GList * dataset_get_labels(Dataset * dataset) {
 	return g_hash_table_get_keys(dataset->labels);
 }
 
+gpointer dataset_get_max_label(Dataset * dataset) {
+	return GINT_TO_POINTER(dataset->max_qlabel);
+}
+
 void dataset_label_assert(Dataset *dataset, gconstpointer label) {
 	g_assert(g_hash_table_lookup_extended(dataset->labels, label, NULL, NULL));
 }
 
 gpointer dataset_label_lookup(Dataset * dataset, const gchar * slabel) {
 	gpointer label;
+	GQuark qlabel;
 
-	label = GINT_TO_POINTER(g_quark_from_string(slabel));
+	qlabel = g_quark_from_string(slabel);
+	label = GINT_TO_POINTER(qlabel);
 	if (!g_hash_table_lookup_extended(dataset->labels, label, NULL, NULL)) {
 		/* key = value apparently enables some optimization in hash
 		 * table for sets.
 		 */
+		if (qlabel > dataset->max_qlabel) {
+			dataset->max_qlabel = qlabel;
+		}
 		g_hash_table_insert(dataset->labels, label, label);
 	}
 	return label;
