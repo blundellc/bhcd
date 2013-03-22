@@ -17,6 +17,7 @@ typedef struct {
 	gdouble		beta;
 	gdouble		delta;
 	gdouble		lambda;
+	gboolean	binary_only;
 } Params;
 
 Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble beta, gdouble delta, gdouble lambda);

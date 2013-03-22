@@ -16,6 +16,7 @@ Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble bet
 	params->beta = beta;
 	params->delta = delta;
 	params->lambda = lambda;
+	params->binary_only = FALSE;
 	return params;
 }
 

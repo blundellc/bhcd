@@ -61,7 +61,7 @@ Merge * merge_absorb(GRand * rng, Params * params, guint ii, Tree * aa, guint jj
 	Tree * tree;
 	Merge * merge;
 
-	if (tree_is_leaf(aa)) {
+	if (tree_is_leaf(aa) || params->binary_only) {
 		return NULL;
 	}
 
@@ -78,7 +78,7 @@ Merge * merge_collapse(GRand * rng, Params * params, guint ii, Tree * aa, guint 
 	Merge * merge;
 	GList * child;
 
-	if (tree_is_leaf(aa)) {
+	if (tree_is_leaf(aa) || params->binary_only) {
 		return NULL;
 	}
 

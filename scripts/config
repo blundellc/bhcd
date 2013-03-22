@@ -24,7 +24,7 @@ def main():
                 # clang is slightly more aggressive, and finds soemthing glib..
                 env['CFLAGS'] += ' -Wunreachable-code'
             # some of the above do not work without -O2
-            env['CFLAGS'] += ' -g -O2'
+            env['CFLAGS'] += ' -ggdb3 '
         elif mode == "profile":
             env['CFLAGS'] += ' -pg -finstrument-functions'
         elif mode == "release":
