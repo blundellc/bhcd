@@ -6,7 +6,6 @@
 void run_rand(GRand * rng, guint num_items, gdouble sparsity, guint verbose) {
 	Dataset * dataset;
 	Params * params;
-	GList * labels;
 	Tree * root;
 
 	/* dataset = dataset_gen_speckle(rng, num_items, 1.0-sparsity); */
@@ -17,11 +16,9 @@ void run_rand(GRand * rng, guint num_items, gdouble sparsity, guint verbose) {
 
 	params = params_default(dataset);
 
-	labels = dataset_get_labels(dataset);
-
 	dataset_unref(dataset);
 
-	root = build(rng, params, labels);
+	root = build(rng, params);
 
 	if (verbose) {
 		tree_println(root, "result: ");
@@ -29,7 +26,6 @@ void run_rand(GRand * rng, guint num_items, gdouble sparsity, guint verbose) {
 
 	g_assert(tree_num_leaves(root) == dataset_num_labels(dataset));
 	tree_unref(root);
-	g_list_free(labels);
 	params_unref(params);
 }
 

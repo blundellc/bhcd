@@ -5,7 +5,6 @@
 
 void run(GRand * rng, Dataset * dataset, gboolean verbose) {
 	Params * params;
-	GList * labels;
 	Tree * root;
 
 	if (verbose) {
@@ -14,9 +13,7 @@ void run(GRand * rng, Dataset * dataset, gboolean verbose) {
 
 	params = params_default(dataset);
 
-	labels = dataset_get_labels(dataset);
-
-	root = build_repeat(rng, params, labels, 1000);
+	root = build_repeat(rng, params, 1000);
 
 	tree_println(root, "result: ");
 
@@ -24,7 +21,6 @@ void run(GRand * rng, Dataset * dataset, gboolean verbose) {
 
 	g_assert(tree_num_leaves(root) == dataset_num_labels(dataset));
 	tree_unref(root);
-	g_list_free(labels);
 	params_unref(params);
 }
 
