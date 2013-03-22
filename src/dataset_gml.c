@@ -106,12 +106,15 @@ static void parse_edge(Tokens * toks, Dataset * dd, GHashTable * id_labels) {
 				weight = -1;
 			} else {
 				weight = tokens_next_int(toks);
-				if (weight < 0) {
+				weight = weight > 0;
+				/*
+				if (weight <= 0) {
 					tokens_fail(toks, "unexpected negative weight `%d'", weight);
 				}
-				if (weight > 1) {
+				if (weight >= 1) {
 					tokens_fail(toks, "unexpected weight `%d'", weight);
 				}
+				*/
 			}
 		} else {
 			tokens_fail(toks, "unexpected token `%s'", next);
