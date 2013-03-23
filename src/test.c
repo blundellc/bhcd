@@ -287,11 +287,17 @@ void test_build_logpred4(void) {
 	gint value_others;
 	gdouble logprob_true, logprob_false;
 	gpointer bb, dd;
+	Build * build;
 
 	rng = g_rand_new();
 	dataset = dataset_gen_toy4();
 	params = params_default(dataset);
-	root = build(rng, params);
+	build = build_new(rng, params, 10, FALSE);
+	build_set_verbose(build, FALSE);
+	build_run(build);
+	root = build_get_best_tree(build);
+	tree_ref(root);
+	build_free(build);
 
 	/* test on the training points */
 	pairs = dataset_get_label_pairs(dataset, &value_others);

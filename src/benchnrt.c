@@ -7,6 +7,7 @@ Tree * run_rand(GRand * rng, guint num_items, gdouble sparsity, guint verbose) {
 	Dataset * dataset;
 	Params * params;
 	Tree * root;
+	Build * build;
 
 	/* dataset = dataset_gen_speckle(rng, num_items, 1.0-sparsity); */
 	dataset = dataset_gen_blocks(rng, num_items, 3, sparsity);
@@ -15,10 +16,13 @@ Tree * run_rand(GRand * rng, guint num_items, gdouble sparsity, guint verbose) {
 	}
 
 	params = params_default(dataset);
-
 	dataset_unref(dataset);
 
-	root = build_repeat(rng, params, 200);
+	build = build_new(rng, params, 200, FALSE);
+	build_run(build);
+	root = build_get_best_tree(build);
+	tree_ref(root);
+	build_free(build);
 
 	if (verbose) {
 		tree_println(root, "result: ");

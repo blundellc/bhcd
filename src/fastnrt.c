@@ -71,6 +71,7 @@ error:
 Tree * run(GRand * rng, Dataset * dataset, gboolean verbose) {
 	Params * params;
 	Tree * root;
+	Build * build;
 
 	if (verbose) {
 		dataset_println(dataset, "");
@@ -82,10 +83,14 @@ Tree * run(GRand * rng, Dataset * dataset, gboolean verbose) {
 			param_delta, param_lambda);
 	params->binary_only = binary_only;
 
-	root = build_repeat(rng, params, build_restarts);
+	build = build_new(rng, params, build_restarts, FALSE);
+	params_unref(params);
+	build_run(build);
+	root = build_get_best_tree(build);
+	tree_ref(root);
+	build_free(build);
 
 	g_assert(tree_num_leaves(root) == dataset_num_labels(dataset));
-	params_unref(params);
 	return root;
 }
 
