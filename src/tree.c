@@ -337,7 +337,7 @@ static gdouble branch_log_not_pi(Tree * branch) {
 }
 
 static gdouble branch_log_pi(Tree * branch, gdouble log_not_pi) {
-	if (log_not_pi > gsl_sf_log(2.0)) {
+	if (log_not_pi > G_LN2) {
 		return gsl_sf_log(-gsl_sf_expm1(log_not_pi));
 	} else {
 		return gsl_sf_log_1plusx(-gsl_sf_exp(log_not_pi));
