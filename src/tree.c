@@ -5,6 +5,9 @@
 #include "sscache.h"
 #include "util.h"
 
+static const gboolean tree_debug = FALSE;
+
+
 struct Tree_t {
 	guint		ref_count;
 	gboolean	is_leaf;
@@ -36,6 +39,9 @@ static gdouble branch_logprob(Tree * branch);
 static gdouble leaf_logprob(Tree * leaf);
 
 void tree_assert(Tree * tree) {
+	if (!tree_debug) {
+		return;
+	}
 	g_assert(tree->ref_count >= 1);
 	g_assert(tree->params != NULL);
 	g_assert(tree->suffstats_on != NULL);
