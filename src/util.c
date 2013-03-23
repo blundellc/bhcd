@@ -97,7 +97,7 @@ void io_stdout(IOFunc func, gpointer user_data) {
 	g_io_channel_unref(io);
 }
 
-void io_file(const gchar *fname, IOFunc func, gpointer user_data) {
+void io_writefile(const gchar *fname, IOFunc func, gpointer user_data) {
         GIOChannel *io;
         GError *error;
         error = NULL;

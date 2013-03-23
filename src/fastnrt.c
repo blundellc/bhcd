@@ -111,7 +111,7 @@ int main(int argc, char * argv[]) {
 	io_stdout((IOFunc)timer_save_io, timer);
 	tree_println(root, "tree: ");
 
-	io_file(output_time_fname, (IOFunc)timer_save_io, timer);
+	io_writefile(output_time_fname, (IOFunc)timer_save_io, timer);
 	tree_io_save(root, output_tree_fname);
 
 	tree_unref(root);

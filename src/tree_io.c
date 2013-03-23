@@ -7,7 +7,7 @@ Tree * tree_io_load(const gchar *fname) {
 }
 
 void tree_io_save(Tree *tree, const gchar *fname) {
-	io_file(fname, (IOFunc)tree_io_save_io, tree);
+	io_writefile(fname, (IOFunc)tree_io_save_io, tree);
 }
 
 void tree_io_save_io(Tree *root, GIOChannel *io) {
