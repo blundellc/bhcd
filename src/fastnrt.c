@@ -94,6 +94,36 @@ Tree * run(GRand * rng, Dataset * dataset, gboolean verbose) {
 	return root;
 }
 
+void eval_test(Tree * root, GIOChannel *io) {
+	Dataset * test;
+	GList * pairs;
+	gint value_omitted;
+
+	if (test_fname == NULL) {
+		return;
+	}
+	test = dataset_gml_load(test_fname);
+	pairs = dataset_get_label_pairs(test, &value_omitted);
+	// better not be sparse.
+	g_assert(value_omitted < 0);
+	for (GList * xx = pairs; xx != NULL; xx = g_list_next(xx)) {
+		Pair * pair = xx->data;
+		gboolean missing;
+		gboolean value = dataset_get(test, pair->fst, pair->snd, &missing);
+		gdouble logpred_true = tree_logpredict(root, pair->fst, pair->snd, TRUE);
+		gdouble logpred_false = tree_logpredict(root, pair->fst, pair->snd, FALSE);
+		g_assert(!missing);
+		io_printf(io, "%s,%s,%s,%1.17e,%1.17e\n",
+				dataset_label_to_string(test, pair->fst),
+				dataset_label_to_string(test, pair->snd),
+				(value? "true": "false"),
+				logpred_false,
+				logpred_true);
+	}
+	dataset_get_label_pairs_free(pairs);
+	dataset_unref(test);
+}
+
 void timer_save_io(GTimer * timer, GIOChannel * io) {
 	io_printf(io, "time: %es\n", g_timer_elapsed(timer, NULL));
 }
@@ -121,6 +151,8 @@ int main(int argc, char * argv[]) {
 
 	io_writefile(output_time_fname, (IOFunc)timer_save_io, timer);
 	tree_io_save(root, output_tree_fname);
+
+	io_writefile(output_pred_fname, (IOFunc)eval_test, root);
 
 	tree_unref(root);
 	g_free(output_tree_fname);
