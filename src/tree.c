@@ -405,7 +405,6 @@ gdouble tree_get_lognotresponse(Tree *tree) {
 }
 
 gdouble tree_predict(Tree *tree, gpointer src, gpointer dst, gboolean value) {
-	GList * child_elem;
 	Tree * child;
 	gdouble logpred_on;
 	gdouble logpred_below;
@@ -418,10 +417,12 @@ gdouble tree_predict(Tree *tree, gpointer src, gpointer dst, gboolean value) {
 		return logpred_on;
 	}
 
-	for (child_elem = tree->children; child_elem != NULL; child_elem = g_list_next(child_elem)) {
-		child = child_elem->data;
-		if (labelset_contains(child->labels, src) &&
-		    labelset_contains(child->labels, dst)) {
+	child = NULL;
+	for (GList * xx = tree->children; xx != NULL; xx = g_list_next(xx)) {
+		Tree * child_query = xx->data;
+		if (labelset_contains(child_query->labels, src) &&
+		    labelset_contains(child_query->labels, dst)) {
+			child  = child_query;
 			break;
 		}
 	}
