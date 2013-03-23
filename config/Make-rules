@@ -1,3 +1,4 @@
 AM_CFLAGS = -Werror $(DEPS_CFLAGS)
+MOSTLYCLEANFILES = *.gcda *.gcno *.gcov
 
 
