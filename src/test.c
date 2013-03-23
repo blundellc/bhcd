@@ -16,7 +16,7 @@ void init_test_toy3(Tree **laa, Tree **lbb, Tree **lcc) {
 	aa = dataset_label_lookup(dataset, "aa");
 	for (guint ii = 0; ii < 64; ii++) {
 		gchar *str = num_to_string(ii);
-		dataset_label_lookup(dataset, str);
+		dataset_label_create(dataset, str);
 		g_free(str);
 	}
 	bb = dataset_label_lookup(dataset, "bb");
@@ -539,7 +539,7 @@ void test_labelset(void) {
 
 	for (guint ii = 0; ii < 0x80 - 4; ii++) {
 		gchar *str = num_to_string(ii);
-		gpointer label = dataset_label_lookup(dataset, str);
+		gpointer label = dataset_label_create(dataset, str);
 		g_assert(!labelset_contains(seta, label));
 		g_assert(labelset_count(seta) == ii);
 		labelset_add(seta, label);
@@ -549,7 +549,7 @@ void test_labelset(void) {
 	}
 	for (guint ii = 0; ii < 0x80 - 4; ii++) {
 		gchar *str = num_to_string(ii);
-		gpointer label = dataset_label_lookup(dataset, str);
+		gpointer label = dataset_label_create(dataset, str);
 		g_free(str);
 		labelset_del(seta, label);
 	}

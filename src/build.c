@@ -118,7 +118,7 @@ Tree * build(GRand * rng, Params * params) {
 
 	labels = dataset_get_labels(params->dataset);
 	trees = build_init_trees(params, labels);
-	g_list_free(labels);
+	dataset_get_labels_free(labels);
 	merges = build_init_merges(rng, params, trees);
 
 	build_greedy(rng, params, trees, merges);

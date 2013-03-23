@@ -8,11 +8,11 @@ Dataset * dataset_gen_speckle(GRand * rng, guint num_items, gdouble prob_one) {
 	dd = dataset_new(TRUE);
 	for (ii = 0; ii < num_items; ii++) {
 		gchar *name_ii = num_to_string(ii);
-		gpointer label_ii = dataset_label_lookup(dd, name_ii);
+		gpointer label_ii = dataset_label_create(dd, name_ii);
 		g_free(name_ii);
 		for (jj = ii; jj < num_items; jj++) {
 			gchar *name_jj = num_to_string(jj);
-			gpointer label_jj = dataset_label_lookup(dd, name_jj);
+			gpointer label_jj = dataset_label_create(dd, name_jj);
 			g_free(name_jj);
 			dataset_set(dd, label_ii, label_jj,
 					g_rand_double(rng) < prob_one);
@@ -30,11 +30,11 @@ Dataset * dataset_gen_blocks(GRand * rng, guint num_items, guint block_width, gd
 	dd = dataset_new(TRUE);
 	for (ii = 0; ii < num_items; ii++) {
 		gchar *name_ii = num_to_string(ii);
-		gpointer label_ii = dataset_label_lookup(dd, name_ii);
+		gpointer label_ii = dataset_label_create(dd, name_ii);
 		g_free(name_ii);
 		for (jj = ii; jj < num_items; jj++) {
 			gchar *name_jj = num_to_string(jj);
-			gpointer label_jj = dataset_label_lookup(dd, name_jj);
+			gpointer label_jj = dataset_label_create(dd, name_jj);
 			g_free(name_jj);
 
 			value = (ii/block_width % 2) == (jj/block_width % 2)
@@ -61,9 +61,9 @@ Dataset * dataset_gen_toy3(void) {
 	 * bb   1    _    0
 	 * cc   0    0    _
 	 */
-	aa = dataset_label_lookup(dataset, "aa");
-	bb = dataset_label_lookup(dataset, "bb");
-	cc = dataset_label_lookup(dataset, "cc");
+	aa = dataset_label_create(dataset, "aa");
+	bb = dataset_label_create(dataset, "bb");
+	cc = dataset_label_create(dataset, "cc");
 	dataset_set_missing(dataset, aa, aa);
 	dataset_set_missing(dataset, bb, bb);
 	dataset_set_missing(dataset, cc, cc);
@@ -86,10 +86,10 @@ Dataset * dataset_gen_toy4(void) {
 	 * cc   1    1    0    0
 	 * dd   0    0    1    _
 	 */
-	aa = dataset_label_lookup(dataset, "aa");
-	bb = dataset_label_lookup(dataset, "bb");
-	cc = dataset_label_lookup(dataset, "cc");
-	dd = dataset_label_lookup(dataset, "dd");
+	aa = dataset_label_create(dataset, "aa");
+	bb = dataset_label_create(dataset, "bb");
+	cc = dataset_label_create(dataset, "cc");
+	dd = dataset_label_create(dataset, "dd");
 
 	/* missing */
 	dataset_set_missing(dataset, bb, bb);

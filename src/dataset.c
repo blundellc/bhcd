@@ -153,6 +153,10 @@ GList * dataset_get_labels(Dataset * dataset) {
 	return g_hash_table_get_keys(dataset->labels);
 }
 
+void dataset_get_labels_free(GList * labels) {
+	g_list_free(labels);
+}
+
 gpointer dataset_get_max_label(Dataset * dataset) {
 	return GINT_TO_POINTER(dataset->max_qlabel);
 }
@@ -161,7 +165,7 @@ void dataset_label_assert(Dataset *dataset, gconstpointer label) {
 	g_assert(g_hash_table_lookup_extended(dataset->labels, label, NULL, NULL));
 }
 
-gpointer dataset_label_lookup(Dataset * dataset, const gchar * slabel) {
+gpointer dataset_label_create(Dataset * dataset, const gchar * slabel) {
 	gpointer label;
 	GQuark qlabel;
 
@@ -176,6 +180,17 @@ gpointer dataset_label_lookup(Dataset * dataset, const gchar * slabel) {
 		}
 		g_hash_table_insert(dataset->labels, label, label);
 	}
+	return label;
+}
+
+gpointer dataset_label_lookup(Dataset * dataset, const gchar * slabel) {
+	gpointer label;
+	GQuark qlabel;
+
+	qlabel = g_quark_from_string(slabel);
+	label = GINT_TO_POINTER(qlabel);
+	g_return_val_if_fail(g_hash_table_lookup_extended(dataset->labels, label, NULL, NULL),
+			     NULL);
 	return label;
 }
 

@@ -64,7 +64,7 @@ static void parse_node(Tokens * toks, Dataset * dd, GHashTable * id_labels) {
 	if (id == NULL || node_label == NULL) {
 		tokens_fail(toks, "missing id/label");
 	}
-	label = dataset_label_lookup(dd, strip_quotes(node_label));
+	label = dataset_label_create(dd, strip_quotes(node_label));
 	g_free(node_label);
 	g_hash_table_insert(id_labels, id, label);
 }
@@ -190,6 +190,7 @@ void dataset_gml_save_io(Dataset * dataset, GIOChannel * io) {
 			}
 		}
 	}
+	dataset_get_labels_free(labels);
 	io_printf(io, "]\n");
 }
 

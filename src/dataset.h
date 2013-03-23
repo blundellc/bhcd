@@ -24,7 +24,8 @@ gboolean dataset_get(Dataset *, gconstpointer, gconstpointer, gboolean *);
 void dataset_label_assert(Dataset *, gconstpointer);
 guint dataset_num_labels(Dataset *);
 GList * dataset_get_labels(Dataset *);
-/* inserts label if it does not already exist */
+void dataset_get_labels_free(GList * labels);
+gpointer dataset_label_create(Dataset *, const gchar *);
 gpointer dataset_label_lookup(Dataset *, const gchar *);
 gpointer dataset_get_max_label(Dataset *);
 const gchar * dataset_label_to_string(Dataset *, gconstpointer);
