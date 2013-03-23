@@ -47,22 +47,25 @@ gchar * parse_args(int *argc, char ***argv) {
 	error = NULL;
 	if (!g_option_context_parse(ctx, argc, argv, &error)) {
 		g_print("option parsing failed: %s\n", error->message);
-		exit(1);
+		goto error;
 	}
 	if (*argc < 2) {
 		g_print("missing argument FILE\n");
-		g_print("%s", g_option_context_get_help(ctx, TRUE, NULL));
-		exit(1);
+		goto error;
 	}
 	if (*argc > 2) {
 		g_print("too many arguments\n");
-		g_print("%s", g_option_context_get_help(ctx, TRUE, NULL));
-		exit(1);
+		goto error;
 	}
+	g_option_context_free(ctx);
 	output_tree_fname = g_strdup_printf("%s.tree", output_prefix);
 	output_pred_fname = g_strdup_printf("%s.pred", output_prefix);
 	output_time_fname = g_strdup_printf("%s.time", output_prefix);
 	return (*argv)[1];
+error:
+	g_print("%s", g_option_context_get_help(ctx, TRUE, NULL));
+	g_option_context_free(ctx);
+	exit(1);
 }
 
 Tree * run(GRand * rng, Dataset * dataset, gboolean verbose) {
