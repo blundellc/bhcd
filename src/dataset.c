@@ -161,6 +161,31 @@ gpointer dataset_get_max_label(Dataset * dataset) {
 	return GINT_TO_POINTER(dataset->max_qlabel);
 }
 
+GList * dataset_get_label_pairs(Dataset *dataset, gint *value_others) {
+	GList * pairs;
+	GList * keys;
+
+	g_assert(value_others != NULL);
+	*value_others = dataset->omitted;
+
+	pairs = NULL;
+	keys = g_hash_table_get_keys(dataset->cells);
+	for (GList * xx = keys; xx != NULL; xx = g_list_next(xx)) {
+		Dataset_Key * key = xx->data;
+		Pair * pair = pair_new(GINT_TO_POINTER(key->src),
+					GINT_TO_POINTER(key->dst));
+
+		pairs = g_list_prepend(pairs, pair);
+	}
+	g_list_free(keys);
+	return pairs;
+}
+
+void dataset_get_label_pairs_free(GList * pairs) {
+	g_list_free_full(pairs, (GDestroyNotify) pair_free);
+}
+
+
 void dataset_label_assert(Dataset *dataset, gconstpointer label) {
 	g_assert(g_hash_table_lookup_extended(dataset->labels, label, NULL, NULL));
 }

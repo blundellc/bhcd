@@ -29,6 +29,8 @@ gpointer dataset_label_create(Dataset *, const gchar *);
 gpointer dataset_label_lookup(Dataset *, const gchar *);
 gpointer dataset_get_max_label(Dataset *);
 const gchar * dataset_label_to_string(Dataset *, gconstpointer);
+GList * dataset_get_label_pairs(Dataset *, gint *value_others);
+void dataset_get_label_pairs_free(GList *);
 
 void dataset_println(Dataset *, const gchar *);
 void dataset_tostring(Dataset *, GString *);
