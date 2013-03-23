@@ -1,0 +1,37 @@
+#!/usr/bin/python
+
+import subprocess, datetime, sys
+
+def main():
+    leak_check = ['./scripts/leak', '--error-exitcode=1']
+    tagname = datetime.datetime.now().strftime('tested-%Y%m%d%H%M%S')
+    cmds = [
+    # first check git is cleanly commited
+    # - update the index
+            ['git', 'update-index', '-q', '--ignore-submodules', '--refresh'],
+    # - check for unstaged changes
+            ['git', 'diff-files', '--quiet', '--ignore-submodules', '--'],
+    # - check for uncommited changes
+            ['git', 'diff-index', '--quiet', '--ignore-submodules', 'HEAD', '--'],
+            ['./scripts/config', 'debug'],
+            leak_check + ['./src/test'],
+            leak_check + ['./src/loadgml', 'data/ila/gene/gene_1_train.mat_train.gml',
+                    'output/out.gml', 'output/out.adj'],
+            ['diff', '-u', 'output/standard-gene1.gml', 'output/out.gml'],
+            ['diff', '-u', 'output/standard-gene1.adj', 'output/out.adj'],
+            leak_check + ['./src/fastnrt', 'data/blocks.gml'],
+            ['diff', '-u', 'output/standard-blocks.tree', 'output/out.tree'],
+            ['./src/fastnrt', 'data/noisy-blocks.gml'],
+            ['diff', '-u', 'output/standard-noisy-blocks.tree', 'output/out.tree'],
+            ['git','tag', tagname]
+        ]
+    for cmd in cmds:
+        if subprocess.call(cmd):
+            print 'FAILED', ' '.join(cmd)
+            sys.exit(1)
+    print 'SUCCESS!'
+    sys.exit(0)
+
+if __name__ == '__main__':
+    main();
+

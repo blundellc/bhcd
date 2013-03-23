@@ -1,0 +1,3 @@
+#!/bin/sh
+
+cppcheck --quiet -v --enable=all -Isrc --force -I/usr/include src
