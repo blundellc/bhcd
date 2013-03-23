@@ -269,6 +269,53 @@ void test_tree_logprob4(void) {
 	g_rand_free(rng);
 }
 
+
+void test_build_logpred4(void) {
+	Tree * root;
+	Dataset * dataset;
+	Params * params;
+	GRand * rng;
+	GList * pairs;
+	gint value_others;
+	gdouble logprob_true, logprob_false;
+	gpointer bb, dd;
+
+	rng = g_rand_new();
+	dataset = dataset_gen_toy4();
+	params = params_default(dataset);
+	root = build(rng, params);
+
+	/* test on the training points */
+	pairs = dataset_get_label_pairs(dataset, &value_others);
+	/* these are the non-missing values */
+	g_assert(value_others < 0);
+#define	pred_ok(src, dst) \
+	do {									\
+		logprob_true = tree_predict(root, src, dst, TRUE);		\
+		logprob_false = tree_predict(root, src, dst, FALSE);		\
+		assert_lefloat(logprob_true, 0.0, EQFLOAT_DEFAULT_PREC);	\
+		assert_lefloat(logprob_false, 0.0, EQFLOAT_DEFAULT_PREC);	\
+		assert_eqfloat(log_add_exp(logprob_true, logprob_false), 0.0,	\
+				EQFLOAT_DEFAULT_PREC);				\
+	} while (0)
+
+	for (GList * xx = pairs; xx != NULL; xx = g_list_next(xx)) {
+		Pair * pair = xx->data;
+		pred_ok(pair->fst, pair->snd);
+	}
+	dataset_get_label_pairs_free(pairs);
+	bb = dataset_label_lookup(dataset, "bb");
+	dd = dataset_label_lookup(dataset, "dd");
+	pred_ok(bb, bb);
+	pred_ok(bb, dd);
+	pred_ok(dd, dd);
+#undef pred_ok
+	dataset_unref(dataset);
+	params_unref(params);
+	tree_unref(root);
+	g_rand_free(rng);
+}
+
 void test_merge_score3(void) {
 	GRand * rng;
 	Params * params;
@@ -648,6 +695,7 @@ int main(int argc, char *argv[]) {
 	g_test_init(&argc, &argv, NULL);
 	g_test_add_func("/tree/logprob3", test_tree_logprob3);
 	g_test_add_func("/tree/logprob4", test_tree_logprob4);
+	g_test_add_func("/tree/logpred4", test_build_logpred4);
 	g_test_add_func("/merge/score3", test_merge_score3);
 	g_test_add_func("/bitset", test_bitset);
 	g_test_add_func("/bitset/popcount", test_bitset_popcount);
