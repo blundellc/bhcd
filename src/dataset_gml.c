@@ -136,19 +136,7 @@ static void parse_edge(Tokens * toks, Dataset * dd, GHashTable * id_labels) {
 
 
 void dataset_gml_save(Dataset * dataset, const gchar *fname) {
-	GIOChannel *io;
-	GError *error;
-	error = NULL;
-	io = g_io_channel_new_file(fname, "w", &error);
-	if (error != NULL) {
-		g_error("open `%s': %s", fname, error->message);
-	}
-	dataset_gml_save_io(dataset, io);
-	g_io_channel_shutdown(io, TRUE, &error);
-	if (error != NULL) {
-		g_error("shutdown `%s': %s", fname, error->message);
-	}
-	g_io_channel_unref(io);
+	io_file(fname, (IOFunc)dataset_gml_save_io, dataset);
 }
 
 void dataset_gml_save_io(Dataset * dataset, GIOChannel * io) {

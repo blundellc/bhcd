@@ -7,19 +7,7 @@ Tree * tree_io_load(const gchar *fname) {
 }
 
 void tree_io_save(Tree *tree, const gchar *fname) {
-	GIOChannel *io;
-	GError *error;
-	error = NULL;
-	io = g_io_channel_new_file(fname, "w", &error);
-	if (error != NULL) {
-		g_error("open `%s': %s", fname, error->message);
-	}
-	tree_io_save_io(tree, io);
-	g_io_channel_shutdown(io, TRUE, &error);
-	if (error != NULL) {
-		g_error("shutdown `%s': %s", fname, error->message);
-	}
-	g_io_channel_unref(io);
+	io_file(fname, (IOFunc)tree_io_save_io, tree);
 }
 
 void tree_io_save_io(Tree *root, GIOChannel *io) {

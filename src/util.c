@@ -97,6 +97,22 @@ void io_stdout(IOFunc func, gpointer user_data) {
 	g_io_channel_unref(io);
 }
 
+void io_file(const gchar *fname, IOFunc func, gpointer user_data) {
+        GIOChannel *io;
+        GError *error;
+        error = NULL;
+        io = g_io_channel_new_file(fname, "w", &error);
+        if (error != NULL) {
+                g_error("open `%s': %s", fname, error->message);
+        }
+        func(user_data, io);
+        g_io_channel_shutdown(io, TRUE, &error);
+        if (error != NULL) {
+                g_error("shutdown `%s': %s", fname, error->message);
+        }
+        g_io_channel_unref(io);
+}
+
 gchar * strip_quotes(gchar *str) {
 	guint len;
 
