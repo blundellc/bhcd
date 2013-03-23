@@ -27,6 +27,8 @@ def main():
             env['CFLAGS'] += ' -ggdb3 '
         elif mode == "profile":
             env['CFLAGS'] += ' -pg -g '
+        elif mode == "cover":
+            env['CFLAGS'] += ' -O0 -fprofile-arcs -ftest-coverage'
         elif mode == "release":
             env['CFLAGS'] += ' -DG_DISABLE_ASSERT -O3'
         elif mode == "release":

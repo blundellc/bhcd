@@ -76,8 +76,12 @@ void test_tree_logprob3(void) {
 
 	/* pairs */
 	tab = branch_new(params);
+	g_assert(tree_num_leaves(tab) == 0);
+	g_assert(tree_num_intern(tab) == 1);
 	branch_add_child(tab, laa);
 	branch_add_child(tab, lbb);
+	g_assert(tree_num_leaves(tab) == 2);
+	g_assert(tree_num_intern(tab) == 1);
 
 	g_assert(g_list_length(tree_get_labelsets(tab)) == 2);
 	g_assert(g_list_length(tree_get_labelsets(laa)) == 1);
@@ -107,6 +111,8 @@ void test_tree_logprob3(void) {
 	tabc = branch_new(params);
 	branch_add_child(tabc, tab);
 	branch_add_child(tabc, lcc);
+	g_assert(tree_num_intern(tabc) == 2);
+	g_assert(tree_num_leaves(tabc) == 3);
 
 	correct_tabc =
 		log_add_exp(gsl_sf_log(0.4) + gsl_sf_lnbeta(1.0+1, 0.2+2) - gsl_sf_lnbeta(1.0, 0.2)
@@ -209,6 +215,8 @@ void test_tree_logprob4(void) {
 			   ,gsl_sf_log(1.0 - 0.4) + correct_tbalance_children
 			   );
 	tbalance = branch_new_full(params, tab, tcd);
+	g_assert(tree_num_leaves(tbalance) == 4);
+	g_assert(tree_num_intern(tbalance) == 3);
 	assert_eqfloat(tree_get_logprob(tbalance), correct_tbalance, prec);
 
 	/* 4-flat */
@@ -218,11 +226,9 @@ void test_tree_logprob4(void) {
 				+ gsl_sf_lnbeta(1.0+1, 0.2) - gsl_sf_lnbeta(1.0, 0.2)
 				+ gsl_sf_lnbeta(1.0, 0.2+1) - gsl_sf_lnbeta(1.0, 0.2)
 			   );
-	tflat = branch_new(params);
-	branch_add_child(tflat, laa);
-	branch_add_child(tflat, lbb);
-	branch_add_child(tflat, lcc);
-	branch_add_child(tflat, ldd);
+	tflat = branch_new_full(params, laa, lbb, lcc, ldd);
+	g_assert(tree_num_leaves(tflat) == 4);
+	g_assert(tree_num_intern(tflat) == 1);
 	assert_eqfloat(tree_get_logprob(tflat), correct_tflat, prec);
 
 	merge = merge_collapse(rng, params, 0, tcd, 1, tab);
@@ -240,13 +246,15 @@ void test_tree_logprob4(void) {
 		log_add_exp(gsl_sf_log(0.4) + gsl_sf_lnbeta(1.0+6, 0.2+7) - gsl_sf_lnbeta(1.0, 0.2)
 			, gsl_sf_log(1-0.4) + gsl_sf_lnbeta(0.2+2, 1.0+3) - gsl_sf_lnbeta(0.2, 1.0)
 				+ correct_tcascade_intern);
-	tcascade_intern = branch_new(params);
-	branch_add_child(tcascade_intern, tab);
-	branch_add_child(tcascade_intern, lcc);
+	tcascade_intern = branch_new_full(params, tab, lcc);
+	g_assert(tree_num_leaves(tcascade_intern) == 3);
+	g_assert(tree_num_intern(tcascade_intern) == 2);
 	assert_eqfloat(tree_get_logprob(tcascade_intern), correct_tcascade_intern, prec);
 	tcascade = branch_new(params);
 	branch_add_child(tcascade, tcascade_intern);
 	branch_add_child(tcascade, ldd);
+	g_assert(tree_num_leaves(tcascade) == 4);
+	g_assert(tree_num_intern(tcascade) == 3);
 	assert_eqfloat(tree_get_logprob(tcascade), correct_tcascade, prec);
 
 	merge = merge_join(rng, params, 0, tcascade_intern, 1, ldd);
