@@ -404,7 +404,7 @@ gdouble tree_get_lognotresponse(Tree *tree) {
 	return tree->log_not_pi + tree->logprob_children - logprob;
 }
 
-gdouble tree_predict(Tree *tree, gpointer src, gpointer dst, gboolean value) {
+gdouble tree_logpredict(Tree *tree, gpointer src, gpointer dst, gboolean value) {
 	Tree * child;
 	gdouble logpred_on;
 	gdouble logpred_below;
@@ -431,7 +431,7 @@ gdouble tree_predict(Tree *tree, gpointer src, gpointer dst, gboolean value) {
 		/* src,dst lies in the off block */
 		logpred_below = params_logpred_off(tree->params, tree->suffstats_off, value);
 	} else {
-		logpred_below = tree_predict(child, src, dst, value);
+		logpred_below = tree_logpredict(child, src, dst, value);
 	}
 	return log_add_exp(
 		  tree_get_logresponse(tree)    + logpred_on

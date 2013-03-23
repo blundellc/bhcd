@@ -285,7 +285,7 @@ void test_build_logpred4(void) {
 	GRand * rng;
 	GList * pairs;
 	gint value_others;
-	gdouble logprob_true, logprob_false;
+	gdouble logpred_true, logpred_false;
 	gpointer bb, dd;
 	Build * build;
 
@@ -305,11 +305,11 @@ void test_build_logpred4(void) {
 	g_assert(value_others < 0);
 #define	pred_ok(src, dst) \
 	do {									\
-		logprob_true = tree_predict(root, src, dst, TRUE);		\
-		logprob_false = tree_predict(root, src, dst, FALSE);		\
-		assert_lefloat(logprob_true, 0.0, EQFLOAT_DEFAULT_PREC);	\
-		assert_lefloat(logprob_false, 0.0, EQFLOAT_DEFAULT_PREC);	\
-		assert_eqfloat(log_add_exp(logprob_true, logprob_false), 0.0,	\
+		logpred_true = tree_logpredict(root, src, dst, TRUE);		\
+		logpred_false = tree_logpredict(root, src, dst, FALSE);		\
+		assert_lefloat(logpred_true, 0.0, EQFLOAT_DEFAULT_PREC);	\
+		assert_lefloat(logpred_false, 0.0, EQFLOAT_DEFAULT_PREC);	\
+		assert_eqfloat(log_add_exp(logpred_true, logpred_false), 0.0,	\
 				EQFLOAT_DEFAULT_PREC);				\
 	} while (0)
 
