@@ -100,6 +100,11 @@ void io_stdout(IOFunc func, gpointer user_data) {
 void io_writefile(const gchar *fname, IOFunc func, gpointer user_data) {
         GIOChannel *io;
         GError *error;
+
+	if (strcmp(fname, "-") == 0) {
+		io_stdout(func, user_data);
+		return;
+	}
         error = NULL;
         io = g_io_channel_new_file(fname, "w", &error);
         if (error != NULL) {
