@@ -6,23 +6,27 @@ def main():
     leak_check = ['./scripts/leak', '--error-exitcode=1']
     tagname = datetime.datetime.now().strftime('tested-%Y%m%d%H%M%S')
     cmds = [
-    # first check git is cleanly commited
+    # approx in order of run time
+            ['./scripts/config', 'debug'],
+            ['./src/test'],
+            leak_check + ['./src/test'],
+            ['./src/fastnrt', '-t', 'data/noisy-blocks.gml', 'data/noisy-blocks.gml'],
+            ['diff', '-u', 'output/standard-noisy-blocks.tree', 'output/out.tree'],
+            ['diff', '-u', 'output/standard-noisy-blocks.pred', 'output/out.pred'],
+            leak_check + ['./src/loadgml', 'data/ila/gene/gene_1_train.mat_train.gml',
+                    'output/out.gml', 'output/out.adj'],
+            ['diff', '-u', 'output/standard-gene1.gml', 'output/out.gml'],
+            ['diff', '-u', 'output/standard-gene1.adj', 'output/out.adj'],
+            leak_check + ['./src/fastnrt', '-t', 'data/blocks.gml', 'data/blocks.gml'],
+            ['diff', '-u', 'output/standard-blocks.tree', 'output/out.tree'],
+            ['diff', '-u', 'output/standard-blocks.pred', 'output/out.pred'],
+    # check git is cleanly commited
     # - update the index
             ['git', 'update-index', '-q', '--ignore-submodules', '--refresh'],
     # - check for unstaged changes
             ['git', 'diff-files', '--quiet', '--ignore-submodules', '--'],
     # - check for uncommited changes
             ['git', 'diff-index', '--quiet', '--ignore-submodules', 'HEAD', '--'],
-            ['./scripts/config', 'debug'],
-            leak_check + ['./src/test'],
-            leak_check + ['./src/loadgml', 'data/ila/gene/gene_1_train.mat_train.gml',
-                    'output/out.gml', 'output/out.adj'],
-            ['diff', '-u', 'output/standard-gene1.gml', 'output/out.gml'],
-            ['diff', '-u', 'output/standard-gene1.adj', 'output/out.adj'],
-            leak_check + ['./src/fastnrt', 'data/blocks.gml'],
-            ['diff', '-u', 'output/standard-blocks.tree', 'output/out.tree'],
-            ['./src/fastnrt', 'data/noisy-blocks.gml'],
-            ['diff', '-u', 'output/standard-noisy-blocks.tree', 'output/out.tree'],
             ['git','tag', tagname]
         ]
     for cmd in cmds:
