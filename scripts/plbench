@@ -5,6 +5,6 @@
 # black dashed line is log of run time in seconds (y-axis is log seconds)
 # red solid line is a shifted and scaled logprob per cell. (symmetric, but with
 # diagonal data in the blocks data).
-awk '!/better/ {print $1" "log($2)" "(-3*$4/($1*($1+1)/2))}' <output/out.bench | pl 0,1/kx-- 0,2/rx-
+awk '!/better/ {print $1" "log($2)" "(-5*$4/($1*($1+1)/2))" "log($6)}' <output/out.bench | pl 0,1/kx-- 0,2/rx- 0,3/bx-
 #awk '!/better/ {print $1" "log($2)" "($4/($1*($1+1)/2))}' <output/out.bench | pl 0,1/kx-- 0,2/rx-
 awk '!/better/ {print (-$4/($1*($1+1)/2))}' <output/out.bench | summary
