@@ -26,16 +26,21 @@ def main():
             # some of the above do not work without -O2
             env['CFLAGS'] += ' -ggdb3 '
         elif mode == "profile":
-            env['CFLAGS'] += ' -pg -finstrument-functions'
+            env['CFLAGS'] += ' -pg -g '
         elif mode == "release":
             env['CFLAGS'] += ' -DG_DISABLE_ASSERT -O3'
         elif mode == "release":
             pass
+        elif mode == 'portland':
+	    env['CC'] = 'pgcc'
+        elif mode == 'clang':
+	    env['CC'] = 'clang'
         else:
             usage()
 
     subprocess.call(["make", "clean"])
-    subprocess.call(["./configure"], env=env)
+    if subprocess.call(["./configure"], env=env):
+        return
     subprocess.call(["make", "-j120"])
 
 if __name__ == '__main__':
