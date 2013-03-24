@@ -4,23 +4,32 @@
 #include "nrt.h"
 
 
-typedef struct job {
+typedef struct {
 	guint num_items;
 	gdouble sparsity;
 } Job;
 
-typedef struct result {
+typedef struct {
 	Job * job;
 	Tree * best_tree;
 	gdouble worst_time;
 } Result;
 
-static void job(Job * job, GAsyncQueue * result_queue);
+static void blocks_job(Job * job, GAsyncQueue * result_queue);
 static void result_free(gpointer pres);
-static Tree * run_rand(guint num_items, gdouble sparsity);
+static Tree * run_blocks(guint num_items, gdouble sparsity);
 
 
-static int small_jobs_first(Job *aa, Job *bb, gpointer junk) {
+static gint small_jobs_first(gconstpointer paa, gconstpointer pbb, gpointer junk) {
+	const Job * aa = paa;
+	const Job * bb = pbb;
+	/* glib's internal g_thread_pool_wakeup_and_stop_all (up to now) seems to
+	 * push 1 onto the internal thread pool queue... which we're sorting. uh
+	 * oh.
+	 */
+	if (paa == GINT_TO_POINTER(1) || pbb == GINT_TO_POINTER(1)) {
+		return 0;
+	}
 	return aa->num_items - bb->num_items;
 }
 
@@ -32,7 +41,7 @@ static void result_free(gpointer pres) {
 	g_free(res);
 }
 
-static void job(Job * job, GAsyncQueue * result_queue) {
+static void blocks_job(Job * job, GAsyncQueue * result_queue) {
 	Result * result;
 	GTimer *timer;
 	Tree * tree;
@@ -43,7 +52,7 @@ static void job(Job * job, GAsyncQueue * result_queue) {
 	g_print("job %d start\n", job->num_items);
 	for (guint repeat = 0; repeat < 100; repeat++) {
 		g_timer_start(timer);
-		tree = run_rand(job->num_items, job->sparsity);
+		tree = run_blocks(job->num_items, job->sparsity);
 		g_timer_stop(timer);
 		if (result == NULL) {
 			result = g_new(Result, 1);
@@ -64,7 +73,7 @@ static void job(Job * job, GAsyncQueue * result_queue) {
 }
 
 
-static Tree * run_rand(guint num_items, gdouble sparsity) {
+static Tree * run_blocks(guint num_items, gdouble sparsity) {
 	Dataset * dataset;
 	Params * params;
 	Tree * root;
@@ -103,11 +112,11 @@ int main(int argc, char * argv[]) {
 	error = NULL;
 	g_thread_init(NULL);
 	result_queue = g_async_queue_new_full(result_free);
-	pool = g_thread_pool_new((GFunc)job, result_queue, num_cores, TRUE, &error);
+	pool = g_thread_pool_new((GFunc)blocks_job, result_queue, num_cores, TRUE, &error);
 	if (error != NULL) {
 		g_error("g_thread_pool_new: %s", error->message);
 	}
-	g_thread_pool_set_sort_function(pool, (GCompareDataFunc)small_jobs_first, NULL);
+	g_thread_pool_set_sort_function(pool, small_jobs_first, NULL);
 	sparsity = 0.2;
 	pending_jobs = 0;
 	for (num_items = 2; num_items < 5; num_items += 2) {
@@ -122,12 +131,13 @@ int main(int argc, char * argv[]) {
 	}
 
 	while (pending_jobs > 0) {
+		Result * result;
 		// wait 30s between attempts to pop from queue (timed_pop for
 		// compat).
 		GTimeVal timeout;
 		g_get_current_time(&timeout);
 		g_time_val_add(&timeout, 30000000);
-		Result * result = g_async_queue_timed_pop(result_queue, &timeout);
+		result = g_async_queue_timed_pop(result_queue, &timeout);
 		while (result != NULL) {
 			g_print("%d %2.2e ", result->job->num_items, result->worst_time);
 			tree_println(result->best_tree, "");
@@ -137,7 +147,7 @@ int main(int argc, char * argv[]) {
 		}
 		g_print("status: %d pending\n", pending_jobs);
 	}
-	g_thread_pool_free(pool, TRUE, FALSE);
+	g_thread_pool_free(pool, FALSE, TRUE);
 	g_async_queue_unref(result_queue);
 	return 0;
 }
