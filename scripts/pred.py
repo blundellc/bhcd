@@ -4,7 +4,7 @@ import sys
 from math import *
 
 # only look at the upper triangluar results.
-upper_only = False
+upper_only = True
 
 def logsumexp(xs):
     mm = max(xs)
@@ -16,10 +16,16 @@ def load(fname):
     with open(fname) as pred:
         for line in pred.readlines():
             src, dst, correct, lp_false, lp_true = line.split(',')
-            if not upper_only or src >= dst:
-                truth[src, dst] = correct == "true"
-                lprob[src, dst] = { False: float(lp_false), True: float(lp_true) }
-                #lprob[src, dst] = { False: log(0.9999), True: log(0.0001) }
+            if upper_only and src < dst:
+                continue
+            truth[src, dst] = correct == "true"
+            lprob[src, dst] = { False: float(lp_false), True: float(lp_true) }
+            #pred = lprob[src,dst][True] > lprob[src,dst][False]
+            #pred = truth[src,dst]
+            #lprob[src,dst][pred] = log(0.98)
+            #lprob[src,dst][not pred] = log(0.02)
+            #lprob[src,dst][False] = log(0.51)
+            #lprob[src,dst][True] = log(0.49)
     return truth, lprob
 
 def check_sum(lprob):
@@ -36,7 +42,7 @@ def var(xs):
     return sum((x*x for x in xs))/float(len(xs)) - mm*mm
 
 def std(xs):
-    return sqrt(var(xs))
+    return sqrt(max(0, var(xs)))
 
 def std_err(xs):
     nn = len(xs)
@@ -55,10 +61,12 @@ def loss01(truth, lprob):
     total = 0.0
     wrong = 0.0
     for src, dst in truth:
-        total += 1
+        if upper_only and src < dst:
+            continue
+        total += 1.0
         call = max(lprob[src, dst].keys(), key=lambda kk: lprob[src,dst][kk])
         if call != truth[src, dst]:
-            wrong += 1
+            wrong += 1.0
     return wrong/total
 
 def auc(truth, lprob):
