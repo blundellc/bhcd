@@ -29,6 +29,7 @@ static void build_init_merges(Build * build);
 static void build_init_trees(Build * build, GList * labels);
 static void build_remove_tree(Build * build, guint ii);
 static void build_cleanup(Build * build);
+static void build_assert(Build * build);
 
 
 Build * build_new(GRand *rng, Params * params, guint num_restarts, gboolean sparse) {
@@ -59,6 +60,26 @@ void build_free(Build * build) {
 	g_free(build);
 }
 
+static void build_assert(Build * build) {
+	GSequenceIter * head;
+	GSequenceIter * prev;
+	if (!build->debug) {
+		return;
+	}
+	if (build->merges != NULL) {
+		// make sure merges is sorted
+		prev = g_sequence_get_begin_iter(build->merges);
+		for (head = g_sequence_iter_next(prev);
+			!g_sequence_iter_is_end(head); 
+			head = g_sequence_iter_next(head)) {
+
+			Merge * prev_merge = g_sequence_get(prev);
+			Merge * head_merge = g_sequence_get(head);
+			assert_lefloat(head_merge->score, prev_merge->score, EQFLOAT_DEFAULT_PREC);
+			prev = head;
+		}
+	}
+}
 
 
 Tree * build_get_best_tree(Build * build) {
@@ -178,6 +199,7 @@ static void build_greedy(Build * build) {
 	live_trees = build->trees->len;
 	while (live_trees > 1) {
 		g_assert(g_sequence_get_length(build->merges) > 0);
+		build_assert(build);
 		head = g_sequence_get_begin_iter(build->merges);
 		cur = g_sequence_get(head);
 		g_sequence_remove(head);
