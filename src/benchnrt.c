@@ -68,6 +68,7 @@ static void blocks_job(Job * job, GAsyncQueue * result_queue) {
 			tree_unref(tree);
 		}
 	}
+	g_timer_destroy(timer);
 	g_async_queue_push(result_queue, result);
 	g_print("job %d done!\n", job->num_items);
 }
@@ -105,7 +106,7 @@ int main(int argc, char * argv[]) {
 	gdouble sparsity;
 	GAsyncQueue * result_queue;
 	GThreadPool * pool;
-	const guint num_cores = 8;
+	const guint num_cores = 5;
 	GError * error;
 	gint pending_jobs;
 
@@ -119,7 +120,19 @@ int main(int argc, char * argv[]) {
 	g_thread_pool_set_sort_function(pool, small_jobs_first, NULL);
 	sparsity = 0.2;
 	pending_jobs = 0;
-	for (num_items = 2; num_items < 5; num_items += 2) {
+	for (num_items = 10; num_items < 64; num_items += 2) {
+	//for (num_items = 2; num_items < 6; num_items += 2) {
+		Job * job = g_new(Job, 1);
+		job->num_items = num_items;
+		job->sparsity = sparsity;
+		g_thread_pool_push(pool, job, &error);
+		if (error != NULL) {
+			g_error("g_thread_pool_push: %s", error->message);
+		}
+		pending_jobs++;
+	}
+
+	for (num_items = 64; num_items < 500; num_items += 64) {
 		Job * job = g_new(Job, 1);
 		job->num_items = num_items;
 		job->sparsity = sparsity;
