@@ -74,11 +74,14 @@ Dataset * dataset_gen_toy3(void) {
 }
 
 
-Dataset * dataset_gen_toy4(void) {
+Dataset * dataset_gen_toy4(gboolean sparse) {
 	Dataset * dataset;
 	gpointer aa, bb, cc, dd;
 
 	dataset = dataset_new(FALSE);
+	if (sparse) {
+		dataset_set_omitted(dataset, FALSE);
+	}
 	/* from scala code
 	 *     aa   bb   cc   dd
 	 * aa   1    0    0    1

@@ -97,15 +97,12 @@ Tree * run(GRand * rng, Dataset * dataset, gboolean verbose) {
 void eval_test(Tree * root, GIOChannel *io) {
 	Dataset * test;
 	GList * pairs;
-	gint value_omitted;
 
 	if (test_fname == NULL) {
 		return;
 	}
 	test = dataset_gml_load(test_fname);
-	pairs = dataset_get_label_pairs(test, &value_omitted);
-	// better not be sparse.
-	g_assert(value_omitted < 0);
+	pairs = dataset_get_label_pairs(test);
 	for (GList * xx = pairs; xx != NULL; xx = g_list_next(xx)) {
 		Pair * pair = xx->data;
 		gboolean missing;

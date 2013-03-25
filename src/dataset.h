@@ -29,7 +29,7 @@ gpointer dataset_label_create(Dataset *, const gchar *);
 gpointer dataset_label_lookup(Dataset *, const gchar *);
 gpointer dataset_get_max_label(Dataset *);
 const gchar * dataset_label_to_string(Dataset *, gconstpointer);
-GList * dataset_get_label_pairs(Dataset *, gint *value_others);
+GList * dataset_get_label_pairs(Dataset *);
 void dataset_get_label_pairs_free(GList *);
 
 void dataset_println(Dataset *, const gchar *);
@@ -38,7 +38,7 @@ void dataset_tostring(Dataset *, GString *);
 Dataset * dataset_gen_speckle(GRand *, guint, gdouble);
 Dataset * dataset_gen_blocks(GRand *, guint, guint, gdouble);
 Dataset * dataset_gen_toy3(void);
-Dataset * dataset_gen_toy4(void);
+Dataset * dataset_gen_toy4(gboolean sparse);
 
 
 #endif

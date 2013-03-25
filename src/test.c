@@ -37,7 +37,7 @@ void init_test_toy4(Tree **laa, Tree **lbb, Tree **lcc, Tree **ldd) {
 	Params *params;
 	gpointer aa, bb, cc, dd;
 
-	dataset = dataset_gen_toy4();
+	dataset = dataset_gen_toy4(FALSE);
 	/* dataset_println(dataset, ""); */
 	aa = dataset_label_lookup(dataset, "aa");
 	bb = dataset_label_lookup(dataset, "bb");
@@ -278,19 +278,20 @@ void test_tree_logprob4(void) {
 }
 
 
-void test_build_logpred4(void) {
+gdouble test_build_logpred4_sparse(gboolean sparse) {
 	Tree * root;
 	Dataset * dataset;
 	Params * params;
 	GRand * rng;
 	GList * pairs;
-	gint value_others;
 	gdouble logpred_true, logpred_false;
 	gpointer bb, dd;
 	Build * build;
+	gdouble total;
+	guint count;
 
-	rng = g_rand_new();
-	dataset = dataset_gen_toy4();
+	rng = g_rand_new_with_seed(2);
+	dataset = dataset_gen_toy4(sparse);
 	params = params_default(dataset);
 	build = build_new(rng, params, 10, FALSE);
 	build_set_verbose(build, FALSE);
@@ -298,11 +299,12 @@ void test_build_logpred4(void) {
 	root = build_get_best_tree(build);
 	tree_ref(root);
 	build_free(build);
+	tree_println(root, "tree: ");
 
+	total = 0;
+	count = 0;
 	/* test on the training points */
-	pairs = dataset_get_label_pairs(dataset, &value_others);
-	/* these are the non-missing values */
-	g_assert(value_others < 0);
+	pairs = dataset_get_label_pairs(dataset);
 #define	pred_ok(src, dst) \
 	do {									\
 		logpred_true = tree_logpredict(root, src, dst, TRUE);		\
@@ -316,7 +318,10 @@ void test_build_logpred4(void) {
 	for (GList * xx = pairs; xx != NULL; xx = g_list_next(xx)) {
 		Pair * pair = xx->data;
 		pred_ok(pair->fst, pair->snd);
+		total += logpred_true;
+		count++;
 	}
+	g_assert_cmpint(count, ==, 16-3);
 	dataset_get_label_pairs_free(pairs);
 	bb = dataset_label_lookup(dataset, "bb");
 	dd = dataset_label_lookup(dataset, "dd");
@@ -328,6 +333,16 @@ void test_build_logpred4(void) {
 	params_unref(params);
 	tree_unref(root);
 	g_rand_free(rng);
+	return total;
+}
+
+void test_build_logpred4(void) {
+	gdouble total_dense;
+	gdouble total_sparse;
+
+	total_dense = test_build_logpred4_sparse(FALSE);
+	total_sparse = test_build_logpred4_sparse(TRUE);
+	assert_eqfloat(total_dense, total_sparse, EQFLOAT_DEFAULT_PREC);
 }
 
 void test_merge_score3(void) {

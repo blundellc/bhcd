@@ -161,23 +161,37 @@ gpointer dataset_get_max_label(Dataset * dataset) {
 	return GINT_TO_POINTER(dataset->max_qlabel);
 }
 
-GList * dataset_get_label_pairs(Dataset *dataset, gint *value_others) {
+GList * dataset_get_label_pairs(Dataset *dataset) {
 	GList * pairs;
-	GList * keys;
-
-	g_assert(value_others != NULL);
-	*value_others = dataset->omitted;
+	Pair * pair;
 
 	pairs = NULL;
-	keys = g_hash_table_get_keys(dataset->cells);
-	for (GList * xx = keys; xx != NULL; xx = g_list_next(xx)) {
-		Dataset_Key * key = xx->data;
-		Pair * pair = pair_new(GINT_TO_POINTER(key->src),
+	if (dataset->omitted < 0) {
+		// dense data
+		GList * keys = g_hash_table_get_keys(dataset->cells);
+		for (GList * xx = keys; xx != NULL; xx = g_list_next(xx)) {
+			Dataset_Key * key = xx->data;
+			pair = pair_new(GINT_TO_POINTER(key->src),
 					GINT_TO_POINTER(key->dst));
 
-		pairs = g_list_prepend(pairs, pair);
+			pairs = g_list_prepend(pairs, pair);
+		}
+		g_list_free(keys);
+	} else {
+		// sparse data--use brute force.
+		GList * labels = dataset_get_labels(dataset);
+		for (GList * xx = labels; xx != NULL; xx = g_list_next(xx)) {
+			for (GList * yy = labels; yy != NULL; yy = g_list_next(yy)) {
+				if (dataset_is_missing(dataset, xx->data, yy->data)) {
+					continue;
+				}
+				pair = pair_new(GINT_TO_POINTER(xx->data),
+						GINT_TO_POINTER(yy->data));
+				pairs = g_list_prepend(pairs, pair);
+			}
+		}
+		dataset_get_labels_free(labels);
 	}
-	g_list_free(keys);
 	return pairs;
 }
 
