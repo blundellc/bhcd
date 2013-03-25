@@ -3,7 +3,7 @@
 import sys, subprocess, os
 
 def usage():
-    print "config <debug|release>"
+    print "config <debug|release> [profile] [<portland|cland>]"
     sys.exit(1)
 
 def main():
@@ -31,8 +31,6 @@ def main():
             env['CFLAGS'] += ' -O0 -fprofile-arcs -ftest-coverage'
         elif mode == "release":
             env['CFLAGS'] += ' -DG_DISABLE_ASSERT -O3'
-        elif mode == "release":
-            pass
         elif mode == 'portland':
 	    env['CC'] = 'pgcc'
         elif mode == 'clang':
