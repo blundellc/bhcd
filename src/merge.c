@@ -132,8 +132,12 @@ static gdouble merge_calc_logprob_rel(Params * params, Tree * aa, Tree * bb) {
 gint merge_cmp_score(gconstpointer paa, gconstpointer pbb, gpointer userdata) {
 	const Merge * aa = paa;
 	const Merge * bb = pbb;
-	gint diff = bb->score - aa->score;
-	if (diff == 0) {
+	gdouble diff = bb->score - aa->score;
+	if (diff < 0) {
+		return -1;
+	} else if (diff > 0) {
+		return 1;
+	} else {
 		if (bb->sym_break < aa->sym_break) {
 			return -1;
 		} else if (bb->sym_break >= aa->sym_break) {
