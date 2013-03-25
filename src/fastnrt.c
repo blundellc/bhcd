@@ -137,7 +137,8 @@ int main(int argc, char * argv[]) {
 
 	fname = parse_args(&argc, &argv);
 
-	g_print("seed: %u\n", seed);
+	g_print("seed: %x\n", seed);
+	g_print("output prefix: %s\n", output_prefix);
 	rng = g_rand_new_with_seed(seed);
 	timer = g_timer_new();
 	dataset = dataset_gml_load(fname);
