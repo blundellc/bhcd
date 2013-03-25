@@ -30,7 +30,7 @@ void merge_free1(gpointer merge, gpointer data) {
 }
 
 
-void merge_println(Merge * merge, const gchar * prefix) {
+void merge_println(const Merge * merge, const gchar * prefix) {
 	GString * out;
 
 	out = g_string_new(prefix);
@@ -39,7 +39,7 @@ void merge_println(Merge * merge, const gchar * prefix) {
 	g_string_free(out, TRUE);
 }
 
-void merge_tostring(Merge * merge, GString * out) {
+void merge_tostring(const Merge * merge, GString * out) {
 	g_string_append_printf(out, "%d + %d (%2.2e/%2.2f)-> ", merge->ii, merge->jj, merge->score, merge->sym_break);
 	tree_tostring(merge->tree, out);
 }
@@ -132,8 +132,12 @@ static gdouble merge_calc_logprob_rel(Params * params, Tree * aa, Tree * bb) {
 gint merge_cmp_score(gconstpointer paa, gconstpointer pbb, gpointer userdata) {
 	const Merge * aa = paa;
 	const Merge * bb = pbb;
-	gint diff = bb->score - aa->score;
-	if (diff == 0) {
+	gdouble diff = bb->score - aa->score;
+	if (diff < 0) {
+		return -1;
+	} else if (diff > 0) {
+		return 1;
+	} else {
 		if (bb->sym_break < aa->sym_break) {
 			return -1;
 		} else if (bb->sym_break >= aa->sym_break) {
