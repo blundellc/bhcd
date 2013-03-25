@@ -19,6 +19,7 @@ static gchar 	output_prefix_default[] = "output/out";
 static gchar *	output_prefix = output_prefix_default;
 static gchar *	output_tree_fname = NULL;
 static gchar *	output_pred_fname = NULL;
+static gchar *	output_fit_fname = NULL;
 static gchar *	output_time_fname = NULL;
 
 static GOptionEntry options[] = {
@@ -38,7 +39,13 @@ static GOptionEntry options[] = {
 	{ NULL,		   0, 0, 0,			NULL,		NULL, NULL },
 };
 
-gchar * parse_args(int *argc, char ***argv) {
+static gchar * parse_args(int *argc, char ***argv);
+static Tree * run(GRand * rng, Dataset * dataset, gboolean verbose);
+static void save_pred(Pair * tree_dataset, GIOChannel * io);
+static void timer_save_io(GTimer * timer, GIOChannel * io);
+
+
+static gchar * parse_args(int *argc, char ***argv) {
 	GError * error;
 	GOptionContext * ctx;
 
@@ -60,6 +67,7 @@ gchar * parse_args(int *argc, char ***argv) {
 	g_option_context_free(ctx);
 	output_tree_fname = g_strdup_printf("%s.tree", output_prefix);
 	output_pred_fname = g_strdup_printf("%s.pred", output_prefix);
+	output_fit_fname  = g_strdup_printf("%s.fit", output_prefix);
 	output_time_fname = g_strdup_printf("%s.time", output_prefix);
 	return (*argv)[1];
 error:
@@ -68,7 +76,7 @@ error:
 	exit(1);
 }
 
-Tree * run(GRand * rng, Dataset * dataset, gboolean verbose) {
+static Tree * run(GRand * rng, Dataset * dataset, gboolean verbose) {
 	Params * params;
 	Tree * root;
 	Build * build;
@@ -94,34 +102,44 @@ Tree * run(GRand * rng, Dataset * dataset, gboolean verbose) {
 	return root;
 }
 
-void eval_test(Tree * root, GIOChannel *io) {
+static void eval_test(Tree * root, GIOChannel *io) {
 	Dataset * test;
-	GList * pairs;
+	Pair * tree_data;
 
 	if (test_fname == NULL) {
 		return;
 	}
 	test = dataset_gml_load(test_fname);
-	pairs = dataset_get_label_pairs(test);
+	tree_data = pair_new(root, test);
+	save_pred(tree_data, io);
+	pair_free(tree_data);
+	dataset_unref(test);
+}
+
+static void save_pred(Pair * tree_dataset, GIOChannel * io) {
+	Tree * const tree = tree_dataset->fst;
+	Dataset * const dataset = tree_dataset->snd;
+	GList * pairs;
+
+	pairs = dataset_get_label_pairs(dataset);
 	for (GList * xx = pairs; xx != NULL; xx = g_list_next(xx)) {
 		Pair * pair = xx->data;
 		gboolean missing;
-		gboolean value = dataset_get(test, pair->fst, pair->snd, &missing);
-		gdouble logpred_true = tree_logpredict(root, pair->fst, pair->snd, TRUE);
-		gdouble logpred_false = tree_logpredict(root, pair->fst, pair->snd, FALSE);
+		gboolean value = dataset_get(dataset, pair->fst, pair->snd, &missing);
+		gdouble logpred_true = tree_logpredict(tree, pair->fst, pair->snd, TRUE);
+		gdouble logpred_false = tree_logpredict(tree, pair->fst, pair->snd, FALSE);
 		g_assert(!missing);
 		io_printf(io, "%s,%s,%s,%1.17e,%1.17e\n",
-				dataset_label_to_string(test, pair->fst),
-				dataset_label_to_string(test, pair->snd),
+				dataset_label_to_string(dataset, pair->fst),
+				dataset_label_to_string(dataset, pair->snd),
 				(value? "true": "false"),
 				logpred_false,
 				logpred_true);
 	}
 	dataset_get_label_pairs_free(pairs);
-	dataset_unref(test);
 }
 
-void timer_save_io(GTimer * timer, GIOChannel * io) {
+static void timer_save_io(GTimer * timer, GIOChannel * io) {
 	io_printf(io, "time: %es\n", g_timer_elapsed(timer, NULL));
 }
 
@@ -129,16 +147,17 @@ int main(int argc, char * argv[]) {
 	GRand * rng;
 	GTimer * timer;
 	Dataset * dataset;
-	gchar *fname;
+	gchar * train_fname;
+	Pair * tree_data;
 	Tree * root;
 
-	fname = parse_args(&argc, &argv);
+	train_fname = parse_args(&argc, &argv);
 
 	g_print("seed: %x\n", seed);
 	g_print("output prefix: %s\n", output_prefix);
 	rng = g_rand_new_with_seed(seed);
 	timer = g_timer_new();
-	dataset = dataset_gml_load(fname);
+	dataset = dataset_gml_load(train_fname);
 
 	g_timer_start(timer);
 	root = run(rng, dataset, FALSE);
@@ -151,6 +170,9 @@ int main(int argc, char * argv[]) {
 	tree_io_save(root, output_tree_fname);
 
 	io_writefile(output_pred_fname, (IOFunc)eval_test, root);
+	tree_data = pair_new(root, dataset);
+	io_writefile(output_fit_fname, (IOFunc)save_pred, tree_data);
+	pair_free(tree_data);
 
 	tree_unref(root);
 	g_free(output_tree_fname);

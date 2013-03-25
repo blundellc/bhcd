@@ -299,7 +299,6 @@ gdouble test_build_logpred4_sparse(gboolean sparse) {
 	root = build_get_best_tree(build);
 	tree_ref(root);
 	build_free(build);
-	tree_println(root, "tree: ");
 
 	total = 0;
 	count = 0;
