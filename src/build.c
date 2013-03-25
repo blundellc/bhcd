@@ -19,6 +19,7 @@ struct Build_t {
 
 	InitMergesFunc init_merges;
 	AddMergesFunc add_merges;
+	gpointer merges_data;
 };
 
 static void build_add_merges(Build * build, Tree * tkk);
@@ -44,6 +45,7 @@ Build * build_new(GRand *rng, Params * params, guint num_restarts, gboolean spar
 	build->trees = NULL;
 	build->merges = NULL;
 	build->best_tree = NULL;
+	build->merges_data = NULL;
 
 	build->init_merges = build_init_merges;
 	build->add_merges = build_add_merges;
@@ -89,7 +91,7 @@ void build_once(Build * build) {
 	labels = dataset_get_labels(build->params->dataset);
 	build_init_trees(build, labels);
 	dataset_get_labels_free(labels);
-	build_init_merges(build);
+	build->init_merges(build);
 	build_greedy(build);
 	build_extract_best_tree(build);
 	build_cleanup(build);
@@ -121,6 +123,7 @@ static void build_init_merges(Build * build) {
 
 	g_assert(build->trees != NULL);
 	g_assert(build->merges == NULL);
+	g_assert(build->merges_data == NULL);
 	build->merges = g_sequence_new(NULL);
 
 	for (ii = 0; ii < build->trees->len; ii++) {
@@ -151,6 +154,7 @@ static void build_add_merges(Build * build, Tree * tkk) {
 
 	g_assert(build->trees != NULL);
 	g_assert(build->merges != NULL);
+	g_assert(build->merges_data == NULL);
 	kk = build->trees->len;
 	for (ll = 0; ll < build->trees->len; ll++) {
 		if (g_ptr_array_index(build->trees, ll) == NULL) {
