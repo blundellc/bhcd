@@ -24,8 +24,8 @@ Merge * merge_absorb(GRand *, Params * params, guint ii, Tree * aa, guint jj, Tr
 Merge * merge_join(GRand *, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
 Merge * merge_collapse(GRand *, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
 
-void merge_println(Merge * merge, const gchar * prefix);
-void merge_tostring(Merge * merge, GString * out);
+void merge_println(const Merge * merge, const gchar * prefix);
+void merge_tostring(const Merge * merge, GString * out);
 gint merge_cmp_score(gconstpointer paa, gconstpointer pbb, gpointer userdata);
 
 #endif /*MERGE_H*/
