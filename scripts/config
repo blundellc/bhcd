@@ -18,7 +18,7 @@ def main():
     env['CFLAGS'] += ' -D_FORIFY_SOURCE=2 -Wformat -Wformat-security'
 
     for mode in sys.argv[1:]:
-        if mode == "debug":
+        if mode.startswith("debug"):
             env['CFLAGS'] += ' -pedantic -Wall -Wfloat-equal -Wbad-function-cast -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wdeclaration-after-statement -Wuninitialized -Wstrict-overflow=5 -Wextra -Wno-unused-parameter -Wfatal-errors -Wwrite-strings'
             env['CFLAGS'] += ' -Wno-deprecated-declarations'
             env['CFLAGS'] += ' -Wdouble-promotion -Wconversion -Wno-sign-conversion'
@@ -26,7 +26,10 @@ def main():
                 # clang is slightly more aggressive, and finds soemthing glib..
                 env['CFLAGS'] += ' -Wunreachable-code'
             # some of the above do not work without -O2
-            env['CFLAGS'] += ' -ggdb3 -O2'
+            if mode == 'debug-no-opt':
+                env['CFLAGS'] += ' -ggdb3'
+            else:
+                env['CFLAGS'] += ' -ggdb3 -O2'
         elif mode == "profile":
             env['CFLAGS'] += ' -pg -g '
         elif mode == "cover":
