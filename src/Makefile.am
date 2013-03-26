@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Make-rules
 
-bin_PROGRAMS = fastnrt loadgml benchnrt test
+bin_PROGRAMS = fastnrt loadgml benchnrt test savetoy
 
 core_srcs = dataset.c util.c counts.c params.c tree.c merge.c \
 					build.c tokens.c dataset_gml.c tree_io.c sscache.c \
@@ -14,6 +14,9 @@ benchnrt_LDADD = $(DEPS_LIBS)
 
 loadgml_SOURCES = loadgml.c $(core_srcs)
 loadgml_LDADD = $(DEPS_LIBS)
+
+savetoy_SOURCES = savetoy.c $(core_srcs)
+savetoy_LDADD = $(DEPS_LIBS)
 
 test_SOURCES = test.c $(core_srcs)
 test_LDADD = $(DEPS_LIBS)
