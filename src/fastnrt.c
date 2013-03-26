@@ -7,6 +7,7 @@
 
 
 static gboolean binary_only = FALSE;
+static gboolean sparse_greedy = FALSE;
 static guint build_restarts = 1000;
 static guint seed = 0x2a23b6bb;
 static gdouble param_gamma = 0.4;
@@ -25,6 +26,7 @@ static gchar *	output_time_fname = NULL;
 static GOptionEntry options[] = {
 	{ "seed",	 's', 0, G_OPTION_ARG_INT,	&seed,		"set RNG seed to S",		"S" },
 
+	{ "sparse",	 'S', 0, G_OPTION_ARG_NONE,	&sparse_greedy,	"use sparse greedy algorithm",	NULL },
 	{ "binary-only", 'B', 0, G_OPTION_ARG_NONE,	&binary_only, 	"only construct binary trees",	NULL },
 	{ "restarts",	 'R', 0, G_OPTION_ARG_INT,	&build_restarts,"take best of N restarts",	"N" },
 
@@ -91,7 +93,7 @@ static Tree * run(GRand * rng, Dataset * dataset, gboolean verbose) {
 			param_delta, param_lambda);
 	params->binary_only = binary_only;
 
-	build = build_new(rng, params, build_restarts, FALSE);
+	build = build_new(rng, params, build_restarts, sparse_greedy);
 	params_unref(params);
 	build_run(build);
 	root = build_get_best_tree(build);
