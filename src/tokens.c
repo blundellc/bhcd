@@ -132,7 +132,7 @@ gchar * tokens_next_quoted(Tokens * toks) {
 	gchar *next;
 	gchar *rest;
 	gchar *tmp;
-	gint len;
+	size_t len;
 
 	next = tokens_next(toks);
 	len = strlen(next);

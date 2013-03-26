@@ -63,7 +63,7 @@ void pair_free(Pair *pair);
 gdouble log_add_exp(gdouble, gdouble);
 gchar * num_to_string(guint);
 gint cmp_quark(gconstpointer, gconstpointer);
-void io_printf(GIOChannel *io, const gchar *fmt, ...);
+void io_printf(GIOChannel *io, const gchar *fmt, ...) G_GNUC_PRINTF(2, 3);
 void io_stdout(IOFunc func, gpointer user_data);
 void io_writefile(const gchar *fname, IOFunc func, gpointer user_data);
 
@@ -84,7 +84,7 @@ static inline guint32 pop_count(guint64 xx) {
 	xx = (xx & 0x00ff00ff00ff00ffULL) + ((xx >>  8) & 0x00ff00ff00ff00ffULL);
 	xx = (xx & 0x0000ffff0000ffffULL) + ((xx >> 16) & 0x0000ffff0000ffffULL);
 	xx = (xx & 0x00000000ffffffffULL) + ((xx >> 32) & 0x00000000ffffffffULL);
-	return xx;
+	return (guint32)xx;
 }
 
 #endif  /*UTIL_H*/

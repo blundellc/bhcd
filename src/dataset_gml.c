@@ -23,7 +23,7 @@ Dataset * dataset_gml_load(const gchar *fname) {
 		if (strcmp(next, "graph") == 0) {
 			tokens_expect(toks, "[");
 		} else if (strcmp(next, "sparse") == 0) {
-			dataset_set_omitted(dd, tokens_next_int(toks));
+			dataset_set_omitted(dd, tokens_next_int(toks) > 0);
 		} else if (strcmp(next, "node") == 0) {
 			parse_node(toks, dd, id_labels);
 		} else if (strcmp(next, "edge") == 0) {
@@ -72,7 +72,7 @@ static void parse_node(Tokens * toks, Dataset * dd, GHashTable * id_labels) {
 static void parse_edge(Tokens * toks, Dataset * dd, GHashTable * id_labels) {
 	gpointer src;
 	gpointer dst;
-	gint weight;
+	gint64 weight;
 	gchar *next;
 
 	src = NULL;

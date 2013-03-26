@@ -264,7 +264,7 @@ void dataset_tostring(Dataset * dataset, GString *str) {
 	max_len = 1;
 	for (xx = labels; xx != NULL; xx = g_list_next(xx)) {
 		qxx = GPOINTER_TO_INT(xx->data);
-		len = strlen(g_quark_to_string(qxx));
+		len = (guint)strlen(g_quark_to_string(qxx));
 		if (len > max_len) {
 			max_len = len;
 		}

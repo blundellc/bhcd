@@ -142,8 +142,10 @@ gint merge_cmp_score(gconstpointer paa, gconstpointer pbb, gpointer userdata) {
 			return -1;
 		} else if (bb->sym_break >= aa->sym_break) {
 			return 1;
+		} else {
+			// really no way to discriminate!
+			return 0;
 		}
 	}
-	return diff;
 }
 

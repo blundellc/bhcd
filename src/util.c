@@ -121,7 +121,7 @@ void io_writefile(const gchar *fname, IOFunc func, gpointer user_data) {
 gchar * strip_quotes(gchar *str) {
 	guint len;
 
-	len = strlen(str);
+	len = (guint)strlen(str);
 	if (len > 1 && str[0] == '"' && str[len-1] == '"') {
 		g_memmove(str, &str[1], len-1);
 		str[len-2] = '\0';
