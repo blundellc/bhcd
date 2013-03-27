@@ -21,6 +21,10 @@ def main():
             ['diff', '-u', 'output/standard-noisy-blocks.tree', 'output/out.tree'],
             ['diff', '-u', 'output/standard-noisy-blocks.pred', 'output/out.pred'],
             ['diff', '-u', 'output/standard-noisy-blocks.fit', 'output/out.fit'],
+            ['./src/fastnrt', '-S', '-t', 'data/blocks.gml', 'data/noisy-blocks.gml'],
+            ['diff', '-u', 'output/standard-noisy-blocks-sparse.tree', 'output/out.tree'],
+            ['diff', '-u', 'output/standard-noisy-blocks.pred', 'output/out.pred'],
+            ['diff', '-u', 'output/standard-noisy-blocks.fit', 'output/out.fit'],
             leak_check + ['./src/loadgml', 'data/ila/gene/gene_1_train.mat_train.gml',
                     'output/out.gml', 'output/out.adj'],
             ['diff', '-u', 'output/standard-gene1.gml', 'output/out.gml'],
@@ -29,6 +33,10 @@ def main():
             ['diff', '-u', 'output/standard-blocks.tree', 'output/out.tree'],
             ['diff', '-u', 'output/standard-blocks.fit', 'output/out.fit'],
             ['diff', '-u', 'output/standard-blocks.pred', 'output/out.pred'],
+            leak_check + ['./src/fastnrt', '-S', '-t', 'data/noisy-blocks.gml', 'data/blocks.gml'],
+            ['diff', '-u', 'output/standard-blocks-sparse.tree', 'output/out.tree'],
+            ['diff', '-u', 'output/standard-blocks-sparse.fit', 'output/out.fit'],
+            ['diff', '-u', 'output/standard-blocks-sparse.pred', 'output/out.pred'],
     # check git is cleanly commited
     # - update the index
             ['git', 'update-index', '-q', '--ignore-submodules', '--refresh'],
