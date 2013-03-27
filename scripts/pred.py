@@ -28,6 +28,25 @@ def load(fname):
             #lprob[src,dst][True] = log(0.49)
     return truth, lprob
 
+def blend_preds(truths, lprobs):
+    truth0 = truths[0]
+    for truth in truths[1:]:
+        if truth != truth0:
+            raise 'truth mismatch'
+
+    lprob = lprobs[0]
+    nn = 1.0
+    for lprob1 in lprobs[1:]:
+        nn += 1.0
+        for src, dst in lprob.keys():
+            lprob[src, dst][False] += lprob1[src, dst][False]
+            lprob[src, dst][True] += lprob1[src, dst][True]
+
+    for src, dst in lprob.keys():
+        lprob[src, dst][False] /= nn
+        lprob[src, dst][True] /= nn
+    return truth0, lprob
+
 def check_sum(lprob):
     for kk in lprob:
         zz = logsumexp(lprob[kk].values())
@@ -84,7 +103,15 @@ def auc(truth, lprob):
     return (So - (nl*(nl+1))/2)/(nl*nn)
 
 def main():
-    truth, lprob = load(sys.argv[1])
+    truths = []
+    lprobs = []
+    for fname in sys.argv[1:]:
+        truth, lprob = load(fname)
+        truths.append(truth)
+        lprobs.append(lprob)
+
+    truth, lprob = blend_preds(truths, lprobs)
+
     check_sum(lprob)
     avg_log_prob(truth, lprob)
     print 'loss01 %2.5f' % loss01(truth, lprob)
