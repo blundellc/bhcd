@@ -37,6 +37,7 @@ static void build_init_trees(Build * build, GList * labels);
 static void build_remove_tree(Build * build, guint ii);
 static void build_cleanup(Build * build);
 static void build_assert(Build * build);
+static void build_flatten_trees(Build * build);
 
 
 Build * build_new(GRand *rng, Params * params, guint num_restarts, gboolean sparse) {
@@ -283,9 +284,7 @@ static void build_sparse_fini_merges(Build * build) {
 static void build_greedy(Build * build) {
 	Merge * cur;
 	GSequenceIter * head;
-	guint live_trees;
 
-	live_trees = build->trees->len;
 	for (head = g_sequence_get_begin_iter(build->merges);
 	    !g_sequence_iter_is_end(head);
 	    head = g_sequence_get_begin_iter(build->merges)) {
@@ -310,14 +309,45 @@ static void build_greedy(Build * build) {
 
 		build_remove_tree(build, cur->ii);
 		build_remove_tree(build, cur->jj);
-		live_trees--;
 		build->add_merges(build, cur->tree, cur->ii, cur->jj);
 		g_ptr_array_add(build->trees, cur->tree);
 		tree_ref(cur->tree);
 again:
 		merge_free(cur);
 	}
+	build_flatten_trees(build);
 }
+
+static void build_flatten_trees(Build * build) {
+	/* we've agglomerated as much as we can by merging,
+	 * but in the sparse case, we might have more than one connected
+	 * component--so just connect them in a rose tree
+	 */
+	Tree * new_root;
+	Tree * child;
+	guint num_children;
+
+	new_root = branch_new(build->params);
+	num_children = 0;
+	for (guint ii = 0; ii < build->trees->len; ii++) {
+		child = g_ptr_array_index(build->trees, ii);
+		if (child == NULL) {
+			continue;
+		}
+		branch_add_child(new_root, child);
+		build_remove_tree(build, ii);
+		num_children++;
+	}
+	g_assert(num_children != 0);
+	if (num_children == 1) {
+		tree_ref(child);
+		tree_unref(new_root);
+		g_ptr_array_index(build->trees, 0) = child;
+	} else {
+		g_ptr_array_index(build->trees, 0) = new_root;
+	}
+}
+
 
 static void build_extract_best_tree(Build * build) {
 	Tree * root;
@@ -325,7 +355,7 @@ static void build_extract_best_tree(Build * build) {
 	g_assert(build->merges != NULL);
 	g_assert(build->trees != NULL);
 
-	root = g_ptr_array_index(build->trees, build->trees->len - 1);
+	root = g_ptr_array_index(build->trees, 0);
 	g_assert(root != NULL);
 	if (build->best_tree == NULL) {
 		build->best_tree = root;
