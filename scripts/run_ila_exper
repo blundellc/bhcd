@@ -1,0 +1,20 @@
+#!/bin/sh
+
+opts="--restarts 200"
+./src/fastnrt $opts -t data/ila/gene/gene_1_train.mat_test.gml -p output/gene1 data/ila/gene/gene_1_train.mat_train.gml &
+./src/fastnrt $opts -t data/ila/gene/gene_1_train.mat_test.gml -p output/gene1bin -B data/ila/gene/gene_1_train.mat_train.gml &
+./src/fastnrt $opts -t data/ila/nips/nips_1_train.mat_test.gml -p output/nips1 data/ila/nips/nips_1_train.mat_train.gml &
+./src/fastnrt $opts -t data/ila/nips/nips_1_train.mat_test.gml -p output/nips1bin -B data/ila/nips/nips_1_train.mat_train.gml &
+
+opts="--restarts 200 -S"
+./src/fastnrt $opts -t data/ila/gene/gene_1_train.mat_test.gml -p output/gene1sparse data/ila/gene/gene_1_train.mat_train.gml &
+./src/fastnrt $opts -t data/ila/gene/gene_1_train.mat_test.gml -p output/gene1binsparse -B data/ila/gene/gene_1_train.mat_train.gml &
+./src/fastnrt $opts -t data/ila/nips/nips_1_train.mat_test.gml -p output/nips1sparse data/ila/nips/nips_1_train.mat_train.gml &
+./src/fastnrt $opts -t data/ila/nips/nips_1_train.mat_test.gml -p output/nips1binsparse -B data/ila/nips/nips_1_train.mat_train.gml &
+wait
+wait
+wait
+wait
+wait
+wait
+
