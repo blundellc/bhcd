@@ -13,3 +13,15 @@ configure.scan
 autom4te.cache/
 depcomp
 aclocal.m4
+output/
+src/benchnrt
+src/fastnrt
+src/loadgml
+src/savetoy
+src/test
+tags
+config.guess
+config.sub
+data/
+libtool
+ltmain.sh
