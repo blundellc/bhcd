@@ -7,7 +7,7 @@ num_restarts=10
 for restart in $(seq $num_restarts); do
     echo restart $restart
     seed=$((restart+42))
-    myout="$out/$restart"
+    myout="$out/blend/$restart"
     mkdir -p $myout
     opts="--restarts=1 --seed=$seed"
     ./src/fastnrt $opts -t data/ila/nips/nips_1_train.mat_test.gml -p $myout/nips1 data/ila/nips/nips_1_train.mat_train.gml &
