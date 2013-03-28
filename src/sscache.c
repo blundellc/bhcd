@@ -216,15 +216,29 @@ out:
 
 static gpointer sscache_lookup_offblock_ordered(SSCache *cache, Labelset * kk, GList * zzxx) {
 	gpointer suffstats = suffstats_new_empty();
+	gboolean found = FALSE;
+	for (GList * xx = zzxx; xx != NULL; xx = g_list_next(xx)) {
+		gpointer offblock_suffstats = sscache_lookup_offblock_simple(cache, kk, xx->data);
+		found = offblock_suffstats != NULL;
+		if (found) {
+			break;
+		}
+	}
+	if (!found) {
+		goto not_found;
+	}
 	for (; zzxx != NULL; zzxx = g_list_next(zzxx)) {
 		gpointer offblock_suffstats = sscache_lookup_offblock_simple(cache, kk, zzxx->data);
 		if (offblock_suffstats == NULL) {
-			goto error;
+			offblock_suffstats = sscache_lookup_offblock_sparse(cache, kk, zzxx->data);
+		}
+		if (offblock_suffstats == NULL) {
+			goto not_found;
 		}
 		suffstats_add(suffstats, offblock_suffstats);
 	}
 	return suffstats;
-error:
+not_found:
 	suffstats_unref(suffstats);
 	return NULL;
 }
