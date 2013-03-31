@@ -87,4 +87,15 @@ static inline guint32 pop_count(guint64 xx) {
 	return (guint32)xx;
 }
 
+static inline guint32 rev32(guint32 xx) {
+	guint32 rr = xx & 0x1;
+	for (guint ii = 1; ii < 32; ii++) {
+		rr <<= 1;
+		rr |= (xx >> ii) & 1;
+	}
+	return rr;
+}
+
+guint32 log2_32(guint32 xx);
+
 #endif  /*UTIL_H*/

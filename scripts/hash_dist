@@ -1,0 +1,9 @@
+#!/bin/sh
+echo singles:
+grep -v , dist  | cut -d: -f2 | sort | uniq -c | awk '{print $1}' | summary
+echo pairs:
+grep '^[0-9]*, [0-9]*:' dist  | cut -d: -f2 | sort | uniq -c | awk '{print $1}' | summary
+echo triples:
+grep '^[0-9]*, [0-9]*, [0-9]*:' dist  | cut -d: -f2 | sort | uniq -c | awk '{print $1}' | summary
+echo overall:
+cut -d: -f2 <dist | sort | uniq -c | awk '{print $1}' | summary
