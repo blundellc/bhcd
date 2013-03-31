@@ -186,3 +186,30 @@ void list_labelset_print(GList * list) {
 		}
 	}
 }
+
+
+#define	LT(nn)	nn, nn, nn, nn, nn, nn, nn, nn, nn, nn, nn, nn, nn, nn, nn, nn
+static const char log2_32_tbl[256] = { -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, LT(4), LT(5), LT(5), LT(6), LT(6), LT(6), LT(6), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7) };
+#undef LT
+
+
+guint32 log2_32(guint32 xx) {
+	const guint32 h16 = xx >> 16;
+	if (h16) {
+		const guint32 h8 = h16 >> 8;
+		if (h8) {
+			return 24 + log2_32_tbl[h8];
+		} else {
+			return 16 + log2_32_tbl[h16];
+		}
+	} else {
+		const guint32 lh8 = xx >> 8;
+		if (lh8) {
+			return 8 + log2_32_tbl[lh8];
+		} else {
+			return log2_32_tbl[xx];
+		}
+	}
+}
+
+
