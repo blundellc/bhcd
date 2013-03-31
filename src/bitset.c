@@ -69,15 +69,18 @@ guint32 bitset_count(Bitset *bitset) {
 }
 
 guint bitset_hash(Bitset * bitset) {
-	guint32 hash = 0;
+	guint64 hash = 1234;
 
 	for (guint32 ii = 0; ii < bitset->size; ii++) {
 		const guint64 elem = bitset->elems[ii];
-		const guint32 lower_elem = elem & 0xffffffff;
-		const guint32 upper_elem = (guint32)(elem >> 32);
-		hash ^= lower_elem ^ upper_elem;
+		hash ^= elem*(ii+1);
+
+		// gives slightly better distribution
+		if (elem) {
+			hash *= 0xffffffffffffffc5;
+		}
 	}
-	return hash;
+	return (guint32)(hash ^ (hash >> 32));
 }
 
 static inline void bitset_get_bit(Bitset * bitset, guint32 index, guint32 * elem_index, guint64 * bit) {
