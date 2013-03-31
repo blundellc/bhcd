@@ -8,7 +8,7 @@
 
 static gboolean binary_only = FALSE;
 static gboolean sparse_greedy = FALSE;
-static guint build_restarts = 1000;
+static guint build_restarts = 1;
 static guint seed = 0x2a23b6bb;
 static gdouble param_gamma = 0.4;
 static gdouble param_alpha = 1.0;
