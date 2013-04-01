@@ -85,6 +85,29 @@ guint bitset_hash(Bitset * bitset) {
 	return (guint32)(hash ^ (hash >> 32));
 }
 
+gint bitset_cmp(gconstpointer paa, gconstpointer pbb) {
+	const Bitset * aa = paa;
+	const Bitset * bb = pbb;
+	const guint32 max_size = MAX(aa->size, bb->size);
+	for (guint32 jj = 0; jj < max_size; jj++) {
+		const guint32 ii = max_size - 1 - jj;
+		guint64 aa_elem = 0;
+		guint64 bb_elem = 0;
+		if (ii < aa->size) {
+			aa_elem = aa->elems[ii];
+		}
+		if (ii < bb->size) {
+			bb_elem = bb->elems[ii];
+		}
+		if (aa_elem > bb_elem) {
+			return 1;
+		} else if (aa_elem < bb_elem) {
+			return -1;
+		}
+	}
+	return 0;
+}
+
 static inline void bitset_get_bit(Bitset * bitset, guint32 index, guint32 * elem_index, guint64 * bit) {
 	guint8 offset;
 
@@ -151,7 +174,7 @@ gboolean bitset_disjoint(Bitset *aa, Bitset *bb) {
 	return TRUE;
 }
 
-void bitset_foreach(Bitset *bitset, BitsetFunc func, gpointer user_data) {
+void bitset_foreach(const Bitset *bitset, BitsetFunc func, gpointer user_data) {
 	for (guint32 ii = 0; ii < bitset->size; ii++) {
 		guint64 elem = bitset->elems[ii];
 		guint32 bit;
@@ -163,7 +186,7 @@ void bitset_foreach(Bitset *bitset, BitsetFunc func, gpointer user_data) {
 	}
 }
 
-void bitset_print(Bitset * bitset) {
+void bitset_print(const Bitset * bitset) {
         GString * out;
 
         out = g_string_new("");
@@ -178,7 +201,7 @@ void bitset_tostring_append(gpointer pout, guint32 ii) {
 }
 
 
-void bitset_tostring(Bitset * bitset, GString * out) {
+void bitset_tostring(const Bitset * bitset, GString * out) {
 	bitset_foreach(bitset, bitset_tostring_append, out);
 }
 

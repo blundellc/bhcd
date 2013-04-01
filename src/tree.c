@@ -285,6 +285,13 @@ void tree_tostring(Tree * tree, GString *str) {
 	tree_struct_tostring(tree, str);
 }
 
+gint tree_cmp_label(gconstpointer paa, gconstpointer pbb) {
+	const Tree * aa = paa;
+	const Tree * bb = pbb;
+	return labelset_cmp(aa->labels, bb->labels);
+}
+
+
 
 gconstpointer leaf_get_label(Tree * leaf) {
 	g_assert(tree_is_leaf(leaf));

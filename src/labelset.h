@@ -18,6 +18,7 @@ void labelset_unref(Labelset * lset);
 guint32 labelset_count(Labelset * lset);
 gboolean labelset_equal(Labelset *aa, Labelset *bb);
 guint labelset_hash(Labelset * lset);
+gint labelset_cmp(gconstpointer paa, gconstpointer pbb);
 
 gpointer labelset_any_label(Labelset * lset);
 void labelset_add(Labelset *lset, gconstpointer label);

@@ -39,5 +39,6 @@ guint tree_num_leaves(Tree * tree);
 void tree_println(Tree * tree, const gchar *prefix);
 void tree_tostring(Tree * tree, GString *str);
 void tree_struct_tostring(Tree * tree, GString *str);
+gint tree_cmp_label(gconstpointer paa, gconstpointer pbb);
 
 #endif /*TREE_H*/

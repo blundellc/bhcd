@@ -51,7 +51,7 @@ void tree_io_save_io(Tree *root, GIOChannel *io) {
 					dataset_label_to_string(dataset, leaf_get_label(tree))
 				);
 		} else {
-			GList * child;
+			GList * children;
 			guint my_index;
 
 			my_index = next_index;
@@ -71,10 +71,11 @@ void tree_io_save_io(Tree *root, GIOChannel *io) {
 						my_index
 					);
 			}
-			child = branch_get_children(tree);
-			for (; child != NULL; child = g_list_next(child)) {
+			children = g_list_sort(g_list_copy(branch_get_children(tree)), tree_cmp_label);
+			for (GList * child = children; child != NULL; child = g_list_next(child)) {
 				g_queue_push_tail(qq, pair_new(GINT_TO_POINTER(my_index), child->data));
 			}
+			g_list_free(children);
 		}
 		pair_free(cur);
 	}

@@ -14,6 +14,7 @@ void bitset_unref(Bitset *);
 guint32 bitset_count(Bitset *);
 gboolean bitset_equal(Bitset *aa, Bitset *bb);
 guint bitset_hash(Bitset * bitset);
+gint bitset_cmp(gconstpointer paa, gconstpointer pbb);
 
 guint32 bitset_any(Bitset *);
 void bitset_set(Bitset *bitset, guint32 index);
@@ -23,9 +24,9 @@ void bitset_union(Bitset *dst, Bitset *src);
 gboolean bitset_disjoint(Bitset *, Bitset *);
 
 typedef void (*BitsetFunc)(gpointer, guint32);
-void bitset_foreach(Bitset *bitset, BitsetFunc func, gpointer user_data);
+void bitset_foreach(const Bitset *bitset, BitsetFunc func, gpointer user_data);
 
-void bitset_print(Bitset *bitset);
-void bitset_tostring(Bitset * bitset, GString * out);
+void bitset_print(const Bitset *bitset);
+void bitset_tostring(const Bitset * bitset, GString * out);
 
 #endif /*BITSET_H*/

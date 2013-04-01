@@ -71,6 +71,12 @@ guint labelset_hash(Labelset * lset) {
 	return bitset_hash(lset->bits);
 }
 
+gint labelset_cmp(gconstpointer paa, gconstpointer pbb) {
+	const Labelset * aa = paa;
+	const Labelset * bb = pbb;
+	return bitset_cmp(aa->bits, bb->bits);
+}
+
 
 void labelset_add(Labelset *lset, gconstpointer label) {
     bitset_set(lset->bits, GPOINTER_TO_INT(label));
