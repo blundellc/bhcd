@@ -127,6 +127,22 @@ Tree * tree_copy(Tree * orig) {
 	return tree;
 }
 
+guint32 tree_hash(Tree * tree) {
+	guint32 hash;
+	guint32 shift;
+
+	hash = labelset_hash(tree->labels);
+	return hash;
+	shift = 0;
+	for (GList * child = tree->children; child != NULL; child = g_list_next(child)) {
+		guint32 child_hash = tree_hash(child->data);
+		hash ^= child_hash >> shift;
+		hash ^= (child_hash & (0xffffff >> shift)) << (32-shift);
+		shift = (shift+1) & 31;
+	}
+	return hash;
+}
+
 Tree * leaf_new(Params * params, gpointer label) {
 	Tree * leaf;
 

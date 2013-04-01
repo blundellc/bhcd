@@ -14,6 +14,7 @@ Tree * branch_new_full1(Params * params, ...);
 #define	branch_new_full(params, ...)	branch_new_full1(params, __VA_ARGS__, NULL)
 
 Tree * tree_copy(Tree * orig);
+guint32 tree_hash(Tree * );
 void tree_ref(Tree * tree);
 void tree_unref(Tree * tree);
 
