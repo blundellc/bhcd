@@ -5,6 +5,8 @@
 #define	MASK_ELEM		(BITS_PER_ELEM-1)
 /* log2(BITS_PER_ELEM) */
 #define SHIFT_ELEM		6
+#define	MAX_ELEMS		0xffffff
+#define	HASH_PRIME		0xffffffffffffffc5
 
 struct Bitset_t {
 	guint ref_count;
@@ -18,7 +20,7 @@ static inline void bitset_get_bit(Bitset *bitset, guint32 index, guint32 * elem_
 Bitset * bitset_new(guint32 max_index) {
 	Bitset * bitset;
 
-	g_assert(max_index < 0xffffff);
+	g_assert(max_index < MAX_ELEMS);
 	bitset = g_new(Bitset, 1);
 	bitset->ref_count = 1;
 	bitset->size = 1 + max_index/BITS_PER_ELEM;
@@ -77,7 +79,7 @@ guint bitset_hash(Bitset * bitset) {
 
 		// gives slightly better distribution
 		if (elem) {
-			hash *= 0xffffffffffffffc5;
+			hash *= HASH_PRIME;
 		}
 	}
 	return (guint32)(hash ^ (hash >> 32));
