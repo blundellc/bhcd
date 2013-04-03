@@ -144,8 +144,10 @@ gint merge_cmp_score(gconstpointer paa, gconstpointer pbb, gpointer userdata) {
 		} else if (bb->sym_break > aa->sym_break) {
 			return 1;
 		} else {
+			/*
 			merge_println(aa, "aa: ");
 			merge_println(bb, "bb: ");
+			*/
 			g_warning("unable to break tie!");
 			// really no way to discriminate!
 			return 0;

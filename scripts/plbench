@@ -1,10 +1,11 @@
 #!/bin/sh
 
-
+fn=output/bench_output
 # x axis is number of labels
 # black dashed line is log of run time in seconds (y-axis is log seconds)
 # red solid line is a shifted and scaled logprob per cell. (symmetric, but with
 # diagonal data in the blocks data).
-awk '!/better/ {print $1" "log($2)" "(-5*$4/($1*($1+1)/2))" "log($6)}' <output/out.bench | pl 0,1/kx-- 0,2/rx- 0,3/bx-
-#awk '!/better/ {print $1" "log($2)" "($4/($1*($1+1)/2))}' <output/out.bench | pl 0,1/kx-- 0,2/rx-
-awk '!/better/ {print (-$4/($1*($1+1)/2))}' <output/out.bench | summary
+# blue line is log number of internal nodes (approx. number of parameters)
+awk '/^[0-9]/ {print $1" "log($2)" "(-5*$4/($1*($1+1)/2))" "log($6)}' <$fn | pl 0,1/kx-- 0,2/rx- 0,3/bx-
+#awk '/^[0-9]/ {print $1" "log($2)" "($4/($1*($1+1)/2))}' <$fn | pl 0,1/kx-- 0,2/rx-
+awk '/^[0-9]/ {print (-$4/($1*($1+1)/2))}' <$fn | summary
