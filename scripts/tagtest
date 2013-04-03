@@ -11,7 +11,7 @@ def main():
             ['./src/test'],
             leak_check + ['./src/test'],
             ['./src/savetoy'],
-            ['./scripts/tagtest-lua'],
+            ['./scripts/tagtest_lua'],
             ['diff', '-u', 'regress/standard-toy3.gml', 'output/toy3.gml'],
             ['diff', '-u', 'regress/standard-toy4dense.gml', 'output/toy4dense.gml'],
             ['diff', '-u', 'regress/standard-toy4sparse.gml', 'output/toy4sparse.gml'],
