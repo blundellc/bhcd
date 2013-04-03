@@ -1,4 +1,4 @@
 #!/bin/sh
 
-./scripts/dbg --leak-check=full "$@"
+./scripts/valgrind --leak-check=full "$@"
 
