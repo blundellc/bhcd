@@ -115,7 +115,7 @@ static int treelib_logpred(lua_State *ss) {
 
 static int treelib_is_leaf(lua_State *ss) {
 	Tree * tree = treelib_checktree(ss);
-	lua_pushnumber(ss, tree_is_leaf(tree));
+	lua_pushboolean(ss, tree_is_leaf(tree));
 	return 1;
 }
 
