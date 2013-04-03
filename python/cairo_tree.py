@@ -11,29 +11,24 @@ class layout_tree(object):
         else:
             self._children = list(self._children)
 
-        # supplied height
-        self.height = height
+        # supplied height mass
+        self._height_mass = height
 
+        # the below are in device coordinates.
         # offset of top left corner
-        self._offset = None
+        self._dev_offset = None
         # width and height of tree and descendants, from the offset
-        self._dimensions = None
+        self._dev_dimensions = None
         # amount of height that belongs to this node only
-        self._my_height = None
-        # string label associated with leaf
-        self._label = None
+        self._dev_my_height = None
 
     @property
     def children(self):
         return self._children
 
-    @property
-    def label(self):
-        return self._label
-
     def get_node_location(self):
-        return (self._offset[0] + self._dimensions[0]/2.0
-               ,self._offset[1] + self._dimensions[1])
+        return (self._dev_offset[0] + self._dev_dimensions[0]/2.0
+               ,self._dev_offset[1] + self._dev_my_height/2.0)
 
     def get_width_mass(self):
         if not self._children:
@@ -41,9 +36,9 @@ class layout_tree(object):
         return [sum(ch.get_width_mass()) for ch in self._children]
 
     def get_height_mass(self):
-        if self.height is None:
-            return self.get_height_depth()
-        return self.height
+        if self._height_mass is None:
+            self._height_mass = self.get_height_depth()
+        return self._height_mass
 
     def get_height_depth(self):
         if not self._children:
@@ -64,7 +59,7 @@ class layout_tree(object):
             min_width += leaf_width
         return min_width, bound_height
 
-    def get_good_dimensions(self, ctx):
+    def get_good_dimensions(self, ctx, prop_forest_height):
         min_width, min_height = self.get_min_dimensions(ctx)
         nleaves = len(self.get_leaves())
         width = (min_width/nleaves + 1)*nleaves
@@ -92,34 +87,30 @@ class layout_tree(object):
         self.update_layout((x1, y1), (width, height-bound_height))
 
     def update_layout(self, offset, dimensions):
-        self._offset = offset
-        self._dimensions = dimensions
+        self._dev_offset = offset
+        self._dev_dimensions = dimensions
 
         wmass = self.get_width_mass()
         zw = sum(wmass)
 
         hdepth = self.get_height_mass()
-        self._my_height = self._dimensions[1]/hdepth
-        ch_height = self._dimensions[1]*(hdepth-1)/hdepth
+        self._dev_my_height = self._dev_dimensions[1]/hdepth
+        ch_height = self._dev_dimensions[1]*(hdepth-1)/hdepth
 
-        ox = self._offset[0]
-        oy = self._offset[1] + self._my_height
+        ox = self._dev_offset[0]
+        oy = self._dev_offset[1] + self._dev_my_height
 
         for i, ch in enumerate(self._children):
-            ch_width = wmass[i]*self._dimensions[0]/zw
+            ch_width = wmass[i]*self._dev_dimensions[0]/zw
             ch.update_layout((ox, oy), (ch_width, ch_height))
             ox += ch_width
-
-    def get_node_location(self):
-        return (self._offset[0] + self._dimensions[0]/2.0
-               ,self._offset[1] + self._my_height/2.0)
 
     def draw(self, ctx):
         if layout_debug:
             ctx.save()
             ctx.set_line_width(1.0)
-            ctx.rectangle(self._offset[0], self._offset[1], self._dimensions[0],
-                    self._dimensions[1])
+            ctx.rectangle(self._dev_offset[0], self._dev_offset[1], self._dev_dimensions[0],
+                    self._dev_dimensions[1])
             ctx.stroke()
             ctx.restore()
         for ch in self._children:
@@ -137,6 +128,14 @@ class draw_leaf(layout_tree):
         self._label = str(label)
         self._label_box_height = None
 
+    @property
+    def label(self):
+        return self._label
+
+    def get_node_location(self):
+        return (self._dev_offset[0] + self._dev_dimensions[0]/2.0
+               ,self._dev_offset[1] + self._dev_dimensions[1])
+
     def set_label_box_height(self, height):
         self._label_box_height = height
 
@@ -153,15 +152,15 @@ class draw_leaf(layout_tree):
         if layout_debug:
             ctx.save()
             ctx.set_line_width(1.0)
-            ctx.rectangle(self._offset[0], self._offset[1], self._dimensions[0],
-                    self._dimensions[1])
+            ctx.rectangle(self._dev_offset[0], self._dev_offset[1], self._dev_dimensions[0],
+                    self._dev_dimensions[1])
             ctx.stroke()
             ctx.restore()
         if self._label is None:
             return
         leaf_width, leaf_height = self.get_bounding_box(ctx)
-        x = self._offset[0] + (self._dimensions[0] - leaf_width)/2.0
-        y = self._offset[1] + self._dimensions[1] 
+        x = self._dev_offset[0] + (self._dev_dimensions[0] - leaf_width)/2.0
+        y = self._dev_offset[1] + self._dev_dimensions[1] 
         ctx.save()
         ctx.move_to(x,y)
         ctx.rotate(math.pi/2)
@@ -171,19 +170,19 @@ class draw_leaf(layout_tree):
 class draw_node(layout_tree):
     pass
 
-def render_pdf(forest, fname, names=None):
+def render_pdf(forest, fname, prop_forest_height=0.9, names=None):
     surf, ctx = init(fname)
-    render_page(forest, surf, ctx, names)
+    render_page(forest, surf, ctx, prop_forest_height, names)
 
 def init(fname):
     surf = cairo.PDFSurface(fname, 100, 100)
     ctx = cairo.Context(surf)
     return surf, ctx
  
-def render_page(forest, surf, ctx, names=None):
+def render_page(forest, surf, ctx, prop_forest_height=0.9, names=None):
     if names is None:
         names = [None for tree in forest]
-    offset_x, width, height = get_extents(forest, ctx)
+    offset_x, width, height = get_extents(forest, ctx, prop_forest_height)
     surf.set_size(sum(width), max(height))
     ctx.set_source_rgb(1.0, 1.0, 1.0)
     ctx.paint()
@@ -206,7 +205,7 @@ def get_extents(forest, ctx):
     height = []
     offset_x = []
     for tree in forest:
-        tree_width, tree_height = tree.get_good_dimensions(ctx)
+        tree_width, tree_height = tree.get_good_dimensions(ctx, prop_forest_height)
         offset_x.append(sum(width))
         width.append(tree_width)
         height.append(tree_height)
