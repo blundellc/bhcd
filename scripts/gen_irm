@@ -1,0 +1,55 @@
+#!/usr/bin/python
+
+import sys, os, subprocess, datetime, argparse
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("train_file")
+    parser.add_argument("-t", "--tag", help="tag of run")
+    parser.add_argument("--mcmc", help="use MCMC", action="store_true")
+    args = parser.parse_args()
+
+    date_str = datetime.datetime.now().strftime('%Y%m%d')
+    out_dir = 'output/'+date_str+'/irm'
+    if args.tag is not None:
+        out_dir += '/'+tag
+
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    print 'output dir', out_dir
+    config_file = out_dir + '/config'
+    params_file = out_dir + '/params'
+    graph_file = out_dir + '/graph'
+    names_file = out_dir + '/names'
+
+    with open(params_file, 'w') as params:
+        print >>params, "--loops=2500"
+        print >>params, "--nchains=1"
+        print >>params, "--outroot="+out_dir
+        print >>params, "--configfile="+config_file
+        print >>params, "--graphname="+graph_file
+        print >>params, "--hypupdates=5"
+        print >>params, "--betamagupdate=0"
+        print >>params, "--betapropupdate=1"
+        print >>params, "--alphaupdate=1"
+        if args.mcmc:
+            print 'using MCMC'
+            print >>params, "--mcmcflag=1"
+
+    num_items = int(subprocess.check_output(['./src/loadgml', train_file, 'num_items']))
+    with open(config_file, 'w') as config:
+        print >>config, str(tag)
+        # number of domains (1) and number of relations (1)
+        print >>config, "1 1"
+        # number of objects, max clusters, initial clusters (as per description
+        # in their paper)
+        print >>config, "%d %d %d 1" % (num_items, num_items, num_items)
+        # relation 0: has two dimensions D0 x D0.
+        print >>config, "2 0 0"
+
+    subprocess.call(['./src/loadgml', train_file, 'write_irm', graph_file, names_file])
+
+
+if __name__ == '__main__':
+    main()
+
