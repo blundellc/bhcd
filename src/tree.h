@@ -8,7 +8,7 @@
 struct Tree_t;
 typedef struct Tree_t Tree;
 
-Tree * leaf_new(Params * params, gpointer label);
+Tree * leaf_new(Params * params, gconstpointer label);
 Tree * branch_new(Params * params);
 Tree * branch_new_full1(Params * params, ...);
 #define	branch_new_full(params, ...)	branch_new_full1(params, __VA_ARGS__, NULL)
@@ -31,7 +31,7 @@ GList * tree_get_labelsets(Tree * tree);
 Params * tree_get_params(Tree * tree);
 gdouble tree_get_logprob(Tree *tree);
 gdouble tree_get_logresponse(Tree *tree);
-gdouble tree_logpredict(Tree *tree, gpointer src, gpointer dst, gboolean value);
+gdouble tree_logpredict(Tree *tree, gconstpointer src, gconstpointer dst, gboolean value);
 
 guint tree_num_intern(Tree * tree);
 guint tree_num_leaves(Tree * tree);

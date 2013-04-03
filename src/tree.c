@@ -143,7 +143,7 @@ guint32 tree_hash(Tree * tree) {
 	return hash;
 }
 
-Tree * leaf_new(Params * params, gpointer label) {
+Tree * leaf_new(Params * params, gconstpointer label) {
 	Tree * leaf;
 
 	leaf = tree_new(params);
@@ -427,7 +427,7 @@ gdouble tree_get_lognotresponse(Tree *tree) {
 	return tree->log_not_pi + tree->logprob_children - logprob;
 }
 
-gdouble tree_logpredict(Tree *tree, gpointer src, gpointer dst, gboolean value) {
+gdouble tree_logpredict(Tree *tree, gconstpointer src, gconstpointer dst, gboolean value) {
 	Tree * child;
 	gdouble logpred_on;
 	gdouble logpred_below;
