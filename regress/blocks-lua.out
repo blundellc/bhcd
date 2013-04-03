@@ -1,0 +1,133 @@
+seed: 2a23b6bb
+output prefix: output/out
+tree: logprob: -4.89e+00 #intern: 4 -4.89e+00:{-8.86e-01:{h , f , e , g }, -8.86e-01:{b , a , d , c }, -1.18e+00:{j , i }}
+res	tree(logprob: -4.89e+00 #intern: 4 -4.89e+00:{-8.86e-01:{h , f , e , g }, -8.86e-01:{b , a , d , c }, -1.18e+00:{j , i }})
+-64.267948042818
+ch	tree(logprob: -8.86e-01 #intern: 1 -8.86e-01:{h , f , e , g })
+-0.0041523370934823
+chch	tree(logprob: -1.82e-01 #intern: 0 h )
+0
+true
+h
+dataset(  a b c d e f g h i j 
+a 1 1 1 1 0 0 0 0 0 0 
+b 1 1 1 1 0 0 0 0 0 0 
+c 1 1 1 1 0 0 0 0 0 0 
+d 1 1 1 1 0 0 0 0 0 0 
+e 0 0 0 0 1 1 1 1 0 0 
+f 0 0 0 0 1 1 1 1 0 0 
+g 0 0 0 0 1 1 1 1 0 0 
+h 0 0 0 0 1 1 1 1 0 0 
+i 0 0 0 0 0 0 0 0 1 1 
+j 0 0 0 0 0 0 0 0 1 1 
+)
+i
+h
+f
+a
+c
+d
+g
+j
+b
+e
+f	a	false
+f	h	true
+j	f	false
+f	i	false
+j	a	false
+j	h	false
+j	g	false
+f	f	true
+f	c	false
+j	c	false
+h	a	false
+h	h	true
+j	i	true
+h	d	false
+h	f	true
+h	c	false
+j	d	false
+j	b	false
+i	e	false
+i	b	false
+i	j	true
+i	g	false
+i	d	false
+i	f	false
+c	j	false
+i	a	false
+c	d	true
+g	b	false
+c	f	false
+g	g	true
+e	e	true
+e	b	false
+g	c	false
+e	j	false
+g	f	true
+e	d	false
+c	h	false
+e	a	false
+e	h	true
+e	i	false
+g	d	false
+g	i	false
+i	i	true
+g	a	false
+c	b	true
+i	c	false
+c	g	false
+i	h	false
+e	g	true
+c	c	true
+c	e	false
+e	c	false
+c	i	false
+g	e	true
+g	h	true
+g	j	false
+c	a	true
+a	e	false
+a	b	true
+a	j	false
+a	g	false
+a	d	true
+d	e	false
+a	c	true
+a	a	true
+b	e	false
+d	d	true
+b	j	false
+d	c	true
+b	d	true
+d	g	false
+b	c	true
+a	i	false
+b	h	false
+b	i	false
+a	h	false
+d	f	false
+a	f	false
+d	j	false
+d	h	false
+d	i	false
+b	b	true
+b	a	true
+b	g	false
+e	f	true
+b	f	false
+d	a	true
+d	b	true
+h	e	true
+h	b	false
+h	j	false
+h	g	true
+f	e	true
+f	b	false
+f	j	false
+f	g	true
+j	e	false
+h	i	false
+j	j	true
+f	d	false
