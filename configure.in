@@ -9,7 +9,7 @@ AC_CHECK_HEADERS([string.h])
 
 AC_CHECK_LIB(gthread-2.0, g_thread_init)
 
-PKG_CHECK_MODULES([DEPS], [glib-2.0 >= 2.30 gsl >= 1.0])
+PKG_CHECK_MODULES([DEPS], [glib-2.0 >= 2.30 gsl >= 1.0 lua5.1 >= 5.1 ])
 
 AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT

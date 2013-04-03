@@ -8,6 +8,7 @@
 
 static gboolean binary_only = FALSE;
 static gboolean sparse_greedy = FALSE;
+static gboolean lua_shell = FALSE;
 static guint build_restarts = 1;
 static guint seed = 0x2a23b6bb;
 static gdouble param_gamma = 0.4;
@@ -25,6 +26,7 @@ static gchar *	output_time_fname = NULL;
 
 static GOptionEntry options[] = {
 	{ "seed",	 's', 0, G_OPTION_ARG_INT,	&seed,		"set RNG seed to S",		"S" },
+	{ "lua",	 'L', 0, G_OPTION_ARG_NONE,	&lua_shell,	"drop to lua shell",		NULL },
 
 	{ "sparse",	 'S', 0, G_OPTION_ARG_NONE,	&sparse_greedy,	"use sparse greedy algorithm",	NULL },
 	{ "binary-only", 'B', 0, G_OPTION_ARG_NONE,	&binary_only, 	"only construct binary trees",	NULL },
@@ -175,6 +177,10 @@ int main(int argc, char * argv[]) {
 	tree_data = pair_new(root, dataset);
 	io_writefile(output_fit_fname, (IOFunc)save_pred, tree_data);
 	pair_free(tree_data);
+
+	if (lua_shell) {
+		tree_lua_shell(root);
+	}
 
 	tree_unref(root);
 	g_free(output_tree_fname);

@@ -4,7 +4,7 @@ bin_PROGRAMS = fastnrt loadgml benchnrt test test_bitset_hash savetoy
 
 core_srcs = dataset.c util.c counts.c params.c tree.c merge.c \
 					build.c tokens.c dataset_gml.c tree_io.c sscache.c \
-					bitset.c labelset.c dataset_gen.c islands.c
+					bitset.c labelset.c dataset_gen.c islands.c tree_lua.c
 
 fastnrt_SOURCES = fastnrt.c $(core_srcs)
 fastnrt_LDADD = $(DEPS_LIBS)
