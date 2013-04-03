@@ -179,7 +179,7 @@ int main(int argc, char * argv[]) {
 	pair_free(tree_data);
 
 	if (lua_shell) {
-		tree_lua_shell(root);
+		nrt_lua_shell(root);
 	}
 
 	tree_unref(root);
