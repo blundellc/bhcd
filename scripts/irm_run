@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ -z "$3" ]; then
+    echo usage: $0 tag train test
+    exit 1
+fi
+
 tag=$1
 train=$2
 test=$3
