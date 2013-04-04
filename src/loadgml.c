@@ -3,6 +3,27 @@
 #include "dataset_gml.h"
 #include "util.h"
 
+void read_names(gpointer arg, GIOChannel *io) {
+	Pair * pair = arg;
+	GHashTable * label_index = pair->fst;
+	Dataset * dataset = pair->snd;
+	GError * error = NULL;
+	gchar * line;
+	gpointer label;
+	gint index;
+
+	while (g_io_channel_read_line(io, &line, NULL, NULL, &error) == G_IO_STATUS_NORMAL) {
+		gchar ** fields = g_strsplit(g_strstrip(line), " ", 2);
+		g_assert(g_strv_length(fields) == 2);
+		index = (gint)g_ascii_strtoull(fields[0], NULL, 0);
+		label = dataset_label_lookup(dataset, fields[1]);
+		g_hash_table_insert(label_index, label, GINT_TO_POINTER(index));
+		g_strfreev(fields);
+		g_free(line);
+	}
+	g_assert(g_hash_table_size(label_index) == dataset_num_labels(dataset));
+}
+
 void write_names(gpointer arg, GIOChannel *io) {
 	Pair * pair = arg;
 	GHashTable * label_index = pair->fst;
@@ -65,7 +86,12 @@ int main(int argc, char *argv[]) {
 		io_writefile(argv[4], (IOFunc) dataset_adj_save_io, dataset);
 	} else if (strcmp(argv[2], "write_irm") == 0 && argc == 5) {
 		Pair * indices_dataset = pair_new(g_hash_table_new(NULL, NULL), dataset);
-		io_writefile(argv[4], (IOFunc) write_names, indices_dataset);
+		if (g_file_test(argv[4], G_FILE_TEST_EXISTS)) {
+			g_print("names file exists already; using it.\n");
+			io_readfile(argv[4], (IOFunc) read_names, indices_dataset);
+		} else {
+			io_writefile(argv[4], (IOFunc) write_names, indices_dataset);
+		}
 		io_writefile(argv[3], (IOFunc) write_graph, indices_dataset);
 	} else {
 		usage(argv[0]);

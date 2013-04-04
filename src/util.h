@@ -65,7 +65,9 @@ gchar * num_to_string(guint);
 gint cmp_quark(gconstpointer, gconstpointer);
 void io_printf(GIOChannel *io, const gchar *fmt, ...) G_GNUC_PRINTF(2, 3);
 void io_stdout(IOFunc func, gpointer user_data);
+void io_stdin(IOFunc func, gpointer user_data);
 void io_writefile(const gchar *fname, IOFunc func, gpointer user_data);
+void io_readfile(const gchar *fname, IOFunc func, gpointer user_data);
 
 GList * list_new_full(gpointer last, ...);
 #define list_new(...)   list_new_full(NULL, __VA_ARGS__, NULL)
