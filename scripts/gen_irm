@@ -6,11 +6,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("train_file")
     parser.add_argument("-t", "--tag", help="tag of run")
-    parser.add_argument("--mcmc", help="use MCMC", action="store_true")
+    parser.add_argument("--name-tag", help="name of tag with same names (useful for test sets")
+    parser.add_argument("--search", help="search for MAP", action="store_true")
     args = parser.parse_args()
 
     date_str = datetime.datetime.now().strftime('%Y%m%d')
     out_dir = 'output/'+date_str+'/irm'
+    raw_out_dir = out_dir
     if args.tag is not None:
         out_dir += '/'+args.tag
 
@@ -20,7 +22,11 @@ def main():
     config_file = out_dir + '/config'
     params_file = out_dir + '/params'
     graph_file = out_dir + '/graph'
-    names_file = out_dir + '/names'
+    if args.name_tag is None:
+        names_file = out_dir + '/names'
+    else:
+        names_file = raw_out_dir+'/'+args.name_tag+'/names'
+        print 'using tag',args.name_tag,'for names'
 
     with open(params_file, 'w') as params:
         print >>params, "--loops=2500"
@@ -32,11 +38,11 @@ def main():
         print >>params, "--betamagupdate=0"
         print >>params, "--betapropupdate=1"
         print >>params, "--alphaupdate=1"
-        if args.mcmc:
+        if args.search:
+            print 'using hill climbing'
+        else:
             print 'using MCMC'
             print >>params, "--mcmcflag=1"
-        else:
-            print 'using hill climbing'
 
     num_items = int(subprocess.check_output(['./src/loadgml', args.train_file, 'num_items']))
     with open(config_file, 'w') as config:
