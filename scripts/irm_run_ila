@@ -1,0 +1,14 @@
+#!/bin/bash
+
+for x in $(seq 1 10); do
+    ./scripts/irm_run gene$x data/ila/gene/gene_${x}_train.mat_train.gml data/ila/gene/gene_${x}_train.mat_test.gml &
+    if [ $((($x-1) % 5)) == 4 ]; then
+        wait; wait; wait; wait; wait
+    fi
+done
+for x in $(seq 1 10); do
+    ./scripts/irm_run nips$x data/ila/nips/nips_${x}_train.mat_train.gml data/ila/nips/nips_${x}_train.mat_test.gml &
+    if [ $((($x-1) % 5)) == 4 ]; then
+        wait; wait; wait; wait; wait
+    fi
+done
