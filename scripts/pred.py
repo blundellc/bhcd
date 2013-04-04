@@ -20,12 +20,13 @@ def load(fname):
                 continue
             truth[src, dst] = correct == "true"
             lprob[src, dst] = { False: float(lp_false), True: float(lp_true) }
+            acc = 1e-8
             #pred = lprob[src,dst][True] > lprob[src,dst][False]
             #pred = truth[src,dst]
-            #lprob[src,dst][pred] = log(0.98)
-            #lprob[src,dst][not pred] = log(0.02)
-            #lprob[src,dst][False] = log(0.51)
-            #lprob[src,dst][True] = log(0.49)
+            #lprob[src,dst][pred] = log(1.0 - acc)
+            #lprob[src,dst][not pred] = log(acc)
+            #lprob[src,dst][False] = log(0.5 + acc)
+            #lprob[src,dst][True] = log(0.5 - acc)
     return truth, lprob
 
 def blend_preds(truths, lprobs):
@@ -88,6 +89,18 @@ def loss01(truth, lprob):
             wrong += 1.0
     return wrong/total
 
+def rmse(truth, lprob):
+    se = []
+    for src, dst in truth:
+        if upper_only and src < dst:
+            continue
+        correct = 0.0
+        if truth[src, dst]:
+            correct = 1.0
+        p = exp(lprob[src,dst][True])
+        se.append(correct - 2*correct*p + p)
+    return sqrt(mean(se))
+
 def auc(truth, lprob):
     # number of links and non-links in truth
     nl = float(sum(truth.values()))
@@ -115,6 +128,7 @@ def main():
     check_sum(lprob)
     avg_log_prob(truth, lprob)
     print 'loss01 %2.5f' % loss01(truth, lprob)
+    print 'rmse %2.5f' % rmse(truth, lprob)
     print 'auc %2.5f' % auc(truth, lprob)
 
 if __name__ == '__main__':
