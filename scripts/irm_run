@@ -1,0 +1,18 @@
+#!/bin/sh
+
+tag=$1
+train=$2
+test=$3
+
+dd=$(date +%Y%m%d)
+out_dir=output/$dd/irm/$tag
+./scripts/irm_gen -t $tag $train
+./scripts/irm_gen -t ${tag}_test --name-tag $tag $test
+if [ -e ${out_dir}_test/names ]; then
+    echo "test names file exists. (weird)"
+    exit 1
+fi
+/usr/bin/time -o $out_dir/time ./bin/irm @$out_dir/params
+./scripts/irm_pred -d $dd -t $tag ${out_dir}/graph | tee $out_dir/fit
+./scripts/irm_pred -d $dd -t $tag ${out_dir}_test/graph | tee $out_dir/pred
+
