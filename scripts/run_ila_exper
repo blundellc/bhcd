@@ -4,22 +4,44 @@ out="output/$(date '+%Y%m%d')/"
 mkdir -p $out
 num_restarts=10
 
-for restart in $(seq $num_restarts); do
-    echo restart $restart
-    seed=$((restart+42))
-    myout="$out/blend/$restart"
-    mkdir -p $myout
-    opts="--restarts=1 --seed=$seed"
-    ./src/fastnrt $opts -t data/ila/nips/nips_1_train.mat_test.gml -p $myout/nips1 data/ila/nips/nips_1_train.mat_train.gml &
-    ./src/fastnrt $opts -t data/ila/nips/nips_1_train.mat_test.gml -p $myout/nips1bin -B data/ila/nips/nips_1_train.mat_train.gml &
-    ./src/fastnrt $opts -t data/ila/gene/gene_1_train.mat_test.gml -p $myout/gene1 data/ila/gene/gene_1_train.mat_train.gml &
-    ./src/fastnrt $opts -t data/ila/gene/gene_1_train.mat_test.gml -p $myout/gene1bin -B data/ila/gene/gene_1_train.mat_train.gml &
+for x in $(seq 1 10); do
+    for restart in $(seq $num_restarts); do
+        echo restart $restart
+        seed=$((restart+42))
+        myout="$out/blend/$restart"
+        mkdir -p $myout
+        opts="--restarts=1 --seed=$seed"
+        ./src/fastnrt $opts -t data/ila/nips/nips_${x}_train.mat_test.gml -p $myout/nips${x} data/ila/nips/nips_${x}_train.mat_train.gml &
+        ./src/fastnrt $opts -t data/ila/nips/nips_${x}_train.mat_test.gml -p $myout/nips${x}bin -B data/ila/nips/nips_${x}_train.mat_train.gml &
+        ./src/fastnrt $opts -t data/ila/gene/gene_${x}_train.mat_test.gml -p $myout/gene${x} data/ila/gene/gene_${x}_train.mat_train.gml &
+        ./src/fastnrt $opts -t data/ila/gene/gene_${x}_train.mat_test.gml -p $myout/gene${x}bin -B data/ila/gene/gene_${x}_train.mat_train.gml &
 
-    opts="--restarts=1 --seed=$seed --sparse"
-    ./src/fastnrt $opts -t data/ila/gene/gene_1_train.mat_test.gml -p $myout/gene1sparse data/ila/gene/gene_1_train.mat_train.gml &
-    ./src/fastnrt $opts -t data/ila/gene/gene_1_train.mat_test.gml -p $myout/gene1binsparse -B data/ila/gene/gene_1_train.mat_train.gml &
-    ./src/fastnrt $opts -t data/ila/nips/nips_1_train.mat_test.gml -p $myout/nips1sparse data/ila/nips/nips_1_train.mat_train.gml &
-    ./src/fastnrt $opts -t data/ila/nips/nips_1_train.mat_test.gml -p $myout/nips1binsparse -B data/ila/nips/nips_1_train.mat_train.gml &
+        opts="--restarts=${x} --seed=$seed --sparse"
+        ./src/fastnrt $opts -t data/ila/gene/gene_${x}_train.mat_test.gml -p $myout/gene${x}sparse data/ila/gene/gene_${x}_train.mat_train.gml &
+        ./src/fastnrt $opts -t data/ila/gene/gene_${x}_train.mat_test.gml -p $myout/gene${x}binsparse -B data/ila/gene/gene_${x}_train.mat_train.gml &
+        ./src/fastnrt $opts -t data/ila/nips/nips_${x}_train.mat_test.gml -p $myout/nips${x}sparse data/ila/nips/nips_${x}_train.mat_train.gml &
+        ./src/fastnrt $opts -t data/ila/nips/nips_${x}_train.mat_test.gml -p $myout/nips${x}binsparse -B data/ila/nips/nips_${x}_train.mat_train.gml &
+        wait
+        wait
+        wait
+        wait
+        wait
+        wait
+    done
+
+    myout="$out/max"
+    mkdir -p $myout
+    opts="--restarts=$num_restarts"
+    ./src/fastnrt $opts -t data/ila/nips/nips_${x}_train.mat_test.gml -p $myout/nips${x} data/ila/nips/nips_${x}_train.mat_train.gml &
+    ./src/fastnrt $opts -t data/ila/nips/nips_${x}_train.mat_test.gml -p $myout/nips${x}bin -B data/ila/nips/nips_${x}_train.mat_train.gml &
+    ./src/fastnrt $opts -t data/ila/gene/gene_${x}_train.mat_test.gml -p $myout/gene${x} data/ila/gene/gene_${x}_train.mat_train.gml &
+    ./src/fastnrt $opts -t data/ila/gene/gene_${x}_train.mat_test.gml -p $myout/gene${x}bin -B data/ila/gene/gene_${x}_train.mat_train.gml &
+
+    opts="--restarts=$num_restarts --sparse"
+    ./src/fastnrt $opts -t data/ila/gene/gene_${x}_train.mat_test.gml -p $myout/gene${x}sparse data/ila/gene/gene_${x}_train.mat_train.gml &
+    ./src/fastnrt $opts -t data/ila/gene/gene_${x}_train.mat_test.gml -p $myout/gene${x}binsparse -B data/ila/gene/gene_${x}_train.mat_train.gml &
+    ./src/fastnrt $opts -t data/ila/nips/nips_${x}_train.mat_test.gml -p $myout/nips${x}sparse data/ila/nips/nips_${x}_train.mat_train.gml &
+    ./src/fastnrt $opts -t data/ila/nips/nips_${x}_train.mat_test.gml -p $myout/nips${x}binsparse -B data/ila/nips/nips_${x}_train.mat_train.gml &
     wait
     wait
     wait
@@ -27,23 +49,3 @@ for restart in $(seq $num_restarts); do
     wait
     wait
 done
-
-myout="$out/max"
-mkdir -p $myout
-opts="--restarts=$num_restarts"
-./src/fastnrt $opts -t data/ila/nips/nips_1_train.mat_test.gml -p $myout/nips1 data/ila/nips/nips_1_train.mat_train.gml &
-./src/fastnrt $opts -t data/ila/nips/nips_1_train.mat_test.gml -p $myout/nips1bin -B data/ila/nips/nips_1_train.mat_train.gml &
-./src/fastnrt $opts -t data/ila/gene/gene_1_train.mat_test.gml -p $myout/gene1 data/ila/gene/gene_1_train.mat_train.gml &
-./src/fastnrt $opts -t data/ila/gene/gene_1_train.mat_test.gml -p $myout/gene1bin -B data/ila/gene/gene_1_train.mat_train.gml &
-
-opts="--restarts=$num_restarts --sparse"
-./src/fastnrt $opts -t data/ila/gene/gene_1_train.mat_test.gml -p $myout/gene1sparse data/ila/gene/gene_1_train.mat_train.gml &
-./src/fastnrt $opts -t data/ila/gene/gene_1_train.mat_test.gml -p $myout/gene1binsparse -B data/ila/gene/gene_1_train.mat_train.gml &
-./src/fastnrt $opts -t data/ila/nips/nips_1_train.mat_test.gml -p $myout/nips1sparse data/ila/nips/nips_1_train.mat_train.gml &
-./src/fastnrt $opts -t data/ila/nips/nips_1_train.mat_test.gml -p $myout/nips1binsparse -B data/ila/nips/nips_1_train.mat_train.gml &
-wait
-wait
-wait
-wait
-wait
-wait
