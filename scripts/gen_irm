@@ -12,7 +12,7 @@ def main():
     date_str = datetime.datetime.now().strftime('%Y%m%d')
     out_dir = 'output/'+date_str+'/irm'
     if args.tag is not None:
-        out_dir += '/'+tag
+        out_dir += '/'+args.tag
 
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -35,19 +35,24 @@ def main():
         if args.mcmc:
             print 'using MCMC'
             print >>params, "--mcmcflag=1"
+        else:
+            print 'using hill climbing'
 
-    num_items = int(subprocess.check_output(['./src/loadgml', train_file, 'num_items']))
+    num_items = int(subprocess.check_output(['./src/loadgml', args.train_file, 'num_items']))
     with open(config_file, 'w') as config:
-        print >>config, str(tag)
+        print >>config, str(args.tag)
         # number of domains (1) and number of relations (1)
         print >>config, "1 1"
         # number of objects, max clusters, initial clusters (as per description
         # in their paper)
-        print >>config, "%d %d %d 1" % (num_items, num_items, num_items)
+        # XXX: we initialize with everything in one cluster, otherwise we hit
+        # WCET.
+        #print >>config, "%d %d %d 1" % (num_items, num_items, num_items)
+        print >>config, "%d %d 1 1" % (num_items, num_items)
         # relation 0: has two dimensions D0 x D0.
         print >>config, "2 0 0"
 
-    subprocess.call(['./src/loadgml', train_file, 'write_irm', graph_file, names_file])
+    subprocess.call(['./src/loadgml', args.train_file, 'write_irm', graph_file, names_file])
 
 
 if __name__ == '__main__':

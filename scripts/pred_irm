@@ -1,0 +1,87 @@
+#!/usr/bin/python
+
+from itertools import izip
+import argparse, datetime
+from scipy.special import betaln
+from collections import defaultdict
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-t', '--tag',  help="tag of run")
+    parser.add_argument('-d', '--date',  help="date of run",
+            default=datetime.datetime.now().strftime('%Y%m%d'))
+    parser.add_argument('test_file')
+    args = parser.parse_args()
+
+    out_dir = 'output/'+args.date+'/irm'
+    if args.tag is not None:
+        out_dir += '/'+args.tag
+
+    graph_file = out_dir + '/graph'
+    names_file = out_dir + '/names'
+    status_file = out_dir + '_status'
+    dom_file = out_dir + '_dom0'
+
+    edges, names = load_edges(graph_file, names_file)
+    test, names = load_edges(args.test_file, names_file)
+
+    sum_lpred = defaultdict(lambda: defaultdict(float))
+    num_lpred = 0
+    with open(status_file) as status:
+        with open(dom_file) as dom:
+            for dom_line, status_line in izip(dom, status):
+                process(sum_lpred, dom_line, status_line, edges, test, names)
+                num_lpred += 1
+
+    for src, dst in sum_lpred:
+        value = "false"
+        if test[src, dst]:
+            value = "true"
+        print '%s,%s,%s,%f,%f' % (
+                names[src], names[dst], value, 
+                sum_lpred[src, dst][False]/num_lpred,
+                sum_lpred[src, dst][True]/num_lpred)
+
+def load_edges(graph_file, names_file):
+    names = {}
+    with open(names_file) as ff:
+        for line in ff:
+            idx, name = line.strip().split()
+            names[int(idx)] = name
+
+    edges = {}
+    with open(graph_file) as ff:
+        for line in ff:
+            dom, src, dst, value = line.strip().split()
+            assert(int(dom) == 0)
+            edges[int(src), int(dst)] = int(value)
+    return edges, names
+
+def process(sum_lpred, dom_line, status_line, edges, test, names):
+    num, llik, lpart, npart, ljoint, betaprop, betamag, alpha = (
+                map(float, status_line.replace(':', ' ').strip().split())
+            )
+    beta = betamag/(1+betaprop)
+    alpha = betaprop*beta
+
+    clusters = dict(enumerate(map(int, dom_line.strip().split())))
+    num_ones = defaultdict(int)
+    num_zeroes = defaultdict(int)
+    for src, dst in edges:
+        csrc = clusters[src]
+        cdst = clusters[dst]
+        num_ones[csrc, cdst] += edges[src, dst]
+        num_zeroes[csrc, cdst] += 1-edges[src,dst]
+
+    lpred = 0
+    for src, dst in test:
+        csrc = clusters[src]
+        cdst = clusters[dst]
+        n1 = num_ones[csrc, cdst]
+        n0 = num_zeroes[csrc, cdst]
+        sum_lpred[src, dst][False] += betaln(alpha+n1, beta+n0+1) - betaln(alpha+n1, beta+n0)
+        sum_lpred[src, dst][True]  += betaln(alpha+n1+1, beta+n0) - betaln(alpha+n1, beta+n0)
+
+if __name__ == '__main__':
+    main()
+
