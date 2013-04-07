@@ -1,0 +1,17 @@
+#!/bin/bash
+
+tag=$1
+shift
+train=$1
+shift
+test=$1
+shift
+
+out="output/$(date '+%Y%m%d')/"
+mkdir -p $out
+num_restarts=10
+myout="$out/blend/$restart"
+mkdir -p $myout
+opts="--restarts=$num_restarts"
+./src/fastnrt $opts "$@" -p $myout/$tag -t $test $train
+

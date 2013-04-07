@@ -1,0 +1,26 @@
+#!/bin/bash
+
+tag=$1
+shift
+train=$1
+shift
+test=$1
+shift
+
+out="output/$(date '+%Y%m%d')/"
+mkdir -p $out
+num_restarts=10
+
+for restart in $(seq $num_restarts); do
+    echo restart $restart
+    seed=$((restart+42))
+    myout="$out/blend/$restart"
+    mkdir -p $myout
+    opts="--restarts=1 --seed=$seed"
+    ./src/fastnrt $opts "$@" -p $myout/$tag -t $test $train &
+done
+for restart in $(seq $num_restarts); do
+    wait
+done
+
+
