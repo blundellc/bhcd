@@ -194,10 +194,13 @@ function output_pred(pr, roots, test_data)
 end
 
 function main()
-    local train_fname = 'data/noisy-blocks.gml'
-    local test_fname = 'data/blocks.gml'
-    -- local train_fname = 'data/ila/nips/nips_1_train.mat_train.gml'
-    -- local test_fname = 'data/ila/nips/nips_1_train.mat_test.gml'
+    if #arg < 2 then
+        print(string.format('usage: %s train test', arg[0]))
+        return
+    end
+
+    local train_fname = arg[1]
+    local test_fname = arg[2]
     local adj = load_train(train_fname)
     --adj:print()
     local pr = pagerank(adj, 100, 0.85, 0.1)
