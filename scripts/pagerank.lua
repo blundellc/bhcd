@@ -101,7 +101,6 @@ end
 
 function load_train(fname)
     local dd = dataset.load(fname)
-    print(dd)
     local adj = AdjMtx:new(dd:labels())
     for _, elem in pairs(dd:elems()) do
         local src, dst = unpack(elem)
@@ -112,16 +111,17 @@ function load_train(fname)
     return adj
 end
 
-function pagerank_status(ii, pr)
+function pagerank_tostring(pr)
     local sum = 0
     for k,v in pairs(pr) do
         sum = sum + v
     end
-    io.write('iter#',ii,' ', sum, ' ')
+    local str = string.format("%2.2f:{", sum)
     for k,v in pairs(pr) do
-        io.write(string.format('%s -> %f ', k, v))
+        str = str .. string.format('%s:%f ', k, v)
     end
-    io.write('\n')
+    str = str .. "}"
+    return str
 end
 
 function pagerank(adj, max_iter, damp)
@@ -147,11 +147,10 @@ function pagerank(adj, max_iter, damp)
         end
         iter = iter+1
     end
-    pagerank_status(0, pr)
     return pr
 end
 
-function pagerank_root(root, adj, max_iter, damp, alpha)
+function pagerank_rooted(root, adj, max_iter, damp)
     local pr = {}
     for uu in adj:vertices() do
         pr[uu] = 1/adj.num_elems
@@ -165,28 +164,51 @@ function pagerank_root(root, adj, max_iter, damp, alpha)
             for vv in adj:incoming(uu) do
                 sum = sum + pr[vv]/adj.num_outgoing[vv]
             end
-            newpr[uu] = (1-damp)/adj.num_elems + (1-alpha)*damp*sum + alpha*pr[root]
+            local restart = 0
+            if uu == root then
+                restart = 1-damp
+            end
+            newpr[uu] = restart + damp*sum
             change = change + math.abs(pr[uu] - newpr[uu])
         end
         pr = newpr
-        if change < 1e-3 then
+        if change < 1e-8 then
             break
         end
         iter = iter+1
     end
-    pagerank_status(iter, pr)
     return pr
 end
 
-function main()
-    --local adj = load_train('data/noisy-blocks.gml')
-    local adj = load_train('data/ila/nips/nips_1_train.mat_train.gml')
-    adj:print()
-    local pr = pagerank(adj, 100, 0.85, 0.1)
-    for root in adj:vertices() do
-        print('root',root)
-        pagerank_root(root, adj, 100, 0.85, 0.1)
+function output_pred(pr, roots, test_data)
+    for _, elem in pairs(test_data:elems()) do
+        local src, dst = unpack(elem)
+        local truth = test_data:get(src, dst)
+        local pred = 0
+        if roots[src][dst] > pr[dst] then
+            pred = 1
+        end
+        local not_pred = 1-pred
+        io.write(src,',',dst,',',tostring(truth),',',math.log(not_pred),',',math.log(pred),'\n')
     end
+end
+
+function main()
+    local train_fname = 'data/noisy-blocks.gml'
+    local test_fname = 'data/blocks.gml'
+    -- local train_fname = 'data/ila/nips/nips_1_train.mat_train.gml'
+    -- local test_fname = 'data/ila/nips/nips_1_train.mat_test.gml'
+    local adj = load_train(train_fname)
+    --adj:print()
+    local pr = pagerank(adj, 100, 0.85, 0.1)
+    --print(pagerank_tostring(pr))
+    local roots = {}
+    for root in adj:vertices() do
+        roots[root] = pagerank_rooted(root, adj, 1000, 0.85)
+        --io.write(root,' ')
+        --print(pagerank_tostring(roots[root]))
+    end
+    output_pred(pr, roots, dataset.load(test_fname))
 end
 
 main()
