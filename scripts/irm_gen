@@ -8,6 +8,7 @@ def main():
     parser.add_argument("-t", "--tag", help="tag of run")
     parser.add_argument("--name-tag", help="name of tag with same names (useful for test sets")
     parser.add_argument("--search", help="search for MAP", action="store_true")
+    parser.add_argument("--no-data-hyper", help="do not update data hypers", action="store_true")
     args = parser.parse_args()
 
     date_str = datetime.datetime.now().strftime('%Y%m%d')
@@ -36,7 +37,10 @@ def main():
         print >>params, "--graphname="+graph_file
         print >>params, "--hypupdates=5"
         print >>params, "--betamagupdate=0"
-        print >>params, "--betapropupdate=1"
+        if not args.no_data_hyper:
+            print >>params, "--betapropupdate=1"
+        else:
+            print >>params, "--betapropupdate=0"
         print >>params, "--alphaupdate=1"
         if args.search:
             print 'using hill climbing'
