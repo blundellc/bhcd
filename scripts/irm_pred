@@ -10,6 +10,9 @@ def main():
     parser.add_argument('-t', '--tag',  help="tag of run")
     parser.add_argument('-d', '--date',  help="date of run",
             default=datetime.datetime.now().strftime('%Y%m%d'))
+    parser.add_argument('-b', '--burnin', help="number of samples to drop",
+            type=int)
+    parser.add_argument('--last', help="just use last sample", action="store_true")
     parser.add_argument('test_file')
     args = parser.parse_args()
 
@@ -29,7 +32,12 @@ def main():
     num_lpred = 0
     with open(status_file) as status:
         with open(dom_file) as dom:
-            for dom_line, status_line in izip(dom, status):
+            for line_num, (dom_line, status_line) in enumerate(izip(dom, status)):
+                if not args.last and line_num >= args.burnin:
+                    process(sum_lpred, dom_line, status_line, edges, test, names)
+                    num_lpred += 1
+
+            if args.last:
                 process(sum_lpred, dom_line, status_line, edges, test, names)
                 num_lpred += 1
 
@@ -58,7 +66,7 @@ def load_edges(graph_file, names_file):
     return edges, names
 
 def process(sum_lpred, dom_line, status_line, edges, test, names):
-    num, llik, lpart, npart, ljoint, betaprop, betamag, alpha = (
+    num, llik, lpart, npart, ljoint, betaprop, betamag, alpha, timestamp = (
                 map(float, status_line.replace(':', ' ').strip().split())
             )
     beta = betamag/(1+betaprop)
