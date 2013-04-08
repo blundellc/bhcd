@@ -29,6 +29,12 @@ def main():
         names_file = raw_out_dir+'/'+args.name_tag+'/names'
         print 'using tag',args.name_tag,'for names'
 
+    if os.path.exists(out_dir+'_status') or os.path.exists(out_dir+'_dom0'):
+        print 'ABORT: previous results files exist:'
+        print out_dir+'_status'
+        print out_dir+'_dom0'
+        sys.exit(1)
+
     with open(params_file, 'w') as params:
         print >>params, "--loops=2500"
         print >>params, "--nchains=1"
