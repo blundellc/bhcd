@@ -6,6 +6,10 @@ train=$1
 shift
 test=$1
 shift
+if [ -z "$test" ]; then
+    echo usage: $0 tag train test
+    exit 1
+fi
 
 out="output/$(date '+%Y%m%d')/"
 mkdir -p $out
