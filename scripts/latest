@@ -20,7 +20,7 @@ def find_latest():
                 datefname = os.path.join(dateroot, datefile)
                 fname = os.path.join(latest_dir, os.path.relpath(datefname, dateprefix))
                 if fname not in latest:
-                    latest[fname] = datefname
+                    latest[fname] = os.path.abspath(datefname)
     return latest
 
 def remove_old(latest):
