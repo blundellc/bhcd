@@ -1,0 +1,64 @@
+#!/usr/bin/python2.7
+
+import os
+
+root = 'output'
+latest_dir = os.path.join(root, 'latest')
+
+# make output/latest a link farm into the latest version of each file it can find.
+def find_latest():
+    latest = {}
+    # traverse each output directory in date order
+    dirs = os.listdir(root)
+    dirs = filter(lambda path: path.isdigit(), dirs)
+    dirs.sort(key=lambda path: -int(path))
+    for date in dirs:
+        # walk through the directory, updating latest
+        dateprefix = os.path.join(root, date)
+        for dateroot, datedirs, datefiles in os.walk(dateprefix):
+            for datefile in datefiles:
+                datefname = os.path.join(dateroot, datefile)
+                fname = os.path.join(latest_dir, os.path.relpath(datefname, dateprefix))
+                if fname not in latest:
+                    latest[fname] = datefname
+    return latest
+
+def remove_old(latest):
+    for curroot, curdirs, curfiles in os.walk(latest_dir, topdown=False):
+        # first go through and remove files not in latest
+        for curfile in curfiles:
+            fname = os.path.join(curroot, curfile)
+            if not os.path.islink(fname):
+                raise RuntimeError('WARNING: non-link '+fname)
+            elif fname not in latest:
+                print '-',fname
+                os.remove(fname)
+        # remove any empty directories
+        for curdir in curdirs:
+            dname = os.path.join(curroot, curdir)
+            if not os.listdir(dname):
+                print '-',dname
+                os.rmdir(dname)
+
+def update_links(latest):
+    for fname in latest:
+        dir = os.path.dirname(fname)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        if os.path.lexists(fname):
+            if os.readlink(fname) != latest[fname]:
+                print '~',fname
+                os.remove(fname)
+                os.symlink(latest[fname], fname)
+        else:
+            print '+',fname
+            os.symlink(latest[fname], fname)
+
+def main():
+    latest = find_latest()
+    remove_old(latest)
+    update_links(latest)
+
+if __name__ == '__main__':
+    main()
+
