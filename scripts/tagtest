@@ -27,7 +27,7 @@ def main():
             ['diff', '-u', 'regress/standard-noisy-blocks.pred', 'output/out.pred'],
             ['diff', '-u', 'regress/standard-noisy-blocks.fit', 'output/out.fit'],
             leak_check + ['./src/loadgml', 'data/ila/gene/gene_1_train.mat_train.gml',
-                    'output/out.gml', 'output/out.adj'],
+                    'write_gml', 'output/out.gml', 'output/out.adj'],
             ['diff', '-u', 'regress/standard-gene1.gml', 'output/out.gml'],
             ['diff', '-u', 'regress/standard-gene1.adj', 'output/out.adj'],
             leak_check + ['./src/fastnrt', '-t', 'data/noisy-blocks.gml', 'data/blocks.gml'],
