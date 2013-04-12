@@ -12,10 +12,10 @@ static void islands_add_edge_directed(Islands *islands, guint ii, guint jj);
 
 Islands * islands_new(Dataset * dataset, GPtrArray *trees) {
 	Islands * islands;
-	GList * pairs;
+	gpointer src, dst;
+	DatasetPairIter pairs;
 	GHashTable * labels_to_trees;
 	gboolean value, missing;
-	Pair * pair;
 	gpointer pp;
 	gpointer qq;
 	guint ii;
@@ -31,21 +31,19 @@ Islands * islands_new(Dataset * dataset, GPtrArray *trees) {
 		g_hash_table_insert(labels_to_trees, GINT_TO_POINTER(GPOINTER_TO_INT(label)), GINT_TO_POINTER(ii));
 	}
 
-	pairs = dataset_get_label_pairs(dataset);
-	for (GList * xx = pairs; xx != NULL; xx = g_list_next(xx)) {
-		pair = xx->data;
-		value = dataset_get(dataset, pair->fst, pair->snd, &missing);
+	dataset_label_pairs_iter_init(dataset, &pairs);
+	while (dataset_label_pairs_iter_next(&pairs, &src, &dst)) {
+		value = dataset_get(dataset, src, dst, &missing);
 		g_assert(!missing);
 		if (!value) {
 			continue;
 		}
-		pp = g_hash_table_lookup(labels_to_trees, pair->fst);
+		pp = g_hash_table_lookup(labels_to_trees, src);
 		ii = GPOINTER_TO_INT(pp);
-		qq = g_hash_table_lookup(labels_to_trees, pair->snd);
+		qq = g_hash_table_lookup(labels_to_trees, dst);
 		jj = GPOINTER_TO_INT(qq);
 		islands_add_edge(islands, ii, jj);
 	}
-	dataset_get_label_pairs_free(pairs);
 	g_hash_table_unref(labels_to_trees);
 
 	return islands;

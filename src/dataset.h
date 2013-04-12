@@ -5,6 +5,22 @@
 
 struct Dataset_t;
 typedef struct Dataset_t Dataset;
+typedef struct DatasetLabelIter_t {
+	GHashTableIter iter;
+} DatasetLabelIter;
+
+typedef struct DatasetPairIter_t {
+	Dataset * dataset;
+	gboolean dense;
+	union {
+		GHashTableIter cell_iter;
+		struct {
+			DatasetLabelIter src_iter;
+			DatasetLabelIter dst_iter;
+			gpointer src;
+		} sp;
+	} u;
+} DatasetPairIter;
 
 Dataset * dataset_new(gboolean);
 void dataset_ref(Dataset *);
@@ -23,15 +39,14 @@ gboolean dataset_get(Dataset *, gconstpointer, gconstpointer, gboolean *);
 /* labels on rows/columns */
 void dataset_label_assert(Dataset *, gconstpointer);
 guint dataset_num_labels(Dataset *);
-GList * dataset_get_labels(Dataset *);
-void dataset_get_labels_free(GList * labels);
+void dataset_labels_iter_init(Dataset *, DatasetLabelIter *);
+gboolean dataset_labels_iter_next(DatasetLabelIter *, gpointer *);
 gpointer dataset_label_create(Dataset *, const gchar *);
 gpointer dataset_label_lookup(Dataset *, const gchar *);
 gpointer dataset_get_max_label(Dataset *);
 const gchar * dataset_label_to_string(Dataset *, gconstpointer);
-GList * dataset_get_label_pairs(Dataset *);
-void dataset_get_label_pairs_free(GList *);
-
+void dataset_label_pairs_iter_init(Dataset *, DatasetPairIter *);
+gboolean dataset_label_pairs_iter_next(DatasetPairIter *, gpointer *, gpointer *);
 void dataset_println(Dataset *, const gchar *);
 void dataset_tostring(Dataset *, GString *);
 

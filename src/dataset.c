@@ -13,6 +13,7 @@ struct Dataset_t {
 	GHashTable *	cells;
 };
 
+
 typedef struct {
 	GQuark	src;
 	GQuark	dst;
@@ -149,54 +150,73 @@ guint dataset_num_labels(Dataset * dataset) {
 	return g_hash_table_size(dataset->labels);
 }
 
-GList * dataset_get_labels(Dataset * dataset) {
-	return g_hash_table_get_keys(dataset->labels);
+
+void dataset_labels_iter_init(Dataset *dataset, DatasetLabelIter *iter) {
+	g_hash_table_iter_init(&iter->iter, dataset->labels);
 }
 
-void dataset_get_labels_free(GList * labels) {
-	g_list_free(labels);
+gboolean dataset_labels_iter_next(DatasetLabelIter *iter, gpointer *plabel) {
+	return g_hash_table_iter_next(&iter->iter, plabel, NULL);
+
 }
+
 
 gpointer dataset_get_max_label(Dataset * dataset) {
 	return GINT_TO_POINTER(dataset->max_qlabel);
 }
 
-GList * dataset_get_label_pairs(Dataset *dataset) {
-	GList * pairs;
-	Pair * pair;
 
-	pairs = NULL;
-	if (dataset->omitted < 0) {
-		// dense data
-		GList * keys = g_hash_table_get_keys(dataset->cells);
-		for (GList * xx = keys; xx != NULL; xx = g_list_next(xx)) {
-			Dataset_Key * key = xx->data;
-			pair = pair_new(GINT_TO_POINTER(key->src),
-					GINT_TO_POINTER(key->dst));
-
-			pairs = g_list_prepend(pairs, pair);
-		}
-		g_list_free(keys);
+void dataset_label_pairs_iter_init(Dataset * dataset, DatasetPairIter * iter) {
+	iter->dataset = dataset;
+	iter->dense = dataset->omitted < 0;
+	if (iter->dense) {
+		/* dense data */
+		g_hash_table_iter_init(&iter->u.cell_iter, dataset->cells);
 	} else {
-		// sparse data--use brute force.
-		GList * labels = dataset_get_labels(dataset);
-		for (GList * xx = labels; xx != NULL; xx = g_list_next(xx)) {
-			for (GList * yy = labels; yy != NULL; yy = g_list_next(yy)) {
-				if (dataset_is_missing(dataset, xx->data, yy->data)) {
-					continue;
-				}
-				pair = pair_new(GINT_TO_POINTER(xx->data),
-						GINT_TO_POINTER(yy->data));
-				pairs = g_list_prepend(pairs, pair);
-			}
-		}
-		dataset_get_labels_free(labels);
+		/* sparse data--brute force */
+		iter->u.sp.src = NULL;
+		dataset_labels_iter_init(iter->dataset, &iter->u.sp.src_iter);
+		dataset_labels_iter_init(iter->dataset, &iter->u.sp.dst_iter);
 	}
-	return pairs;
 }
 
-void dataset_get_label_pairs_free(GList * pairs) {
-	g_list_free_full(pairs, (GDestroyNotify) pair_free);
+gboolean dataset_label_pairs_iter_next(DatasetPairIter *iter, gpointer * psrc, gpointer * pdst) {
+	if (iter->dense) {
+		/* dst_iter is unused: dense */
+		Dataset_Key * key;
+		gpointer pkey;
+		gboolean ret = g_hash_table_iter_next(&iter->u.cell_iter, &pkey, NULL);
+		key = pkey;
+		if (ret) {
+			*psrc = GINT_TO_POINTER(key->src);
+			*pdst = GINT_TO_POINTER(key->dst);
+		}
+		return ret;
+	} else {
+		/* sparse: brute force */
+		gboolean dst_next;
+		if (iter->u.sp.src == NULL) {
+			if (!dataset_labels_iter_next(&iter->u.sp.src_iter, &iter->u.sp.src)) {
+				return FALSE;
+			}
+			dataset_labels_iter_init(iter->dataset, &iter->u.sp.dst_iter);
+		}
+		while (1) {
+			dst_next = dataset_labels_iter_next(&iter->u.sp.dst_iter, pdst);
+			while (dst_next && dataset_is_missing(iter->dataset, iter->u.sp.src, *pdst)) {
+				dst_next = dataset_labels_iter_next(&iter->u.sp.dst_iter, pdst);
+			}
+			if (dst_next) {
+				break;
+			}
+			if (!dataset_labels_iter_next(&iter->u.sp.src_iter, &iter->u.sp.src)) {
+				return FALSE;
+			}
+			dataset_labels_iter_init(iter->dataset, &iter->u.sp.dst_iter);
+		}
+		*psrc = iter->u.sp.src;
+		return dst_next;
+	}
 }
 
 
@@ -242,7 +262,8 @@ const gchar * dataset_label_to_string(Dataset * dataset, gconstpointer label) {
 void dataset_println(Dataset * dataset, const gchar *prefix) {
 	GString * out;
 
-	out = g_string_new("dataset: \n");
+	out = g_string_new("");
+	g_string_append_printf(out, "dataset(%s): \n", prefix);
 	dataset_tostring(dataset, out);
 	g_print("%s\n", out->str);
 	g_string_free(out, TRUE);

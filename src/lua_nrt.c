@@ -145,29 +145,31 @@ static int datasetlua_get(lua_State * ss) {
 
 static int datasetlua_labels(lua_State * ss) {
 	Dataset * dataset = datasetlua_checkdataset(ss);
-	GList * labels = dataset_get_labels(dataset);
+	DatasetLabelIter iter;
+	gpointer label;
 	int index = 1;
 
 	lua_newtable(ss);
-	for (GList * xx = labels; xx != NULL; xx = g_list_next(xx)) {
-		lua_pushstring(ss, dataset_label_to_string(dataset, xx->data));
+	dataset_labels_iter_init(dataset, &iter);
+	while (dataset_labels_iter_next(&iter, &label)) {
+		lua_pushstring(ss, dataset_label_to_string(dataset, label));
 		lua_rawseti(ss, -2, index);
 		index++;
 	}
-	dataset_get_labels_free(labels);
 	return 1;
 }
 
 static int datasetlua_elems(lua_State * ss) {
 	Dataset * dataset = datasetlua_checkdataset(ss);
-	GList * pairs = dataset_get_label_pairs(dataset);
+	DatasetPairIter pairs;
+	gpointer lsrc, ldst;
 	int index = 1;
 
 	lua_newtable(ss);
-	for (GList * xx = pairs; xx != NULL; xx = g_list_next(xx)) {
-		Pair * pair = xx->data;
-		const gchar * src = dataset_label_to_string(dataset, pair->fst);
-		const gchar * dst = dataset_label_to_string(dataset, pair->snd);
+	dataset_label_pairs_iter_init(dataset, &pairs);
+	while (dataset_label_pairs_iter_next(&pairs, &lsrc, &ldst)) {
+		const gchar * src = dataset_label_to_string(dataset, lsrc);
+		const gchar * dst = dataset_label_to_string(dataset, ldst);
 		lua_newtable(ss);
 		lua_pushstring(ss, src);
 		lua_rawseti(ss, -2, 1);
@@ -176,7 +178,6 @@ static int datasetlua_elems(lua_State * ss) {
 		lua_rawseti(ss, -2, index);
 		index++;
 	}
-	dataset_get_label_pairs_free(pairs);
 	return 1;
 }
 

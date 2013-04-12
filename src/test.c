@@ -283,12 +283,13 @@ gdouble test_build_logpred4_sparse(gboolean sparse) {
 	Dataset * dataset;
 	Params * params;
 	GRand * rng;
-	GList * pairs;
 	gdouble logpred_true, logpred_false;
 	gpointer bb, dd;
 	Build * build;
 	gdouble total;
 	guint count;
+	DatasetPairIter pairs;
+	gpointer src, dst;
 
 	rng = g_rand_new_with_seed(2);
 	dataset = dataset_gen_toy4(sparse);
@@ -303,7 +304,6 @@ gdouble test_build_logpred4_sparse(gboolean sparse) {
 	total = 0;
 	count = 0;
 	/* test on the training points */
-	pairs = dataset_get_label_pairs(dataset);
 #define	pred_ok(src, dst) \
 	do {									\
 		logpred_true = tree_logpredict(root, src, dst, TRUE);		\
@@ -314,14 +314,19 @@ gdouble test_build_logpred4_sparse(gboolean sparse) {
 				EQFLOAT_DEFAULT_PREC);				\
 	} while (0)
 
-	for (GList * xx = pairs; xx != NULL; xx = g_list_next(xx)) {
-		Pair * pair = xx->data;
-		pred_ok(pair->fst, pair->snd);
+	/*dataset_println(dataset, sparse? "sparse": "dense");*/
+	dataset_label_pairs_iter_init(dataset, &pairs);
+	while (dataset_label_pairs_iter_next(&pairs, &src, &dst)) {
+		/*
+		g_print("%s %s\n",
+				dataset_label_to_string(dataset, src),
+				dataset_label_to_string(dataset, dst));
+		*/
+		pred_ok(src, dst);
 		total += logpred_true;
 		count++;
 	}
 	g_assert_cmpint(count, ==, 16-3);
-	dataset_get_label_pairs_free(pairs);
 	bb = dataset_label_lookup(dataset, "bb");
 	dd = dataset_label_lookup(dataset, "dd");
 	pred_ok(bb, bb);

@@ -123,24 +123,23 @@ static void eval_test(Tree * root, GIOChannel *io) {
 static void save_pred(Pair * tree_dataset, GIOChannel * io) {
 	Tree * const tree = tree_dataset->fst;
 	Dataset * const dataset = tree_dataset->snd;
-	GList * pairs;
+	DatasetPairIter pairs;
+	gpointer src, dst;
 
-	pairs = dataset_get_label_pairs(dataset);
-	for (GList * xx = pairs; xx != NULL; xx = g_list_next(xx)) {
-		Pair * pair = xx->data;
+	dataset_label_pairs_iter_init(dataset, &pairs);
+	while (dataset_label_pairs_iter_next(&pairs, &src, &dst)) {
 		gboolean missing;
-		gboolean value = dataset_get(dataset, pair->fst, pair->snd, &missing);
-		gdouble logpred_true = tree_logpredict(tree, pair->fst, pair->snd, TRUE);
-		gdouble logpred_false = tree_logpredict(tree, pair->fst, pair->snd, FALSE);
+		gboolean value = dataset_get(dataset, src, dst, &missing);
+		gdouble logpred_true = tree_logpredict(tree, src, dst, TRUE);
+		gdouble logpred_false = tree_logpredict(tree, src, dst, FALSE);
 		g_assert(!missing);
 		io_printf(io, "%s,%s,%s,%1.17e,%1.17e\n",
-				dataset_label_to_string(dataset, pair->fst),
-				dataset_label_to_string(dataset, pair->snd),
+				dataset_label_to_string(dataset, src),
+				dataset_label_to_string(dataset, dst),
 				(value? "true": "false"),
 				logpred_false,
 				logpred_true);
 	}
-	dataset_get_label_pairs_free(pairs);
 }
 
 static void timer_save_io(GTimer * timer, GIOChannel * io) {

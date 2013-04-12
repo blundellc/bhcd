@@ -140,11 +140,10 @@ void dataset_gml_save(Dataset * dataset, const gchar *fname) {
 }
 
 void dataset_gml_save_io(Dataset * dataset, GIOChannel * io) {
-	GList * labels;
-	GList * src;
-	GList * dst;
 	gboolean sparse;
 	gboolean omitted;
+	DatasetLabelIter iter_src, iter_dst;
+	gpointer src, dst;
 
 	io_printf(io, "graph [\n");
 
@@ -153,32 +152,34 @@ void dataset_gml_save_io(Dataset * dataset, GIOChannel * io) {
 		io_printf(io, "\tsparse %d\n", omitted);
 	}
 
-	labels = dataset_get_labels(dataset);
-	for (src = labels; src != NULL; src = g_list_next(src))  {
+	dataset_labels_iter_init(dataset, &iter_src);
+	while (dataset_labels_iter_next(&iter_src, &src)) {
 		io_printf(io, "\tnode [ id %d label \"%s\" ]\n",
-				GPOINTER_TO_INT(src->data),
-				dataset_label_to_string(dataset, src->data));
+				GPOINTER_TO_INT(src),
+				dataset_label_to_string(dataset, src));
 	}
-	for (src = labels; src != NULL; src = g_list_next(src)) {
-		for (dst = labels; dst != NULL; dst = g_list_next(dst)) {
+
+	dataset_labels_iter_init(dataset, &iter_src);
+	while (dataset_labels_iter_next(&iter_src, &src)) {
+		dataset_labels_iter_init(dataset, &iter_dst);
+		while (dataset_labels_iter_next(&iter_dst, &dst)) {
 			gboolean missing;
 			gboolean value;
 
-			value = dataset_get(dataset, src->data, dst->data, &missing);
+			value = dataset_get(dataset, src, dst, &missing);
 			if ((!sparse && !missing) ||
 			    (sparse && value != omitted)) {
 				io_printf(io, "\tedge [ source %d target %d weight %d ]\n",
-						GPOINTER_TO_INT(src->data),
-						GPOINTER_TO_INT(dst->data),
+						GPOINTER_TO_INT(src),
+						GPOINTER_TO_INT(dst),
 						value);
 			} else if (sparse && missing) {
 				io_printf(io, "\tedge [ source %d target %d weight NA ]\n",
-						GPOINTER_TO_INT(src->data),
-						GPOINTER_TO_INT(dst->data));
+						GPOINTER_TO_INT(src),
+						GPOINTER_TO_INT(dst));
 			}
 		}
 	}
-	dataset_get_labels_free(labels);
 	io_printf(io, "]\n");
 }
 

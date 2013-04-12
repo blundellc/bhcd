@@ -28,39 +28,38 @@ void write_names(gpointer arg, GIOChannel *io) {
 	Pair * pair = arg;
 	GHashTable * label_index = pair->fst;
 	Dataset * dataset = pair->snd;
-	GList * labels;
+	DatasetLabelIter iter;
+	gpointer label;
 	int index = 0;
 
-	labels = dataset_get_labels(dataset);
-	for (GList * xx = labels; xx != NULL; xx = g_list_next(xx)) {
-		g_hash_table_insert(label_index, xx->data, GINT_TO_POINTER(index));
-		io_printf(io, "%d %s\n", index, dataset_label_to_string(dataset, xx->data));
+	dataset_labels_iter_init(dataset, &iter);
+	while (dataset_labels_iter_next(&iter, &label)) {
+		g_hash_table_insert(label_index, label, GINT_TO_POINTER(index));
+		io_printf(io, "%d %s\n", index, dataset_label_to_string(dataset, label));
 		index++;
 	}
-	dataset_get_labels_free(labels);
 }
 
 void write_graph(gpointer arg, GIOChannel *io) {
 	Pair * argpair = arg;
 	GHashTable * label_index = argpair->fst;
 	Dataset * dataset = argpair->snd;
-	GList * pairs;
+	DatasetPairIter pairs;
+	gpointer lsrc, ldst;
 
-	pairs = dataset_get_label_pairs(dataset);
-	for (GList * xx = pairs; xx != NULL; xx = g_list_next(xx)) {
-		Pair * pair = xx->data;
-		gpointer src_ptr = g_hash_table_lookup(label_index, pair->fst);
-		gpointer dst_ptr = g_hash_table_lookup(label_index, pair->snd);
+	dataset_label_pairs_iter_init(dataset, &pairs);
+	while (dataset_label_pairs_iter_next(&pairs, &lsrc, &ldst)) {
+		gpointer src_ptr = g_hash_table_lookup(label_index, lsrc);
+		gpointer dst_ptr = g_hash_table_lookup(label_index, ldst);
 		guint src = GPOINTER_TO_INT(src_ptr);
 		guint dst = GPOINTER_TO_INT(dst_ptr);
-		gboolean value = dataset_get(dataset, pair->fst, pair->snd, NULL);
+		gboolean value = dataset_get(dataset, lsrc, ldst, NULL);
 		if (src == dst) {
 			g_warning("skipping self-link");
 			continue;
 		}
 		io_printf(io, "0 %u %u %u\n", src, dst, value);
 	}
-	dataset_get_label_pairs_free(pairs);
 }
 
 

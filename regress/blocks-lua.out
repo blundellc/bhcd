@@ -1,14 +1,14 @@
 seed: 2a23b6bb
 output prefix: output/out
-tree: logprob: -4.89e+00 #intern: 4 -4.89e+00:{-8.86e-01:{h , f , e , g }, -8.86e-01:{b , a , d , c }, -1.18e+00:{j , i }}
-res	tree(logprob: -4.89e+00 #intern: 4 -4.89e+00:{-8.86e-01:{h , f , e , g }, -8.86e-01:{b , a , d , c }, -1.18e+00:{j , i }})
+tree: logprob: -4.89e+00 #intern: 4 -4.89e+00:{-8.86e-01:{f , e , h , g }, -8.86e-01:{b , a , c , d }, -1.18e+00:{i , j }}
+res	tree(logprob: -4.89e+00 #intern: 4 -4.89e+00:{-8.86e-01:{f , e , h , g }, -8.86e-01:{b , a , c , d }, -1.18e+00:{i , j }})
 -64.267948042818
-ch	tree(logprob: -8.86e-01 #intern: 1 -8.86e-01:{h , f , e , g })
+ch	tree(logprob: -8.86e-01 #intern: 1 -8.86e-01:{f , e , h , g })
 -0.0041523370934823
-chch	tree(logprob: -1.82e-01 #intern: 0 h )
+chch	tree(logprob: -1.82e-01 #intern: 0 f )
 0
 true
-h
+f
 dataset(  a b c d e f g h i j 
 a 1 1 1 1 0 0 0 0 0 0 
 b 1 1 1 1 0 0 0 0 0 0 
@@ -21,16 +21,16 @@ h 0 0 0 0 1 1 1 1 0 0
 i 0 0 0 0 0 0 0 0 1 1 
 j 0 0 0 0 0 0 0 0 1 1 
 )
-i
-h
-f
-a
-c
-d
-g
-j
-b
 e
+b
+j
+g
+d
+c
+a
+f
+h
+i
 f	a	false
 f	h	true
 j	f	false

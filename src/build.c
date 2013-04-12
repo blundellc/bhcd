@@ -33,7 +33,7 @@ static void build_fini_merges(Build * build);
 static void build_sparse_init_merges(Build * build);
 static void build_sparse_add_merges(Build * build, Tree * tkk, guint ii, guint jj);
 static void build_sparse_fini_merges(Build * build);
-static void build_init_trees(Build * build, GList * labels);
+static void build_init_trees(Build * build, Dataset * dataset);
 static void build_remove_tree(Build * build, guint ii);
 static void build_cleanup(Build * build);
 static void build_assert(Build * build);
@@ -123,12 +123,8 @@ static void build_cleanup(Build * build) {
 
 
 void build_once(Build * build) {
-	GList * labels;
-
 	params_reset_cache(build->params);
-	labels = dataset_get_labels(build->params->dataset);
-	build_init_trees(build, labels);
-	dataset_get_labels_free(labels);
+	build_init_trees(build, build->params->dataset);
 	build->init_merges(build);
 	build_greedy(build);
 	build_extract_best_tree(build);
@@ -142,11 +138,15 @@ void build_run(Build * build) {
 }
 
 
-static void build_init_trees(Build * build, GList * labels) {
+static void build_init_trees(Build * build, Dataset * dataset) {
+	DatasetLabelIter iter;
+	gpointer label;
+
 	g_assert(build->trees == NULL);
-	build->trees = g_ptr_array_new_full(g_list_length(labels), (GDestroyNotify)tree_unref);
-	for (labels = g_list_first(labels); labels != NULL; labels = g_list_next(labels)) {
-		Tree * leaf = leaf_new(build->params, labels->data);
+	build->trees = g_ptr_array_new_full(dataset_num_labels(dataset), (GDestroyNotify)tree_unref);
+	dataset_labels_iter_init(dataset, &iter);
+	while (dataset_labels_iter_next(&iter, &label)) {
+		Tree * leaf = leaf_new(build->params, label);
 		g_ptr_array_add(build->trees, leaf);
 	}
 }
