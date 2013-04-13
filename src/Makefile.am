@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Make-rules
 
-bin_PROGRAMS = fastnrt loadgml benchnrt test test_bitset_hash savetoy
+bin_PROGRAMS = fastnrt loadgml benchnrt test test_bitset_hash savetoy pagerank
 
 lib_LTLIBRARIES = libnrt.la
 
@@ -27,4 +27,7 @@ test_LDADD = libnrt.la $(DEPS_LIBS)
 
 test_bitset_hash_SOURCES = test_bitset_hash.c
 test_bitset_hash_LDADD = libnrt.la $(DEPS_LIBS)
+
+pagerank_SOURCES = pagerank.c
+pagerank_LDADD = libnrt.la $(DEPS_LIBS)
 

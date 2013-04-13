@@ -31,3 +31,4 @@ src/.libs/
 *.la
 *.so
 src/test_bitset_hash
+src/pagerank
