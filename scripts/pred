@@ -2,6 +2,7 @@
 
 import sys
 from math import *
+from collections import defaultdict
 
 # only look at the upper triangluar results.
 upper_only = True
@@ -11,42 +12,71 @@ def logsumexp(xs):
     return mm + log(sum((exp(xx-mm) for xx in xs)))
 
 def load(fname):
-    truth = {}
-    lprob = {}
+    truth = defaultdict(dict)
+    lprob = defaultdict(dict)
     with open(fname) as pred:
         for line in pred.readlines():
-            src, dst, correct, lp_false, lp_true = line.split(',')
+            fields = [field.strip() for field in line.split(',')]
+            if len(fields) == 6:
+                time_taken, src, dst, correct, lp_false, lp_true = fields
+            else:
+                src, dst, correct, lp_false, lp_true = fields
+                time_taken = 0.0
             if upper_only and src < dst:
                 continue
-            truth[src, dst] = correct == "true"
-            lprob[src, dst] = { False: float(lp_false), True: float(lp_true) }
+            time_taken = float(time_taken)
+            truth[time_taken][src, dst] = correct == "true"
+            lprob[time_taken][src, dst] = { False: float(lp_false), True: float(lp_true) }
             acc = 1e-8
-            #pred = lprob[src,dst][True] > lprob[src,dst][False]
-            #pred = truth[src,dst]
-            #lprob[src,dst][pred] = log(1.0 - acc)
-            #lprob[src,dst][not pred] = log(acc)
-            #lprob[src,dst][False] = log(0.5 + acc)
-            #lprob[src,dst][True] = log(0.5 - acc)
+            #pred = lprob[time_taken][src,dst][True] > lprob[time_taken][src,dst][False]
+            #pred = truth[time_taken][src,dst]
+            #lprob[time_taken][src,dst][pred] = log(1.0 - acc)
+            #lprob[time_taken][src,dst][not pred] = log(acc)
+            #lprob[time_taken][src,dst][False] = log(0.5 + acc)
+            #lprob[time_taken][src,dst][True] = log(0.5 - acc)
     return truth, lprob
 
+def merge_preds(truthfiles, lprobfiles):
+    # increment time offset as we process each truth file.
+    time_offset = 0.0
+    # truths, lprobs results we've seen so far
+    acc_truths = []
+    acc_lprobs = []
+    # process each file in turn
+    truths = {}
+    lprobs = {}
+    for ii, truthfile in enumerate(truthfiles):
+        for time_taken in truthfile:
+            acc_truths.append(truthfile[time_taken])
+            acc_lprobs.append(lprobfiles[ii][time_taken])
+            truth, lprob = blend_preds(acc_truths, acc_lprobs)
+            time_offset += time_taken
+            truths[time_offset] = truth
+            lprobs[time_offset] = lprob
+
+    check_truths(truths.values())
+    return truths, lprobs
+
 def blend_preds(truths, lprobs):
+    check_truths(truths)
+    nn = 0.0
+    acc_lprob = defaultdict(lambda: defaultdict(int))
+    for lprob in lprobs:
+        nn += 1.0
+        for src, dst in lprob.keys():
+            acc_lprob[src, dst][False] += lprob[src, dst][False]
+            acc_lprob[src, dst][True] += lprob[src, dst][True]
+
+    for src, dst in acc_lprob.keys():
+        acc_lprob[src, dst][False] /= nn
+        acc_lprob[src, dst][True] /= nn
+    return truths[0], acc_lprob
+
+def check_truths(truths):
     truth0 = truths[0]
     for truth in truths[1:]:
         if truth != truth0:
             raise 'truth mismatch'
-
-    lprob = lprobs[0]
-    nn = 1.0
-    for lprob1 in lprobs[1:]:
-        nn += 1.0
-        for src, dst in lprob.keys():
-            lprob[src, dst][False] += lprob1[src, dst][False]
-            lprob[src, dst][True] += lprob1[src, dst][True]
-
-    for src, dst in lprob.keys():
-        lprob[src, dst][False] /= nn
-        lprob[src, dst][True] /= nn
-    return truth0, lprob
 
 def check_sum(lprob):
     for kk in lprob:
@@ -72,10 +102,7 @@ def avg_log_prob(truth, lprob):
     lp = []
     for src, dst in truth:
         lp.append(lprob[src, dst][truth[src, dst]])
-    print 'lpred',mean(lp),'+/-',std_err(lp)
-#    log2 = log(2.0)
-#    lp2 = [-ll/log2 for ll in lp]
-#    print 'bits',mean(lp2),'+/-',std_err(lp2)
+    return mean(lp), std_err(lp)
 
 def loss01(truth, lprob):
     total = 0.0
@@ -116,20 +143,25 @@ def auc(truth, lprob):
     return (So - (nl*(nl+1))/2)/(nl*nn)
 
 def main():
-    truths = []
-    lprobs = []
+    truthfiles = []
+    lprobfiles = []
     for fname in sys.argv[1:]:
         truth, lprob = load(fname)
-        truths.append(truth)
-        lprobs.append(lprob)
+        truthfiles.append(truth)
+        lprobfiles.append(lprob)
 
-    truth, lprob = blend_preds(truths, lprobs)
+    check_truths([truthfile[tt] for truthfile in truthfiles for tt in truthfile])
+    truths, lprobs = merge_preds(truthfiles, lprobfiles)
 
-    check_sum(lprob)
-    avg_log_prob(truth, lprob)
-    print 'loss01 %2.5f' % loss01(truth, lprob)
-    print 'rmse %2.5f' % rmse(truth, lprob)
-    print 'auc %2.5f' % auc(truth, lprob)
+    print 'time','lpred_mean','lpred_se','loss01','rmse','auc'
+    for time_taken in truths.keys():
+        truth = truths[time_taken]
+        lprob = lprobs[time_taken]
+        check_sum(lprob)
+        lpred_mean, lpred_se = avg_log_prob(truth, lprob)
+        print time_taken, lpred_mean, lpred_se,
+        print loss01(truth, lprob), rmse(truth, lprob),
+        print auc(truth, lprob)
 
 if __name__ == '__main__':
     main()
