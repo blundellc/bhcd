@@ -153,15 +153,14 @@ def main():
     check_truths([truthfile[tt] for truthfile in truthfiles for tt in truthfile])
     truths, lprobs = merge_preds(truthfiles, lprobfiles)
 
-    print 'time','lpred_mean','lpred_se','loss01','rmse','auc'
+    print 'time, lpred_mean, lpred_se, loss01, rmse, auc'
     for time_taken in truths.keys():
         truth = truths[time_taken]
         lprob = lprobs[time_taken]
         check_sum(lprob)
         lpred_mean, lpred_se = avg_log_prob(truth, lprob)
-        print time_taken, lpred_mean, lpred_se,
-        print loss01(truth, lprob), rmse(truth, lprob),
-        print auc(truth, lprob)
+        print '%e, %e, %e,' % (time_taken, lpred_mean, lpred_se),
+        print '%e, %e, %e' % (loss01(truth, lprob), rmse(truth, lprob), auc(truth, lprob))
 
 if __name__ == '__main__':
     main()
