@@ -106,23 +106,25 @@ static Tree * run(GRand * rng, Dataset * dataset, gboolean verbose) {
 	return root;
 }
 
-static void eval_test(Tree * root, GIOChannel *io) {
+static void eval_test(Pair * root_timer, GIOChannel *io) {
 	Dataset * test;
-	Pair * tree_data;
+	Pair * root_timer_test;
 
 	if (test_fname == NULL) {
 		return;
 	}
 	test = dataset_gml_load(test_fname);
-	tree_data = pair_new(root, test);
-	save_pred(tree_data, io);
-	pair_free(tree_data);
+	root_timer_test = pair_new(root_timer, test);
+	save_pred(root_timer_test, io);
+	pair_free(root_timer_test);
 	dataset_unref(test);
 }
 
-static void save_pred(Pair * tree_dataset, GIOChannel * io) {
-	Tree * const tree = tree_dataset->fst;
-	Dataset * const dataset = tree_dataset->snd;
+static void save_pred(Pair * root_timer_data, GIOChannel * io) {
+	Pair * root_timer = root_timer_data->fst;
+	Tree * const tree = root_timer->fst;
+	GTimer * timer = root_timer->snd;
+	Dataset * const dataset = root_timer_data->snd;
 	DatasetPairIter pairs;
 	gpointer src, dst;
 
@@ -133,7 +135,8 @@ static void save_pred(Pair * tree_dataset, GIOChannel * io) {
 		gdouble logpred_true = tree_logpredict(tree, src, dst, TRUE);
 		gdouble logpred_false = tree_logpredict(tree, src, dst, FALSE);
 		g_assert(!missing);
-		io_printf(io, "%s,%s,%s,%1.17e,%1.17e\n",
+		io_printf(io, "%e,%s,%s,%s,%1.17e,%1.17e\n",
+				g_timer_elapsed(timer, NULL),
 				dataset_label_to_string(dataset, src),
 				dataset_label_to_string(dataset, dst),
 				(value? "true": "false"),
@@ -151,8 +154,9 @@ int main(int argc, char * argv[]) {
 	GTimer * timer;
 	Dataset * dataset;
 	gchar * train_fname;
-	Pair * tree_data;
 	Tree * root;
+	Pair * root_timer;
+	Pair * root_timer_train;
 
 	train_fname = parse_args(&argc, &argv);
 
@@ -172,10 +176,13 @@ int main(int argc, char * argv[]) {
 	io_writefile(output_time_fname, (IOFunc)timer_save_io, timer);
 	tree_io_save(root, output_tree_fname);
 
-	io_writefile(output_pred_fname, (IOFunc)eval_test, root);
-	tree_data = pair_new(root, dataset);
-	io_writefile(output_fit_fname, (IOFunc)save_pred, tree_data);
-	pair_free(tree_data);
+	root_timer = pair_new(root, timer);
+	io_writefile(output_pred_fname, (IOFunc)eval_test, root_timer);
+
+	root_timer_train = pair_new(root_timer, dataset);
+	io_writefile(output_fit_fname, (IOFunc)save_pred, root_timer_train);
+	pair_free(root_timer_train);
+	pair_free(root_timer);
 
 	if (lua_shell) {
 		nrt_lua_shell(root);
