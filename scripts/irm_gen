@@ -9,6 +9,8 @@ def main():
     parser.add_argument("--name-tag", help="name of tag with same names (useful for test sets")
     parser.add_argument("--search", help="search for MAP", action="store_true")
     parser.add_argument("--no-data-hyper", help="do not update data hypers", action="store_true")
+    parser.add_argument("--loops", help="maximum number of iterations",
+            type=int, default=2500)
     args = parser.parse_args()
 
     date_str = datetime.datetime.now().strftime('%Y%m%d')
@@ -36,7 +38,7 @@ def main():
         sys.exit(1)
 
     with open(params_file, 'w') as params:
-        print >>params, "--loops=2500"
+        print >>params, "--loops="+str(args.loops)
         print >>params, "--nchains=1"
         print >>params, "--outroot="+out_dir
         print >>params, "--configfile="+config_file
