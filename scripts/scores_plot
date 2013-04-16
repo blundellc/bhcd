@@ -9,19 +9,21 @@ load_data <- function(name, fname) {
     return(cbind(name=name, dd))
 }
 
-data = data.frame(rbind(
-        cbind('nrt', 'output/latest/blend/nips1.score'),
-        cbind('nrt-bin', 'output/latest/blend/nips1bin.score'),
-        cbind('nrt-sparse', 'output/latest/blend/nips1sparse.score'),
-        cbind('nrt-bin-sparse', 'output/latest/blend/nips1binsparse.score'),
-        cbind('irm', 'output/latest/irm/nips1/score'),
-        cbind('irm-greedy', 'output/latest/irm/nips1search/score')
-        ))
+data_index <- function(fold='nips1', fit_or_pred='pred') {
+    return(data.frame(rbind(
+        cbind('nrt',            paste('output/latest/blend/',fold,'.score_',fit_or_pred,sep='')),
+        cbind('nrt-bin',        paste('output/latest/blend/',fold,'bin.score_',fit_or_pred,sep='')),
+        cbind('nrt-sparse',     paste('output/latest/blend/',fold,'sparse.score_',fit_or_pred,sep='')),
+        cbind('nrt-bin-sparse', paste('output/latest/blend/',fold,'binsparse.score_',fit_or_pred,sep='')),
+        cbind('irm',        paste('output/latest/irm/',fold,'/score_',fit_or_pred, sep='')),
+        cbind('irm-greedy', paste('output/latest/irm/',fold,'search/score_',fit_or_pred, sep=''))
+        )))
+}
 
-mkplot <- function(dim, namefiles=data) {
+mkplot <- function(dim, index=data_index()) {
     df = c()
-    for (ii in 1:nrow(namefiles)) {
-        df = rbind(df, load_data(namefiles[ii, 1], namefiles[ii, 2]))
+    for (ii in 1:nrow(index)) {
+        df = rbind(df, load_data(index[ii, 1], index[ii, 2]))
     }
     pp <- ggplot(df, aes_string(x='time', y=dim, color='name'))
     #pp <- ggplot(df, aes(x=time, y=auc, color=name))
