@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#date=20130405
+date=latest
+# for output
+curdate=$(date +%Y%m%d)
+
+search=""
+if [ ! -z "$1" ]
+then
+    if [ "$1" = search ]
+    then
+        search=search
+    else
+        echo usage: $0 '[search]'
+    fi
+fi
+
+for c in nips gene; do
+    for x in $(seq 1 10); do
+        tag=$c$x$search
+        in_dir=output/$date/irm/$tag
+        out_dir=output/$curdate/irm/$tag
+        mkdir -p $out_dir
+        echo $tag
+        ./scripts/irm_pred -d $date -t $tag $in_dir/graph $out_dir/fit
+        ./scripts/irm_pred -d $date -t $tag ${in_dir}_test/graph $out_dir/pred
+    done
+done
