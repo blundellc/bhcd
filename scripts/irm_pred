@@ -13,42 +13,70 @@ def main():
     parser.add_argument('-b', '--burnin', help="number of samples to drop",
             type=int)
     parser.add_argument('--last', help="just use last sample", action="store_true")
+    parser.add_argument('--no-blend', help="do not average predictives",
+            action="store_true")
     parser.add_argument('test_file')
+    parser.add_argument('pred_file')
     args = parser.parse_args()
 
-    out_dir = 'output/'+args.date+'/irm'
+    in_dir = 'output/'+args.date+'/irm'
     if args.tag is not None:
-        out_dir += '/'+args.tag
+        in_dir += '/'+args.tag
 
-    graph_file = out_dir + '/graph'
-    names_file = out_dir + '/names'
-    status_file = out_dir + '_status'
-    dom_file = out_dir + '_dom0'
+    graph_file = in_dir + '/graph'
+    names_file = in_dir + '/names'
+    status_file = in_dir + '_status'
+    dom_file = in_dir + '_dom0'
 
+    print 'loading data', graph_file, args.test_file, names_file
     edges, names = load_edges(graph_file, names_file)
     test, names = load_edges(args.test_file, names_file)
 
-    sum_lpred = defaultdict(lambda: defaultdict(float))
-    num_lpred = 0
+    print 'loading model', status_file, dom_file
+    print '+ outputting', args.pred_file
+    # timestamp -> src, dst-> log predictives src, dst at that timestamp.
+    time_lpred = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
+    # cumulative sum of log predictives, ordered by time.
+    acc_lpred = defaultdict(lambda: defaultdict(float))
+    # number of log preds in acc_lpred
+    acc_count = 0
     with open(status_file) as status:
         with open(dom_file) as dom:
-            for line_num, (dom_line, status_line) in enumerate(izip(dom, status)):
-                if not args.last and line_num >= args.burnin:
-                    process(sum_lpred, dom_line, status_line, edges, test, names)
-                    num_lpred += 1
+            with open(args.pred_file, 'w') as pred:
+                for line_num, (dom_line, status_line) in enumerate(izip(dom, status)):
+                    # skip the very first result--it's the initialization
+                    if line_num == 0 or (line_num >= 100 and (line_num % 100) != 0):
+                        continue
+                    if not args.last and line_num >= args.burnin:
+                        if args.no_blend:
+                            acc_count = 1.0
+                            for kk in list(acc_lpred.keys()):
+                                del acc_lpred[kk]
+                        else:
+                            acc_count += 1.0
+                        timestamp = process(acc_lpred, dom_line, status_line, edges, test, names)
+                        output_pred(pred, timestamp, acc_lpred, acc_count, names, test)
 
-            if args.last:
-                process(sum_lpred, dom_line, status_line, edges, test, names)
-                num_lpred += 1
+                if args.last:
+                    if args.no_blend:
+                        acc_count = 1.0
+                        for kk in list(acc_lpred.keys()):
+                            del acc_lpred[kk]
+                    else:
+                        acc_count += 1.0
+                    timestamp = process(acc_lpred, dom_line, status_line, edges, test, names)
+                    output_pred(pred, timestamp, acc_lpred, acc_count, names, test)
 
-    for src, dst in sum_lpred:
+def output_pred(pred, timestamp, acc_lpred, acc_count, names, test):
+    for src, dst in acc_lpred:
         value = "false"
         if test[src, dst]:
             value = "true"
-        print '%s,%s,%s,%f,%f' % (
+        pred.write('%e,%s,%s,%s,%f,%f\n' % (
+                timestamp,
                 names[src], names[dst], value, 
-                sum_lpred[src, dst][False]/num_lpred,
-                sum_lpred[src, dst][True]/num_lpred)
+                acc_lpred[src, dst][False]/acc_count,
+                acc_lpred[src, dst][True]/acc_count))
 
 def load_edges(graph_file, names_file):
     names = {}
@@ -65,10 +93,11 @@ def load_edges(graph_file, names_file):
             edges[int(src), int(dst)] = int(value)
     return edges, names
 
-def process(sum_lpred, dom_line, status_line, edges, test, names):
+def process(acc_lpred, dom_line, status_line, edges, test, names):
     num, llik, lpart, npart, ljoint, betaprop, betamag, alpha, timestamp = (
                 map(float, status_line.replace(':', ' ').strip().split())
             )
+    assert timestamp not in acc_lpred
     beta = betamag/(1+betaprop)
     alpha = betaprop*beta
 
@@ -87,8 +116,9 @@ def process(sum_lpred, dom_line, status_line, edges, test, names):
         cdst = clusters[dst]
         n1 = num_ones[csrc, cdst]
         n0 = num_zeroes[csrc, cdst]
-        sum_lpred[src, dst][False] += betaln(alpha+n1, beta+n0+1) - betaln(alpha+n1, beta+n0)
-        sum_lpred[src, dst][True]  += betaln(alpha+n1+1, beta+n0) - betaln(alpha+n1, beta+n0)
+        acc_lpred[src, dst][False] += betaln(alpha+n1, beta+n0+1) - betaln(alpha+n1, beta+n0)
+        acc_lpred[src, dst][True]  += betaln(alpha+n1+1, beta+n0) - betaln(alpha+n1, beta+n0)
+    return timestamp
 
 if __name__ == '__main__':
     main()
