@@ -11,13 +11,19 @@ test=$3
 
 dd=$(date +%Y%m%d)
 out_dir=output/$dd/irm/$tag
-./scripts/irm_gen -t $tag $train
-./scripts/irm_gen -t ${tag}_test --name-tag $tag $test
+
+search=""
+if echo "$tag" | grep -q 'search$'; then
+    search="--search --loops 250"
+fi
+
+./scripts/irm_gen $search -t $tag $train
+./scripts/irm_gen $search -t ${tag}_test --name-tag $tag $test
 if [ -e ${out_dir}_test/names ]; then
     echo "test names file exists. (weird)"
     exit 1
 fi
 /usr/bin/time -o $out_dir/time ./bin/irm @$out_dir/params
-./scripts/irm_pred -d $dd -t $tag ${out_dir}/graph | tee $out_dir/fit
-./scripts/irm_pred -d $dd -t $tag ${out_dir}_test/graph | tee $out_dir/pred
+./scripts/irm_pred -d $dd -t $tag ${out_dir}/graph $out_dir/fit
+./scripts/irm_pred -d $dd -t $tag ${out_dir}_test/graph $out_dir/pred
 
