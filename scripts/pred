@@ -46,13 +46,15 @@ def merge_preds(truthfiles, lprobfiles):
     truths = {}
     lprobs = {}
     for ii, truthfile in enumerate(truthfiles):
+        file_time = 0
         for time_taken in truthfile:
             acc_truths.append(truthfile[time_taken])
             acc_lprobs.append(lprobfiles[ii][time_taken])
             truth, lprob = blend_preds(acc_truths, acc_lprobs)
-            time_offset += time_taken
-            truths[time_offset] = truth
-            lprobs[time_offset] = lprob
+            truths[time_offset+time_taken] = truth
+            lprobs[time_offset+time_taken] = lprob
+            file_time += time_taken
+        time_offset += file_time
 
     check_truths(truths.values())
     return truths, lprobs
@@ -154,7 +156,7 @@ def main():
     truths, lprobs = merge_preds(truthfiles, lprobfiles)
 
     print 'time, lpred_mean, lpred_se, loss01, rmse, auc'
-    for time_taken in truths.keys():
+    for time_taken in sorted(truths.keys(), key=lambda tt: float(tt)):
         truth = truths[time_taken]
         lprob = lprobs[time_taken]
         check_sum(lprob)
