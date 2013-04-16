@@ -15,7 +15,7 @@ Labelset * labelset_new_full(Dataset * dataset, ...) {
 	guint max_label;
 	gpointer label;
 
-	lset = g_new(Labelset, 1);
+	lset = g_slice_new(Labelset);
 	lset->ref_count = 1;
 	lset->dataset = dataset;
 	dataset_ref(dataset);
@@ -48,7 +48,7 @@ void labelset_unref(Labelset * lset) {
 	if (lset->ref_count <= 1) {
 		dataset_unref(lset->dataset);
 		bitset_unref(lset->bits);
-		g_free(lset);
+		g_slice_free(Labelset, lset);
 	} else {
 		lset->ref_count--;
 	}

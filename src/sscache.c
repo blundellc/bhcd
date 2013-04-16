@@ -84,7 +84,7 @@ gpointer sscache_get_label(SSCache *cache, gconstpointer label) {
 static Offblock_Key * offblock_key_new(Labelset * fst, Labelset * snd) {
 	Offblock_Key * key;
 
-	key = g_new(Offblock_Key, 1);
+	key = g_slice_new(Offblock_Key);
 	key->fst = fst;
 	labelset_ref(key->fst);
 	key->snd = snd;
@@ -99,7 +99,7 @@ static void offblock_key_free(gpointer pkey) {
 
 	labelset_unref(key->fst);
 	labelset_unref(key->snd);
-	g_free(key);
+	g_slice_free(Offblock_Key, key);
 }
 
 static guint offblock_key_hash(gconstpointer pkey) {

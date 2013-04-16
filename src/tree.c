@@ -73,7 +73,7 @@ void tree_assert(Tree * tree) {
 static Tree * tree_new(Params * params) {
 	Tree * tree;
        
-	tree = g_new(Tree, 1);
+	tree = g_slice_new(Tree);
 	tree->ref_count = 1;
 	tree->is_leaf = TRUE;
 	tree->params = params;
@@ -98,7 +98,7 @@ Tree * tree_copy(Tree * orig) {
 	Tree * tree;
 	GList * child;
        
-	tree = g_new(Tree, 1);
+	tree = g_slice_new(Tree);
 	tree->ref_count = 1;
 	tree->is_leaf = orig->is_leaf;
 	tree->params = orig->params;
@@ -203,7 +203,7 @@ void tree_unref(Tree * tree) {
 		suffstats_unref(tree->suffstats_on);
 		suffstats_unref(tree->suffstats_off);
 		params_unref(tree->params);
-		g_free(tree);
+		g_slice_free(Tree, tree);
 	} else {
 		tree->ref_count--;
 	}

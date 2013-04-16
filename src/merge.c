@@ -8,7 +8,7 @@ Merge * merge_new(GRand * rng, Params * params, guint ii, Tree * aa, guint jj, T
 	Merge * merge;
 	gdouble logprob_rel;
 
-	merge = g_new(Merge, 1);
+	merge = g_slice_new(Merge);
 	merge->ii = ii;
 	merge->jj = jj;
 	merge->tree = mm;
@@ -23,7 +23,7 @@ Merge * merge_new(GRand * rng, Params * params, guint ii, Tree * aa, guint jj, T
 
 void merge_free(Merge * merge) {
 	tree_unref(merge->tree);
-	g_free(merge);
+	g_slice_free(Merge, merge);
 }
 
 void merge_free1(gpointer merge, gpointer data) {

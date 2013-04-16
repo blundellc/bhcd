@@ -21,10 +21,11 @@ Bitset * bitset_new(guint32 max_index) {
 	Bitset * bitset;
 
 	g_assert(max_index < MAX_ELEMS);
-	bitset = g_new(Bitset, 1);
+	bitset = g_slice_new(Bitset);
 	bitset->ref_count = 1;
 	bitset->size = 1 + max_index/BITS_PER_ELEM;
-	bitset->elems = g_new0(guint64, bitset->size);
+	// XXX: overflow
+	bitset->elems = g_slice_alloc0(sizeof(guint64) * bitset->size);
 	return bitset;
 }
 
@@ -43,8 +44,8 @@ void bitset_ref(Bitset * bitset) {
 
 void bitset_unref(Bitset * bitset) {
 	if (bitset->ref_count <= 1) {
-		g_free(bitset->elems);
-		g_free(bitset);
+		g_slice_free1(sizeof(guint64) * bitset->size, bitset->elems);
+		g_slice_free(Bitset, bitset);
 	} else {
 		bitset->ref_count--;
 	}

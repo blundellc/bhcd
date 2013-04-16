@@ -21,6 +21,7 @@ typedef struct {
 
 
 static Dataset_Key * dataset_key(Dataset *, gconstpointer, gconstpointer);
+static void dataset_key_free(Dataset_Key *key);
 static guint dataset_key_hash(gconstpointer);
 static gboolean dataset_key_eq(gconstpointer, gconstpointer);
 static gint dataset_label_cmp(gconstpointer, gconstpointer);
@@ -35,7 +36,7 @@ Dataset* dataset_new(gboolean symmetric) {
 	data->cells = g_hash_table_new_full(
 				dataset_key_hash,
 				dataset_key_eq,
-				g_free,
+				(GDestroyNotify)dataset_key_free,
 				NULL
 			);
 	data->max_qlabel = 0;
@@ -98,7 +99,7 @@ gboolean dataset_get(Dataset * dataset, gconstpointer src, gconstpointer dst, gb
 
 	key = dataset_key(dataset, src, dst);
 	ptr = g_hash_table_lookup(dataset->cells, key);
-	g_free(key);
+	dataset_key_free(key);
 	if (ptr == NULL) {
 		value = dataset->omitted;
 	} else {
@@ -140,7 +141,7 @@ static void dataset_set_full(Dataset * dataset, gpointer src, gpointer dst, gint
 	key = dataset_key(dataset, src, dst);
 	if (value == dataset->omitted) {
 		g_hash_table_remove(dataset->cells, key);
-		g_free(key);
+		dataset_key_free(key);
 		return;
 	}
 	g_hash_table_replace(dataset->cells, key, GINT_TO_POINTER(value+DATASET_VALUE_SHIFT));
@@ -323,7 +324,7 @@ static Dataset_Key * dataset_key(Dataset * dd, gconstpointer psrc, gconstpointer
 	dataset_label_assert(dd, psrc);
 	dataset_label_assert(dd, pdst);
 
-	key = g_new(Dataset_Key, 1);
+	key = g_slice_new(Dataset_Key);
 
 	src = GPOINTER_TO_INT(psrc);
 	dst = GPOINTER_TO_INT(pdst);
@@ -336,6 +337,10 @@ static Dataset_Key * dataset_key(Dataset * dd, gconstpointer psrc, gconstpointer
 		key->dst = src;
 	}
 	return key;
+}
+
+static void dataset_key_free(Dataset_Key *key) {
+	g_slice_free(Dataset_Key, key);
 }
 
 static guint dataset_key_hash(gconstpointer pkey) {

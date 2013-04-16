@@ -3,7 +3,7 @@
 Counts * counts_new(guint num_ones, guint num_total) {
 	Counts * counts;
 
-	counts = g_new(Counts, 1);
+	counts = g_slice_new(Counts);
 	counts->ref_count = 1;
 	counts->num_ones = num_ones;
 	counts->num_total = num_total;
@@ -25,7 +25,7 @@ void counts_ref(Counts * counts) {
 
 void counts_unref(Counts * counts) {
 	if (counts->ref_count <= 1) {
-		g_free(counts);
+		g_slice_free(Counts, counts);
 	} else {
 		counts->ref_count--;
 	}

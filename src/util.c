@@ -9,14 +9,14 @@
 Pair *pair_new(gpointer fst, gpointer snd) {
 	Pair * pair;
 
-	pair = g_new(Pair, 1);
+	pair = g_slice_new(Pair);
 	pair->fst = fst;
 	pair->snd = snd;
 	return pair;
 }
 
 void pair_free(Pair *pair) {
-	g_free(pair);
+	g_slice_free(Pair, pair);
 }
 
 
