@@ -1,0 +1,23 @@
+#!/bin/sh
+
+cur=$(date +%Y%m%d)
+mkdir -p output/$cur/blend
+
+for type in fit pred
+do
+    for c in nips gene
+    do
+        for n in $(seq 1 10)
+        do
+            mkdir -p output/$cur/irm/$c$n
+            mkdir -p output/$cur/irm/$c${n}search
+            echo $c$n
+            ./scripts/pred output/latest/irm/$c$n/$type | tee output/$cur/irm/$c$n/score_$type
+            ./scripts/pred output/latest/irm/$c${n}search/$type | tee output/$cur/irm/$c${n}search/score_$type
+            for x in "" sparse bin binsparse
+            do
+                ./scripts/pred output/latest/blend/*/$c$n$x.$type | tee output/$cur/blend/$c$n$x.score_$type
+            done
+        done
+    done
+done
