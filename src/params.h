@@ -11,13 +11,20 @@ typedef struct {
 	/* public: */
 	Dataset *	dataset;
 	SSCache *	sscache;
+	gboolean	binary_only;
+
 	gdouble		gamma;
-	gdouble		loggamma; /* really log(1-gamma) */
 	gdouble		alpha;
 	gdouble		beta;
 	gdouble		delta;
 	gdouble		lambda;
-	gboolean	binary_only;
+    /* private */
+    /* cached: really log(1-gamma) */
+	gdouble		loggamma;
+    /* cached: logbeta(alpha, beta) */
+    gdouble     logbeta_alpha_beta;
+    /* cached: logbeta(delta, lambda) */
+    gdouble     logbeta_delta_lambda;
 } Params;
 
 Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble beta, gdouble delta, gdouble lambda);

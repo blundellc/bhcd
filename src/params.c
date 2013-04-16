@@ -7,16 +7,23 @@
 Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble beta, gdouble delta, gdouble lambda) {
 	Params * params = g_new(Params, 1);
 	params->ref_count = 1;
+
 	params->dataset = dataset;
 	dataset_ref(dataset);
 	params->sscache = sscache_new(dataset);
+
 	params->gamma = gamma;
 	params->loggamma = gsl_sf_log(1.0 - gamma);
+	params->binary_only = FALSE;
+
 	params->alpha = alpha;
 	params->beta = beta;
+	params->logbeta_alpha_beta = gsl_sf_lnbeta(alpha, beta);
+
 	params->delta = delta;
 	params->lambda = lambda;
-	params->binary_only = FALSE;
+	params->logbeta_delta_lambda = gsl_sf_lnbeta(delta, lambda);
+
 	return params;
 }
 
@@ -55,7 +62,7 @@ gdouble params_logprob_on(Params * params, gpointer pcounts) {
 	}
 	a1 = params->alpha + counts->num_ones;
 	b0 = params->beta  + counts->num_total - counts->num_ones;
-	logprob = gsl_sf_lnbeta(a1, b0) - gsl_sf_lnbeta(params->alpha, params->beta);
+	logprob = gsl_sf_lnbeta(a1, b0) - params->logbeta_alpha_beta;
 	return logprob;
 }
 
@@ -68,7 +75,7 @@ gdouble params_logprob_off(Params * params, gpointer pcounts) {
 	}
 	d1 = params->delta + counts->num_ones;
 	l0 = params->lambda  + counts->num_total - counts->num_ones;
-	logprob = gsl_sf_lnbeta(d1, l0) - gsl_sf_lnbeta(params->delta, params->lambda);
+	logprob = gsl_sf_lnbeta(d1, l0) - params->logbeta_delta_lambda;
 	return logprob;
 }
 
