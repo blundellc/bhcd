@@ -1,0 +1,37 @@
+#!/usr/bin/r
+
+library(ggplot2)
+
+load_data <- function(name, fname) {
+    print(paste('loading',name,'from',fname))
+    fp <- file(paste(fname))
+    dd <- read.csv(fp)
+    return(cbind(name=name, dd))
+}
+
+data = data.frame(rbind(
+        cbind('nrt', 'output/latest/blend/nips1.score'),
+        cbind('nrt-bin', 'output/latest/blend/nips1bin.score'),
+        cbind('nrt-sparse', 'output/latest/blend/nips1sparse.score'),
+        cbind('nrt-bin-sparse', 'output/latest/blend/nips1binsparse.score'),
+        cbind('irm', 'output/latest/irm/nips1/score'),
+        cbind('irm-greedy', 'output/latest/irm/nips1search/score')
+        ))
+
+mkplot <- function(dim, namefiles=data) {
+    df = c()
+    for (ii in 1:nrow(namefiles)) {
+        df = rbind(df, load_data(namefiles[ii, 1], namefiles[ii, 2]))
+    }
+    pp <- ggplot(df, aes_string(x='time', y=dim, color='name'))
+    #pp <- ggplot(df, aes(x=time, y=auc, color=name))
+    pp <- pp + geom_point() + geom_line()
+    if (dim == 'lpred_mean') {
+        limits <- aes(ymin = lpred_mean - lpred_se,
+                      ymax = lpred_mean + lpred_se)
+        pp <- pp + geom_errorbar(limits)
+    }
+    pp <- pp + scale_x_log10() + xlab('time') + ylab(dim)
+    return(pp)
+}
+
