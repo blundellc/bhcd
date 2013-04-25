@@ -724,6 +724,38 @@ void test_log_add_exp(void) {
 }
 
 
+void test_lnbetacache(void) {
+	gdouble hypers[] = { 0.01, 0.1, 0.5, 10.0 };
+	const guint max_num = 51;
+
+	for (guint h0 = 0; h0 < sizeof(hypers)/sizeof(hypers[0]); h0++) {
+		gdouble alpha = hypers[h0];
+		for (guint h1 = 0; h1 < sizeof(hypers)/sizeof(hypers[0]); h1++) {
+			gdouble beta = hypers[h1];
+			LnBetaCache * cache = lnbetacache_new(alpha, beta, max_num);
+			for (guint n0 = 0; n0 < 2*max_num; n0++) {
+				for (guint n1 = 0; n1 < 2*max_num; n1++) {
+					gdouble truth = gsl_sf_lnbeta(alpha+n1, beta+n0);
+					gdouble cc = lnbetacache_get(cache, n1, n0);
+					assert_eqfloat(truth, cc, EQFLOAT_DEFAULT_PREC);
+				}
+			}
+			g_assert(lnbetacache_get_num_hits(cache) == 0);
+			for (guint n0 = 0; n0 < 2*max_num; n0++) {
+				for (guint n1 = 0; n1 < 2*max_num; n1++) {
+					gdouble truth = gsl_sf_lnbeta(alpha+n1, beta+n0);
+					gdouble cc = lnbetacache_get(cache, n1, n0);
+					assert_eqfloat(truth, cc, EQFLOAT_DEFAULT_PREC);
+				}
+			}
+			/* note that only values lying < max_num will be cached
+			 */
+			g_assert(lnbetacache_get_num_hits(cache) == max_num*max_num);
+			lnbeta_cache_free(cache);
+		}
+	}
+}
+
 int main(int argc, char *argv[]) {
 	g_test_init(&argc, &argv, NULL);
 	g_test_add_func("/tree/logprob3", test_tree_logprob3);
@@ -735,6 +767,7 @@ int main(int argc, char *argv[]) {
 	g_test_add_func("/labelset", test_labelset);
 	g_test_add_func("/sscache/stats", test_sscache_stats);
 	g_test_add_func("/util/log_add_exp", test_log_add_exp);
+	g_test_add_func("/util/lnbetacache", test_lnbetacache);
 	g_test_run();
 	return 0;
 }

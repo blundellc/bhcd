@@ -3,6 +3,7 @@
 #include <glib.h>
 #include "dataset.h"
 #include "sscache.h"
+#include "lnbetacache.h"
 
 
 typedef struct {
@@ -18,13 +19,13 @@ typedef struct {
 	gdouble		beta;
 	gdouble		delta;
 	gdouble		lambda;
-    /* private */
-    /* cached: really log(1-gamma) */
+	/* private */
+	/* cached: really log(1-gamma) */
 	gdouble		loggamma;
-    /* cached: logbeta(alpha, beta) */
-    gdouble     logbeta_alpha_beta;
-    /* cached: logbeta(delta, lambda) */
-    gdouble     logbeta_delta_lambda;
+	/* cached: logbeta(alpha, beta) */
+	LnBetaCache *	logbeta_alpha_beta;
+	/* cached: logbeta(delta, lambda) */
+	LnBetaCache *	logbeta_delta_lambda;
 } Params;
 
 Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble beta, gdouble delta, gdouble lambda);

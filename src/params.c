@@ -3,6 +3,7 @@
 #include "counts.h"
 #include "params.h"
 
+static const guint max_cached_count = 100;
 
 Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble beta, gdouble delta, gdouble lambda) {
 	Params * params = g_new(Params, 1);
@@ -18,11 +19,11 @@ Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble bet
 
 	params->alpha = alpha;
 	params->beta = beta;
-	params->logbeta_alpha_beta = gsl_sf_lnbeta(alpha, beta);
+	params->logbeta_alpha_beta = lnbetacache_new(alpha, beta, max_cached_count);
 
 	params->delta = delta;
 	params->lambda = lambda;
-	params->logbeta_delta_lambda = gsl_sf_lnbeta(delta, lambda);
+	params->logbeta_delta_lambda = lnbetacache_new(delta, lambda, max_cached_count);
 
 	return params;
 }
@@ -47,6 +48,8 @@ void params_unref(Params * params) {
 	if (params->ref_count <= 1) {
 		dataset_unref(params->dataset);
 		sscache_unref(params->sscache);
+		lnbeta_cache_free(params->logbeta_alpha_beta);
+		lnbeta_cache_free(params->logbeta_delta_lambda);
 		g_free(params);
 	} else {
 		params->ref_count--;
@@ -55,47 +58,55 @@ void params_unref(Params * params) {
 
 gdouble params_logprob_on(Params * params, gpointer pcounts) {
 	Counts * counts = pcounts;
-	gdouble a1, b0, logprob;
+	gdouble logprob;
 
 	if (counts->num_total == 0) {
 		return 0.0;
 	}
-	a1 = params->alpha + counts->num_ones;
-	b0 = params->beta  + counts->num_total - counts->num_ones;
-	logprob = gsl_sf_lnbeta(a1, b0) - params->logbeta_alpha_beta;
+	logprob = lnbetacache_get(params->logbeta_alpha_beta,
+			counts->num_ones,
+			counts->num_total - counts->num_ones) -
+		  lnbetacache_get(params->logbeta_alpha_beta, 0, 0);
 	return logprob;
 }
 
 gdouble params_logprob_off(Params * params, gpointer pcounts) {
 	Counts * counts = pcounts;
-	gdouble d1, l0, logprob;
+	gdouble logprob;
 
 	if (counts->num_total == 0) {
 		return 0.0;
 	}
-	d1 = params->delta + counts->num_ones;
-	l0 = params->lambda  + counts->num_total - counts->num_ones;
-	logprob = gsl_sf_lnbeta(d1, l0) - params->logbeta_delta_lambda;
+	logprob = lnbetacache_get(params->logbeta_delta_lambda,
+			counts->num_ones,
+			counts->num_total - counts->num_ones) -
+		  lnbetacache_get(params->logbeta_delta_lambda, 0, 0);
 	return logprob;
 }
 
 
 gdouble params_logpred_on(Params * params, gpointer pcounts, gboolean value) {
 	Counts * counts = pcounts;
-	gdouble a1, b0, logpred;
+	gdouble logpred;
 
-	a1 = params->alpha + counts->num_ones;
-	b0 = params->beta  + counts->num_total - counts->num_ones;
-	logpred = gsl_sf_lnbeta(a1 + value, b0 + 1-value) - gsl_sf_lnbeta(a1, b0);
+	logpred = lnbetacache_get(params->logbeta_alpha_beta,
+			counts->num_ones + value,
+			counts->num_total - counts->num_ones + 1-value) -
+		  lnbetacache_get(params->logbeta_alpha_beta,
+			counts->num_ones,
+			counts->num_total - counts->num_ones);
 	return logpred;
 }
 
 gdouble params_logpred_off(Params * params, gpointer pcounts, gboolean value) {
 	Counts * counts = pcounts;
-	gdouble d1, l0, logpred;
+	gdouble logpred;
 
-	d1 = params->delta + counts->num_ones;
-	l0 = params->lambda  + counts->num_total - counts->num_ones;
-	logpred = gsl_sf_lnbeta(d1 + value, l0 + 1-value) - gsl_sf_lnbeta(d1, l0);
+	logpred = lnbetacache_get(params->logbeta_delta_lambda,
+			counts->num_ones + value,
+			counts->num_total - counts->num_ones + 1-value) -
+		  lnbetacache_get(params->logbeta_delta_lambda,
+			counts->num_ones,
+			counts->num_total - counts->num_ones);
 	return logpred;
 }

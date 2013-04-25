@@ -14,5 +14,6 @@
 #include "bitset.h"
 #include "labelset.h"
 #include "lua_nrt.h"
+#include "lnbetacache.h"
 
 #endif
