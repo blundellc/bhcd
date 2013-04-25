@@ -1,4 +1,4 @@
-#!/usr/bin/r
+#!/usr/bin/Rscript
 
 library(ggplot2)
 
@@ -34,6 +34,26 @@ mkplot <- function(dim, index=data_index()) {
         pp <- pp + geom_errorbar(limits)
     }
     pp <- pp + scale_x_log10() + xlab('time') + ylab(dim)
+    pp <- pp + guides(color = guide_legend(title='',nrow=3, direction='horizontal'))
+    pp <- pp + theme(legend.position = 'top')
+
     return(pp)
 }
 
+
+main <- function() {
+    for (type in c('pred', 'fit')) {
+        for (field in c('lpred_mean','loss01','rmse','auc')) {
+            for (fold in 1) {
+                for (data in c('nips','gene')) {
+                    foldname <- paste(data, fold, sep='')
+                    print(paste(foldname,field))
+                    pp <- mkplot(field, data_index(foldname,type))
+                    ggsave(paste('output/plots/', foldname, '_', field, '_',type,'.pdf', sep=''), plot=pp)
+                }
+            }
+        }
+    }
+}
+
+main()
