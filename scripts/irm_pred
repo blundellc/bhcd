@@ -4,6 +4,7 @@ from itertools import izip
 import argparse, datetime
 from scipy.special import betaln
 from collections import defaultdict
+from math import log
 
 def main():
     parser = argparse.ArgumentParser()
@@ -11,10 +12,8 @@ def main():
     parser.add_argument('-d', '--date',  help="date of run",
             default=datetime.datetime.now().strftime('%Y%m%d'))
     parser.add_argument('-b', '--burnin', help="number of samples to drop",
-            type=int)
-    parser.add_argument('--last', help="just use last sample", action="store_true")
-    parser.add_argument('--no-blend', help="do not average predictives",
-            action="store_true")
+            type=int, default=0)
+    parser.add_argument('--prob-file', help='file with probability trace')
     parser.add_argument('test_file')
     parser.add_argument('pred_file')
     args = parser.parse_args()
@@ -34,49 +33,50 @@ def main():
 
     print 'loading model', status_file, dom_file
     print '+ outputting', args.pred_file
-    # timestamp -> src, dst-> log predictives src, dst at that timestamp.
-    time_lpred = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
-    # cumulative sum of log predictives, ordered by time.
-    acc_lpred = defaultdict(lambda: defaultdict(float))
-    # number of log preds in acc_lpred
-    acc_count = 0
-    with open(status_file) as status:
-        with open(dom_file) as dom:
-            with open(args.pred_file, 'w') as pred:
-                for line_num, (dom_line, status_line) in enumerate(izip(dom, status)):
-                    # skip the very first result--it's the initialization
-                    if line_num == 0 or (line_num >= 100 and (line_num % 100) != 0):
-                        continue
-                    if not args.last and line_num >= args.burnin:
-                        if args.no_blend:
-                            acc_count = 1.0
-                            for kk in list(acc_lpred.keys()):
-                                del acc_lpred[kk]
-                        else:
-                            acc_count += 1.0
-                        timestamp = process(acc_lpred, dom_line, status_line, edges, test, names)
-                        output_pred(pred, timestamp, acc_lpred, acc_count, names, test)
 
-                if args.last:
-                    if args.no_blend:
-                        acc_count = 1.0
-                        for kk in list(acc_lpred.keys()):
-                            del acc_lpred[kk]
-                    else:
-                        acc_count += 1.0
-                    timestamp = process(acc_lpred, dom_line, status_line, edges, test, names)
-                    output_pred(pred, timestamp, acc_lpred, acc_count, names, test)
+    status = open(status_file)
+    dom = open(dom_file)
+    pred = open(args.pred_file, 'w')
+    if args.prob_file is not None:
+        prob_file = open(args.prob_file, 'w')
+        prob_file.write('time, lprob, num_clust, beta_prop, beta_mag\n')
+    else:
+        prob_file = None
 
-def output_pred(pred, timestamp, acc_lpred, acc_count, names, test):
-    for src, dst in acc_lpred:
+    for line_num, (dom_line, status_line) in enumerate(izip(dom, status)):
+        # skip the very first result--it's the initialization
+        if line_num == 0:
+            continue
+        line_num -= args.burnin
+        if line_num < 0:
+            continue
+        if line_num >= 100 and (line_num % 100) != 0:
+            continue
+
+        # timestamp -> src, dst-> log predictives src, dst at that timestamp.
+        time_lpred = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
+
+        timestamp = extract_pred(time_lpred, dom_line, status_line,
+                edges, test)
+        output_pred(pred, timestamp, time_lpred, names, test)
+        if prob_file is not None:
+            extract_prob(prob_file, dom_line, status_line, edges)
+
+    pred.close()
+    if prob_file is not None:
+        prob_file.close()
+
+
+def output_pred(pred, timestamp, time_lpred, names, test):
+    for src, dst in time_lpred:
         value = "false"
         if test[src, dst]:
             value = "true"
         pred.write('%e,%s,%s,%s,%f,%f\n' % (
                 timestamp,
                 names[src], names[dst], value, 
-                acc_lpred[src, dst][False]/acc_count,
-                acc_lpred[src, dst][True]/acc_count))
+                time_lpred[src, dst][False],
+                time_lpred[src, dst][True]))
 
 def load_edges(graph_file, names_file):
     names = {}
@@ -93,11 +93,10 @@ def load_edges(graph_file, names_file):
             edges[int(src), int(dst)] = int(value)
     return edges, names
 
-def process(acc_lpred, dom_line, status_line, edges, test, names):
+def extract_line(dom_line, status_line, edges):
     num, llik, lpart, npart, ljoint, betaprop, betamag, alpha, timestamp = (
                 map(float, status_line.replace(':', ' ').strip().split())
             )
-    assert timestamp not in acc_lpred
     beta = betamag/(1+betaprop)
     alpha = betaprop*beta
 
@@ -105,20 +104,48 @@ def process(acc_lpred, dom_line, status_line, edges, test, names):
     num_ones = defaultdict(int)
     num_zeroes = defaultdict(int)
     for src, dst in edges:
+        # no self edges in irm
+        assert src != dst
         csrc = clusters[src]
         cdst = clusters[dst]
         num_ones[csrc, cdst] += edges[src, dst]
         num_zeroes[csrc, cdst] += 1-edges[src,dst]
+    return timestamp, alpha, beta, clusters, num_ones, num_zeroes
 
-    lpred = 0
+def extract_pred(time_lpred, dom_line, status_line, edges, test):
+    timestamp, alpha, beta, clusters, num_ones, num_zeroes = extract_line(dom_line,
+            status_line, edges)
+
     for src, dst in test:
         csrc = clusters[src]
         cdst = clusters[dst]
         n1 = num_ones[csrc, cdst]
         n0 = num_zeroes[csrc, cdst]
-        acc_lpred[src, dst][False] += betaln(alpha+n1, beta+n0+1) - betaln(alpha+n1, beta+n0)
-        acc_lpred[src, dst][True]  += betaln(alpha+n1+1, beta+n0) - betaln(alpha+n1, beta+n0)
+        zz = betaln(alpha+n1, beta+n0)
+        time_lpred[src, dst][False] = betaln(alpha+n1, beta+n0+1) - zz
+        time_lpred[src, dst][True]  = betaln(alpha+n1+1, beta+n0) - zz
     return timestamp
+
+def extract_prob(prob_file, dom_line, status_line, edges):
+    timestamp, alpha, beta, clusters, num_ones, num_zeroes = extract_line(dom_line,
+            status_line, edges)
+
+    zz = betaln(alpha, beta)
+    lprob = 0
+    clustids = list(set(clusters.values()))
+    for csrc in clustids:
+        for cdst in clustids:
+            n1 = num_ones[csrc, cdst]
+            n0 = num_zeroes[csrc, cdst]
+            lprob += betaln(alpha+n1, beta+n0) - zz
+
+    # hyperparameter prior...
+    lprob += -2.5*log(alpha+beta)
+
+    mag = alpha+beta
+    prop = alpha/beta
+    prob_file.write('%f, %e, %d, %e, %e\n' % (timestamp, lprob,
+        len(clustids), prop, mag))
 
 if __name__ == '__main__':
     main()
