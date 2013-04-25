@@ -2,7 +2,10 @@
 #include "dataset.h"
 #include "util.h"
 
-#define	DATASET_VALUE_SHIFT	0x10
+#define	DATASET_VALUE_SHIFT		0x10
+#define	DATASET_VALUE_TO_INT(pp)	(GPOINTER_TO_INT(pp) - DATASET_VALUE_SHIFT)
+#define	DATASET_INT_TO_VALUE(ii)	(GINT_TO_POINTER(ii + DATASET_VALUE_SHIFT))
+
 struct Dataset_t {
 	guint		ref_count;
 	gchar *		filename;
@@ -103,7 +106,7 @@ gboolean dataset_get(Dataset * dataset, gconstpointer src, gconstpointer dst, gb
 	if (ptr == NULL) {
 		value = dataset->omitted;
 	} else {
-		value = GPOINTER_TO_INT(ptr) - DATASET_VALUE_SHIFT;
+		value = DATASET_VALUE_TO_INT(ptr);
 		g_assert(value != dataset->omitted);
 	}
 
@@ -144,7 +147,7 @@ static void dataset_set_full(Dataset * dataset, gpointer src, gpointer dst, gint
 		dataset_key_free(key);
 		return;
 	}
-	g_hash_table_replace(dataset->cells, key, GINT_TO_POINTER(value+DATASET_VALUE_SHIFT));
+	g_hash_table_replace(dataset->cells, key, DATASET_INT_TO_VALUE(value));
 }
 
 guint dataset_num_labels(Dataset * dataset) {
@@ -168,55 +171,75 @@ gpointer dataset_get_max_label(Dataset * dataset) {
 
 
 void dataset_label_pairs_iter_init(Dataset * dataset, DatasetPairIter * iter) {
+	dataset_label_pairs_iter_init_full(dataset, DATASET_ITER_ANY, iter);
+}
+
+
+void dataset_label_pairs_iter_init_full(Dataset * dataset, gint value, DatasetPairIter * iter) {
 	iter->dataset = dataset;
-	iter->dense = dataset->omitted < 0;
-	if (iter->dense) {
-		/* dense data */
-		g_hash_table_iter_init(&iter->u.cell_iter, dataset->cells);
+	iter->value = value;
+	if (value == DATASET_ITER_ANY) {
+		iter->brute = dataset->omitted >= 0;
+	} else if (value == DATASET_ITER_MISSING) {
+		iter->brute = dataset->omitted < 0;
 	} else {
-		/* sparse data--brute force */
-		iter->u.sp.src = NULL;
-		dataset_labels_iter_init(iter->dataset, &iter->u.sp.src_iter);
-		dataset_labels_iter_init(iter->dataset, &iter->u.sp.dst_iter);
+		iter->brute = dataset->omitted == value;
+	}
+
+	if (iter->brute) {
+		iter->u.br.src = NULL;
+		dataset_labels_iter_init(iter->dataset, &iter->u.br.src_iter);
+		dataset_labels_iter_init(iter->dataset, &iter->u.br.dst_iter);
+	} else {
+		g_hash_table_iter_init(&iter->u.cell_iter, dataset->cells);
 	}
 }
 
+
 gboolean dataset_label_pairs_iter_next(DatasetPairIter *iter, gpointer * psrc, gpointer * pdst) {
-	if (iter->dense) {
-		/* dst_iter is unused: dense */
-		Dataset_Key * key;
-		gpointer pkey;
-		gboolean ret = g_hash_table_iter_next(&iter->u.cell_iter, &pkey, NULL);
-		key = pkey;
-		if (ret) {
-			*psrc = GINT_TO_POINTER(key->src);
-			*pdst = GINT_TO_POINTER(key->dst);
-		}
-		return ret;
-	} else {
-		/* sparse: brute force */
+	if (iter->brute) {
 		gboolean dst_next;
-		if (iter->u.sp.src == NULL) {
-			if (!dataset_labels_iter_next(&iter->u.sp.src_iter, &iter->u.sp.src)) {
+		if (iter->u.br.src == NULL) {
+			if (!dataset_labels_iter_next(&iter->u.br.src_iter, &iter->u.br.src)) {
 				return FALSE;
 			}
-			dataset_labels_iter_init(iter->dataset, &iter->u.sp.dst_iter);
+			dataset_labels_iter_init(iter->dataset, &iter->u.br.dst_iter);
 		}
 		while (1) {
-			dst_next = dataset_labels_iter_next(&iter->u.sp.dst_iter, pdst);
-			while (dst_next && dataset_is_missing(iter->dataset, iter->u.sp.src, *pdst)) {
-				dst_next = dataset_labels_iter_next(&iter->u.sp.dst_iter, pdst);
+			dst_next = dataset_labels_iter_next(&iter->u.br.dst_iter, pdst);
+			while (dst_next && dataset_is_missing(iter->dataset, iter->u.br.src, *pdst)) {
+				dst_next = dataset_labels_iter_next(&iter->u.br.dst_iter, pdst);
 			}
 			if (dst_next) {
 				break;
 			}
-			if (!dataset_labels_iter_next(&iter->u.sp.src_iter, &iter->u.sp.src)) {
+			if (!dataset_labels_iter_next(&iter->u.br.src_iter, &iter->u.br.src)) {
 				return FALSE;
 			}
-			dataset_labels_iter_init(iter->dataset, &iter->u.sp.dst_iter);
+			dataset_labels_iter_init(iter->dataset, &iter->u.br.dst_iter);
 		}
-		*psrc = iter->u.sp.src;
+		*psrc = iter->u.br.src;
 		return dst_next;
+	} else {
+		Dataset_Key * key;
+		gpointer pkey;
+		gpointer pvalue;
+		gint value;
+		while (1) {
+			gboolean ret = g_hash_table_iter_next(&iter->u.cell_iter, &pkey, &pvalue);
+			if (!ret) {
+				return FALSE;
+			}
+			value = DATASET_VALUE_TO_INT(pvalue);
+			if ((iter->value != DATASET_ITER_ANY && value != iter->value) ||
+			    (iter->value == DATASET_ITER_ANY && (value != FALSE && value != TRUE))) {
+				continue;
+			}
+			key = pkey;
+			*psrc = GINT_TO_POINTER(key->src);
+			*pdst = GINT_TO_POINTER(key->dst);
+			return ret;
+		}
 	}
 }
 

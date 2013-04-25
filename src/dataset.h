@@ -7,18 +7,24 @@ struct Dataset_t;
 typedef struct Dataset_t Dataset;
 typedef struct DatasetLabelIter_t {
 	GHashTableIter iter;
+	gint value;
 } DatasetLabelIter;
 
+#define	DATASET_ITER_ANY	(-2)
+#define	DATASET_ITER_MISSING	(-1)
+#define	DATASET_ITER_FALSE	FALSE
+#define	DATASET_ITER_TRUE	TRUE
 typedef struct DatasetPairIter_t {
 	Dataset * dataset;
-	gboolean dense;
+	gboolean brute;
+	gint value;
 	union {
 		GHashTableIter cell_iter;
 		struct {
 			DatasetLabelIter src_iter;
 			DatasetLabelIter dst_iter;
 			gpointer src;
-		} sp;
+		} br;
 	} u;
 } DatasetPairIter;
 
@@ -45,8 +51,11 @@ gpointer dataset_label_create(Dataset *, const gchar *);
 gpointer dataset_label_lookup(Dataset *, const gchar *);
 gpointer dataset_get_max_label(Dataset *);
 const gchar * dataset_label_to_string(Dataset *, gconstpointer);
+
 void dataset_label_pairs_iter_init(Dataset *, DatasetPairIter *);
+void dataset_label_pairs_iter_init_full(Dataset *, gint, DatasetPairIter *);
 gboolean dataset_label_pairs_iter_next(DatasetPairIter *, gpointer *, gpointer *);
+
 void dataset_println(Dataset *, const gchar *);
 void dataset_tostring(Dataset *, GString *);
 
