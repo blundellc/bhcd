@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys, os, subprocess, datetime, argparse
+from math import sqrt
 
 def main():
     parser = argparse.ArgumentParser()
@@ -10,7 +11,7 @@ def main():
     parser.add_argument("--search", help="search for MAP", action="store_true")
     parser.add_argument("--no-data-hyper", help="do not update data hypers", action="store_true")
     parser.add_argument("--loops", help="maximum number of iterations",
-            type=int, default=2500)
+            type=int, default=200)
     args = parser.parse_args()
 
     date_str = datetime.datetime.now().strftime('%Y%m%d')
@@ -63,10 +64,9 @@ def main():
         print >>config, "1 1"
         # number of objects, max clusters, initial clusters (as per description
         # in their paper)
-        # XXX: we initialize with everything in one cluster, otherwise we hit
-        # WCET.
-        #print >>config, "%d %d %d 1" % (num_items, num_items, num_items)
-        print >>config, "%d %d 1 1" % (num_items, num_items)
+        # XXX: we initialize with sqrt(num_items) clusters to avoid WCET and 
+        # poor mixing.
+        print >>config, "%d %d %d 1" % (num_items, num_items, sqrt(num_items))
         # relation 0: has two dimensions D0 x D0.
         print >>config, "2 0 0"
 
