@@ -1,7 +1,5 @@
-#!/bin/bash
+#!/bin/bash -x
 
-#date=20130405
-date=latest
 # for output
 curdate=$(date +%Y%m%d)
 
@@ -16,14 +14,14 @@ then
     fi
 fi
 
-for c in nips gene; do
-    for x in $(seq 1 10); do
+for x in $(seq 1 10); do
+    for c in nips gene; do
         tag=$c$x$search
-        in_dir=output/$date/irm/$tag
+        in_dir=output/latest/irm/$tag
         out_dir=output/$curdate/irm/$tag
         mkdir -p $out_dir
         echo $tag
-        ./scripts/irm_pred -d $date -t $tag $in_dir/graph $out_dir/fit
-        ./scripts/irm_pred -d $date -t $tag ${in_dir}_test/graph $out_dir/pred
+        ./scripts/irm_pred -d latest -t $tag ${in_dir}_test/graph $out_dir/pred
+        ./scripts/irm_pred -d latest -t $tag $in_dir/graph $out_dir/fit
     done
 done
