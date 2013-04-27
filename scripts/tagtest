@@ -20,24 +20,32 @@ def main():
             ['diff', '-u', 'regress/standard-toy4sparse.adj', 'output/toy4sparse.adj'],
             ['./src/fastnrt', '-t', 'data/blocks.gml', 'data/noisy-blocks.gml'],
             ['diff', '-u', 'regress/standard-noisy-blocks.tree', 'output/out.tree'],
-            ['diff', '-u', 'regress/standard-noisy-blocks.pred', 'output/out.pred'],
-            ['diff', '-u', 'regress/standard-noisy-blocks.fit', 'output/out.fit'],
+            ['/bin/sh','-c',' cut -d, -f2- output/out.pred | '+
+                'diff -u regress/standard-noisy-blocks.pred -'],
+            ['/bin/sh','-c',' cut -d, -f2- output/out.fit | '+
+                'diff -u regress/standard-noisy-blocks.fit -'],
             ['./src/fastnrt', '-S', '-t', 'data/blocks.gml', 'data/noisy-blocks.gml'],
             ['diff', '-u', 'regress/standard-noisy-blocks-sparse.tree', 'output/out.tree'],
-            ['diff', '-u', 'regress/standard-noisy-blocks.pred', 'output/out.pred'],
-            ['diff', '-u', 'regress/standard-noisy-blocks.fit', 'output/out.fit'],
+            ['/bin/sh','-c',' cut -d, -f2- output/out.pred | '+
+                'diff -u regress/standard-noisy-blocks.pred -'],
+            ['/bin/sh','-c',' cut -d, -f2- output/out.fit | '+
+                'diff -u regress/standard-noisy-blocks.fit -'],
             leak_check + ['./src/loadgml', 'data/ila/gene/gene_1_train.mat_train.gml',
                     'write_gml', 'output/out.gml', 'output/out.adj'],
             ['diff', '-u', 'regress/standard-gene1.gml', 'output/out.gml'],
             ['diff', '-u', 'regress/standard-gene1.adj', 'output/out.adj'],
             leak_check + ['./src/fastnrt', '-t', 'data/noisy-blocks.gml', 'data/blocks.gml'],
             ['diff', '-u', 'regress/standard-blocks.tree', 'output/out.tree'],
-            ['diff', '-u', 'regress/standard-blocks.fit', 'output/out.fit'],
-            ['diff', '-u', 'regress/standard-blocks.pred', 'output/out.pred'],
+            ['/bin/sh','-c',' cut -d, -f2- output/out.pred | '+
+                'diff -u regress/standard-blocks.pred -'],
+            ['/bin/sh','-c',' cut -d, -f2- output/out.fit | '+
+                'diff -u regress/standard-blocks.fit -'],
             leak_check + ['./src/fastnrt', '-S', '-t', 'data/noisy-blocks.gml', 'data/blocks.gml'],
             ['diff', '-u', 'regress/standard-blocks-sparse.tree', 'output/out.tree'],
-            ['diff', '-u', 'regress/standard-blocks-sparse.fit', 'output/out.fit'],
-            ['diff', '-u', 'regress/standard-blocks-sparse.pred', 'output/out.pred'],
+            ['/bin/sh','-c',' cut -d, -f2- output/out.pred | '+
+                'diff -u regress/standard-blocks-sparse.pred -'],
+            ['/bin/sh','-c',' cut -d, -f2- output/out.fit | '+
+                'diff -u regress/standard-blocks-sparse.fit -'],
     # check git is cleanly commited
     # - update the index
             ['git', 'update-index', '-q', '--ignore-submodules', '--refresh'],
@@ -47,9 +55,9 @@ def main():
             ['git', 'diff-index', '--quiet', '--ignore-submodules', 'HEAD', '--'],
             ['git','tag', tagname]
         ]
-    for cmd in cmds:
+    for ii, cmd in enumerate(cmds):
         if subprocess.call(cmd):
-            print 'FAILED', ' '.join(cmd)
+            print 'FAILED',ii, ' '.join(cmd)
             sys.exit(1)
     print 'SUCCESS!'
     sys.exit(0)
