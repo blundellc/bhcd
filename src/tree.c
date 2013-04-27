@@ -225,6 +225,30 @@ Params * tree_get_params(Tree * tree) {
 	return tree->params;
 }
 
+void tree_set_params(Tree * tree, Params * params, gboolean recurse) {
+	if (params != tree->params) {
+		params_unref(tree->params);
+		tree->params = params;
+		params_ref(tree->params);
+		tree->dirty = TRUE;
+	}
+
+	if (!recurse || tree_is_leaf(tree)) {
+		return;
+	}
+
+	for (GList * child = tree->children; child != NULL; child = g_list_next(child)) {
+		Tree * ch = child->data;
+		tree_set_params(ch, params, recurse);
+		/* propagate dirty bit. this is inefficient, as our
+		 * params may not have changed, but by propagating dirty, we
+		 * will still recalculate everything. but: simpler, uncommon use
+		 * case.
+		*/
+		tree->dirty |= ch->dirty;
+	}
+}
+
 guint tree_num_leaves(Tree * tree) {
 	guint total;
 	GList *child;

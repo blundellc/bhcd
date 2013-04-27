@@ -57,6 +57,7 @@ void init_test_toy4(Tree **laa, Tree **lbb, Tree **lcc, Tree **ldd) {
 
 void test_tree_logprob3(void) {
 	Params * params;
+	Params * new_params;
 	Tree *laa, *lbb, *lcc;
 	Tree *tab, *tac, *tbc, *tabc;
 	gdouble prec;
@@ -119,6 +120,28 @@ void test_tree_logprob3(void) {
 			   ,gsl_sf_log(1.0 - 0.4) + correct_tab + 0.0 + gsl_sf_lnbeta(0.2, 1.0+2) - gsl_sf_lnbeta(0.2, 1.0)
 			   );
 	assert_eqfloat(tree_get_logprob(tabc), correct_tabc, prec);
+
+	/* params do not propagate */
+	new_params = params_new(params->dataset, 0.2, 0.3, 0.1, 0.5, 0.6);
+	tree_set_params(tabc, new_params, FALSE);
+	correct_tabc =
+		log_add_exp(gsl_sf_log(0.2) + gsl_sf_lnbeta(0.3+1, 0.1+2) - gsl_sf_lnbeta(0.3, 0.1)
+			   ,gsl_sf_log(1.0 - 0.2) + correct_tab + 0.0 + gsl_sf_lnbeta(0.5, 0.6+2) - gsl_sf_lnbeta(0.5, 0.6)
+			   );
+	assert_eqfloat(tree_get_logprob(tabc), correct_tabc, prec);
+	/* params DO propagate */
+	tree_set_params(tabc, new_params, TRUE);
+	correct_tab =
+		log_add_exp(gsl_sf_log(0.2) + gsl_sf_lnbeta(0.3+1, 0.1+0) - gsl_sf_lnbeta(0.3, 0.1)
+			   ,gsl_sf_log(1.0 - 0.2) + gsl_sf_lnbeta(0.5+1, 0.6+0) - gsl_sf_lnbeta(0.5, 0.6)
+			   );
+	correct_tabc =
+		log_add_exp(gsl_sf_log(0.2) + gsl_sf_lnbeta(0.3+1, 0.1+2) - gsl_sf_lnbeta(0.3, 0.1)
+			   ,gsl_sf_log(1.0 - 0.2) + correct_tab + 0.0 + gsl_sf_lnbeta(0.5, 0.6+2) - gsl_sf_lnbeta(0.5, 0.6)
+			   );
+	assert_eqfloat(tree_get_logprob(tabc), correct_tabc, prec);
+
+	params_unref(new_params);
 	tree_unref(tabc);
 
 	tabc = branch_new(params);
@@ -131,6 +154,17 @@ void test_tree_logprob3(void) {
 			   ,2*gsl_sf_log(1.0 - 0.4) + gsl_sf_lnbeta(0.2+1, 1.0+2) - gsl_sf_lnbeta(0.2, 1.0)
 			   );
 	assert_eqfloat(tree_get_logprob(tabc), correct_tabc, prec);
+
+	new_params = params_new(params->dataset, 0.2, 0.3, 0.1, 0.5, 0.6);
+
+	tree_set_params(tabc, new_params, FALSE);
+	correct_tabc =
+		log_add_exp(gsl_sf_log(1.-(1.-0.2)*(1.-0.2)) + gsl_sf_lnbeta(0.3+1, 0.1+2) - gsl_sf_lnbeta(0.3, 0.1)
+			   ,2*gsl_sf_log(1.0 - 0.2) + gsl_sf_lnbeta(0.5+1, 0.6+2) - gsl_sf_lnbeta(0.5, 0.6)
+			   );
+	assert_eqfloat(tree_get_logprob(tabc), correct_tabc, prec);
+
+	params_unref(new_params);
 
 	/* deallocate */
 	tree_unref(laa);

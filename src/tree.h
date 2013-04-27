@@ -41,4 +41,6 @@ void tree_tostring(Tree * tree, GString *str);
 void tree_struct_tostring(Tree * tree, GString *str);
 gint tree_cmp_label(gconstpointer paa, gconstpointer pbb);
 
+void tree_set_params(Tree * tree, Params * params, gboolean recurse);
+
 #endif /*TREE_H*/
