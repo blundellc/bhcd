@@ -19,15 +19,16 @@ void tree_io_save_io(Tree *root, GIOChannel *io) {
 	params = tree_get_params(root);
 	dataset = params->dataset;
 
-	io_printf(io, "data [ file \"%s\" ]\n", dataset_get_filename(dataset));
+	io_printf(io, "{\n");
+	io_printf(io, "\t\"data\": { \"file\": \"%s\" },\n", dataset_get_filename(dataset));
 	/* IEEE754 numbers have at most 17 dp of precision. */
-	io_printf(io, "params [ gamma %1.17e alpha %1.17e beta %1.17e delta %1.17e lambda %1.17e ]\n",
+	io_printf(io, "\t\"params\": { \"gamma\": %1.17e, \"alpha\": %1.17e, \"beta\": %1.17e, \"delta\": %1.17e, \"lambda\": %1.17e },\n",
 			params->gamma,
 			params->alpha, params->beta,
 			params->delta, params->lambda
 			);
-	io_printf(io, "fit [ logprob %1.17e ]\n", tree_get_logprob(root));
-	io_printf(io, "tree [\n");
+	io_printf(io, "\t\"fit\": { \"logprob\": %1.17e },\n", tree_get_logprob(root));
+	io_printf(io, "\t\"tree\": [\n");
 
 	qq = g_queue_new();
 	next_index = -1;
@@ -44,7 +45,7 @@ void tree_io_save_io(Tree *root, GIOChannel *io) {
 		tree = cur->snd;
 
 		if (tree_is_leaf(tree)) {
-			io_printf(io, "\tleaf [ logprob %1.17e logresp %1.17e parent %d label \"%s\" ]\n",
+			io_printf(io, "\t\t, {\"leaf\": { \"logprob\": %1.17e, \"logresp\": %1.17e, \"parent\": %d, \"label\": \"%s\" }}\n",
 					tree_get_logprob(tree),
 					tree_get_logresponse(tree),
 					parent_index,
@@ -58,13 +59,13 @@ void tree_io_save_io(Tree *root, GIOChannel *io) {
 			next_index++;
 
 			if (parent_index == -1) {
-				io_printf(io, "\troot [ logprob %1.17e logresp %1.17e id %d ]\n",
+				io_printf(io, "\t\t  {\"root\": { \"logprob\": %1.17e, \"logresp\": %1.17e, \"id\": %d }}\n",
 						tree_get_logprob(tree),
 						tree_get_logresponse(tree),
 						my_index
 					);
 			} else {
-				io_printf(io, "\tstem [ logprob %1.17e logresp %1.17e parent %d child %d ]\n",
+				io_printf(io, "\t\t, {\"stem\": { \"logprob\": %1.17e, \"logresp\": %1.17e, \"parent\": %d, \"child\": %d }}\n",
 						tree_get_logprob(tree),
 						tree_get_logresponse(tree),
 						parent_index,
@@ -80,6 +81,6 @@ void tree_io_save_io(Tree *root, GIOChannel *io) {
 		pair_free(cur);
 	}
 	g_queue_free(qq);
-	io_printf(io, "]\n");
+	io_printf(io, "\t]\n}\n");
 }
 
