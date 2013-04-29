@@ -45,7 +45,7 @@ def main():
         print >>params, "--configfile="+config_file
         print >>params, "--graphname="+graph_file
         print >>params, "--hypupdates=5"
-        print >>params, "--betamagupdate=0"
+        print >>params, "--betamagupdate=1"
         if not args.no_data_hyper:
             print >>params, "--betapropupdate=1"
         else:
