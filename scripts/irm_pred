@@ -44,9 +44,6 @@ def main():
         prob_file = None
 
     for line_num, (dom_line, status_line) in enumerate(izip(dom, status)):
-        # skip the very first result--it's the initialization
-        if line_num == 0:
-            continue
         line_num -= args.burnin
         if line_num < 0:
             continue
