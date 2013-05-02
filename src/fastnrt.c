@@ -23,6 +23,7 @@ static gchar *	output_tree_fname = NULL;
 static gchar *	output_pred_fname = NULL;
 static gchar *	output_fit_fname = NULL;
 static gchar *	output_time_fname = NULL;
+static gchar *	output_hypers_fname = NULL;
 
 static GOptionEntry options[] = {
 	{ "seed",	 's', 0, G_OPTION_ARG_INT,	&seed,		"set RNG seed to S",		"S" },
@@ -33,7 +34,9 @@ static GOptionEntry options[] = {
 	{ "restarts",	 'R', 0, G_OPTION_ARG_INT,	&build_restarts,"take best of N restarts",	"N" },
 
 	{ "test-file",	 't', 0, G_OPTION_ARG_FILENAME,	&test_fname,	"test dataset", NULL },
-	{ "prefix",	 'p',  0, G_OPTION_ARG_STRING,	&output_prefix,	"prefix for output filenames", NULL },
+	{ "prefix",	 'p', 0, G_OPTION_ARG_STRING,	&output_prefix,	"prefix for output filenames", NULL },
+	{ "sample-hypers", 0, 0, G_OPTION_ARG_STRING,	&output_hypers_fname,
+									"slice sample hyperparameters, output to this file", NULL },
 
 	{ "gamma",	 'g', 0, G_OPTION_ARG_DOUBLE,	&param_gamma,	"set mixture parameter to GAMMA","GAMMA" },
 	{ "alpha",	 'a', 0, G_OPTION_ARG_DOUBLE,	&param_alpha,	"set on-diagonal one hyperparameter to ALPHA", "ALPHA" },
@@ -149,6 +152,37 @@ static void timer_save_io(GTimer * timer, GIOChannel * io) {
 	io_printf(io, "time: %es\n", g_timer_elapsed(timer, NULL));
 }
 
+static gdouble eval_tree_params_logprob(Params * params, gpointer ptree) {
+	Tree * tree = ptree;
+
+	tree_set_params(tree, params, TRUE);
+	return tree_get_logprob(tree);
+}
+
+static void sample_save_hypers(Tree * root, GIOChannel * io) {
+	GRand * rng;
+	Params * params;
+
+	rng = g_rand_new();
+	params = tree_get_params(root);
+	io_printf(io, "step, gamma, alpha, beta, delta, lambda, logprob\n");
+	for (guint step = 0; step < 1000; step++) {
+		g_printf("%d, %e, %e, %e, %e, %e, %e\n",
+				step, params->gamma,
+				params->alpha, params->beta,
+				params->delta, params->lambda,
+				tree_get_logprob(root)
+			 );
+		io_printf(io, "%d, %e, %e, %e, %e, %e, %e\n",
+				step, params->gamma,
+				params->alpha, params->beta,
+				params->delta, params->lambda,
+				tree_get_logprob(root)
+			 );
+		params = params_sample(rng, params, eval_tree_params_logprob, root);
+	}
+}
+
 int main(int argc, char * argv[]) {
 	GRand * rng;
 	GTimer * timer;
@@ -183,6 +217,10 @@ int main(int argc, char * argv[]) {
 	io_writefile(output_fit_fname, (IOFunc)save_pred, root_timer_train);
 	pair_free(root_timer_train);
 	pair_free(root_timer);
+
+	if (output_hypers_fname != NULL) {
+		io_writefile(output_hypers_fname, (IOFunc)sample_save_hypers, root);
+	}
 
 	if (lua_shell) {
 		nrt_lua_shell(root);

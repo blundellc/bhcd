@@ -3,7 +3,27 @@
 #include "counts.h"
 #include "params.h"
 
+typedef void (*ParamsSetFunc)(Params *, gdouble);
+
+static void params_set_gamma(Params *, gdouble);
+static void params_set_alpha(Params *, gdouble);
+static void params_set_beta(Params *, gdouble);
+static void params_set_delta(Params *, gdouble);
+static void params_set_lambda(Params *, gdouble);
+static Params * params_copy(const Params * );
+
+typedef struct {
+	gdouble lower;
+	gdouble upper;
+	ParamsSetFunc set_value;
+} ParamsSpec;
+static const ParamsSpec params_spec_gamma  = { .lower = 0.0, .upper = 1.0, .set_value = params_set_gamma  };
+static const ParamsSpec params_spec_alpha  = { .lower = 0.0, .upper = 1.0, .set_value = params_set_alpha  };
+static const ParamsSpec params_spec_beta   = { .lower = 0.0, .upper = 1.0, .set_value = params_set_beta   };
+static const ParamsSpec params_spec_delta  = { .lower = 0.0, .upper = 1.0, .set_value = params_set_delta  };
+static const ParamsSpec params_spec_lambda = { .lower = 0.0, .upper = 1.0, .set_value = params_set_lambda };
 static const guint max_cached_count = 100;
+
 
 Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble beta, gdouble delta, gdouble lambda) {
 	Params * params = g_new(Params, 1);
@@ -13,14 +33,16 @@ Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble bet
 	dataset_ref(dataset);
 	params->sscache = sscache_new(dataset);
 
-	params->gamma = gamma;
-	params->loggamma = gsl_sf_log(1.0 - gamma);
 	params->binary_only = FALSE;
 
+	params_set_gamma(params, gamma);
+
+	/* SEE ALSO: params_set_alpha, params_set_beta */
 	params->alpha = alpha;
 	params->beta = beta;
 	params->logbeta_alpha_beta = lnbetacache_new(alpha, beta, max_cached_count);
 
+	/* SEE ALSO: params_set_delta, params_set_lambda */
 	params->delta = delta;
 	params->lambda = lambda;
 	params->logbeta_delta_lambda = lnbetacache_new(delta, lambda, max_cached_count);
@@ -28,11 +50,14 @@ Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble bet
 	return params;
 }
 
-Params * params_default(Dataset * dataset) {
-	return params_new(dataset,
-			  0.4,
-			  1.0, 0.2,
-			  0.2, 1.0);
+static Params * params_copy(const Params * orig) {
+	Params * params;
+
+	params = params_new(orig->dataset, orig->gamma,
+			orig->alpha, orig->beta,
+			orig->delta, orig->lambda);
+	params->binary_only = orig->binary_only;
+	return params;
 }
 
 void params_reset_cache(Params *params) {
@@ -54,6 +79,38 @@ void params_unref(Params * params) {
 	} else {
 		params->ref_count--;
 	}
+}
+
+Params * params_default(Dataset * dataset) {
+	return params_new(dataset,
+			  0.4,
+			  1.0, 0.2,
+			  0.2, 1.0);
+}
+
+static void params_set_gamma(Params * params, gdouble gamma) {
+	params->gamma = gamma;
+	params->loggamma = gsl_sf_log(1.0 - gamma);
+}
+
+static void params_set_alpha(Params * params, gdouble alpha) {
+	params->alpha = alpha;
+	params->logbeta_alpha_beta = lnbetacache_new(params->alpha, params->beta, max_cached_count);
+}
+
+static void params_set_beta(Params * params, gdouble beta) {
+	params->beta = beta;
+	params->logbeta_alpha_beta = lnbetacache_new(params->alpha, params->beta, max_cached_count);
+}
+
+static void params_set_delta(Params * params, gdouble delta) {
+	params->delta = delta;
+	params->logbeta_delta_lambda = lnbetacache_new(params->delta, params->lambda, max_cached_count);
+}
+
+static void params_set_lambda(Params * params, gdouble lambda) {
+	params->lambda = lambda;
+	params->logbeta_delta_lambda = lnbetacache_new(params->delta, params->lambda, max_cached_count);
 }
 
 gdouble params_logprob_on(Params * params, gpointer pcounts) {
@@ -110,3 +167,47 @@ gdouble params_logpred_off(Params * params, gpointer pcounts, gboolean value) {
 			counts->num_total - counts->num_ones);
 	return logpred;
 }
+
+
+static Params * params_sample_full(GRand * rng, const Params * orig, gdouble cur, const ParamsSpec * spec, ParamsProbFunc func, gpointer user_data) {
+	Params * params;
+	gdouble lower, upper;
+	gdouble yy, prop;
+
+	params = params_copy(orig);
+	lower = spec->lower;
+	upper = spec->upper;
+	yy = gsl_sf_log(g_rand_double(rng)) + func(params, user_data);
+
+	while (1) {
+		prop = g_rand_double_range(rng, lower, upper);
+		spec->set_value(params, prop);
+		if (yy < func(params, user_data)) {
+			goto out;
+		}
+		if (prop < cur) {
+			lower = prop;
+		} else {
+			upper = prop;
+		}
+	}
+out:
+	return params;
+}
+
+
+Params * params_sample(GRand * rng, Params * params, ParamsProbFunc func, gpointer user_data) {
+	Params * new_params;
+
+	new_params = params;
+	for (guint ministep = 0; ministep < 10; ministep++) {
+		new_params = params_sample_full(rng, new_params, params->gamma,      &params_spec_gamma, func, user_data);
+		new_params = params_sample_full(rng, new_params, new_params->alpha,  &params_spec_alpha, func, user_data);
+		new_params = params_sample_full(rng, new_params, new_params->beta,   &params_spec_beta, func, user_data);
+		new_params = params_sample_full(rng, new_params, new_params->delta,  &params_spec_delta, func, user_data);
+		new_params = params_sample_full(rng, new_params, new_params->lambda, &params_spec_lambda, func, user_data);
+	}
+	return new_params;
+}
+
+

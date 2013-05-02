@@ -28,6 +28,8 @@ typedef struct {
 	LnBetaCache *	logbeta_delta_lambda;
 } Params;
 
+typedef gdouble (*ParamsProbFunc)(Params *, gpointer);
+
 Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble beta, gdouble delta, gdouble lambda);
 Params * params_default(Dataset * dataset);
 void params_reset_cache(Params *);
@@ -38,5 +40,7 @@ gdouble params_logprob_off(Params *, gpointer);
 gdouble params_logprob_on(Params *, gpointer);
 gdouble params_logpred_off(Params *, gpointer, gboolean);
 gdouble params_logpred_on(Params *, gpointer, gboolean);
+
+Params * params_sample(GRand * rng, Params * params, ParamsProbFunc func, gpointer user_data);
 
 #endif
