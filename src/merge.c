@@ -16,8 +16,7 @@ Merge * merge_new(GRand * rng, Params * params, guint ii, Tree * aa, guint jj, T
 	logprob_rel = merge_calc_logprob_rel(params, aa, bb);
 	merge->score = tree_get_logprob(merge->tree)
 	       		- tree_get_logprob(aa) - tree_get_logprob(bb) - logprob_rel;
-	merge->sym_break = g_rand_int(rng);
-	//merge->sym_break = tree_hash(mm);
+	merge->sym_break = g_rand_double(rng);
 	return merge;
 }
 
@@ -41,7 +40,7 @@ void merge_println(const Merge * merge, const gchar * prefix) {
 }
 
 void merge_tostring(const Merge * merge, GString * out) {
-	g_string_append_printf(out, "%03d + %03d (%2.2e/%d)-> ", merge->ii, merge->jj, merge->score, merge->sym_break);
+	g_string_append_printf(out, "%03d + %03d (%2.2e/%1.2e)-> ", merge->ii, merge->jj, merge->score, merge->sym_break);
 	tree_tostring(merge->tree, out);
 }
 

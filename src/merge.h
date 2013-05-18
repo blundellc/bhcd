@@ -11,7 +11,7 @@ typedef struct {
 	Tree * tree;
 	gdouble score;
 	/* break equal scores at random */
-	guint32 sym_break;
+	gdouble sym_break;
 } Merge;
 
 
