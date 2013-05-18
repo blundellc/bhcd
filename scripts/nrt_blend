@@ -13,18 +13,20 @@ fi
 
 out="output/$(date '+%Y%m%d')/"
 mkdir -p $out
-num_restarts=10
+num_restarts=50
 
 for restart in $(seq $num_restarts); do
     echo restart $restart
-    seed=$((restart+42))
+    seed=$((restart+2828))
     myout="$out/blend/$restart"
     mkdir -p $myout
     opts="--restarts=1 --seed=$seed"
     /usr/bin/time -o $myout/$tag.systime ./src/fastnrt $opts "$@" -p $myout/$tag -t $test $train &
+    if [ $(($restart % 5)) == 0 ]
+    then
+        wait
+    fi
 done
-for restart in $(seq $num_restarts); do
-    wait
-done
+wait
 
 
