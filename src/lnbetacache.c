@@ -3,6 +3,9 @@
 #include "lnbetacache.h"
 
 
+// allocate at most ~1GB for the cache.
+#define	MAX_MAX_ENTRIES	11585
+
 struct LnBetaCache_t {
 	guint max_num;
 	guint size;
@@ -17,13 +20,16 @@ LnBetaCache * lnbetacache_new(gdouble alpha, gdouble beta, guint max_num) {
 	LnBetaCache * cache;
 
 	cache = g_new(LnBetaCache, 1);
-	cache->max_num = max_num;
 	cache->hits = 0;
 	cache->alpha = alpha;
 	cache->beta = beta;
-	// XXX: int overflow
+	if (max_num > MAX_MAX_ENTRIES) {
+		max_num = MAX_MAX_ENTRIES;
+	}
 	cache->size = max_num*max_num;
 	cache->evals = g_new(gdouble, cache->size);
+	cache->max_num = max_num;
+
 	for (guint ii = 0; ii < cache->size; ii++) {
 		cache->evals[ii] = INFINITY;
 	}

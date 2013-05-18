@@ -26,6 +26,7 @@ static const guint max_cached_count = 100;
 
 
 Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble beta, gdouble delta, gdouble lambda) {
+	guint cache_size;
 	Params * params = g_new(Params, 1);
 	params->ref_count = 1;
 
@@ -37,15 +38,16 @@ Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble bet
 
 	params_set_gamma(params, gamma);
 
+	cache_size = dataset_num_labels(dataset);
 	/* SEE ALSO: params_set_alpha, params_set_beta */
 	params->alpha = alpha;
 	params->beta = beta;
-	params->logbeta_alpha_beta = lnbetacache_new(alpha, beta, max_cached_count);
+	params->logbeta_alpha_beta = lnbetacache_new(alpha, beta, cache_size);
 
 	/* SEE ALSO: params_set_delta, params_set_lambda */
 	params->delta = delta;
 	params->lambda = lambda;
-	params->logbeta_delta_lambda = lnbetacache_new(delta, lambda, max_cached_count);
+	params->logbeta_delta_lambda = lnbetacache_new(delta, lambda, cache_size);
 
 	return params;
 }
