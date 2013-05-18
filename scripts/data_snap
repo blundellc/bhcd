@@ -1,0 +1,27 @@
+#!/usr/bin/python
+
+import sys
+
+def main():
+    adj = {}
+    names = set()
+    with open(sys.argv[1]) as ff:
+        for line in ff:
+            line = line.strip()
+            if line[0] == '#':
+                continue
+            src, dst = line.split()
+            names.add(src)
+            names.add(dst)
+            adj[src, dst] = True
+
+    print 'graph [\n\tsparse 0'
+    for name in names:
+        print '\tnode [ id %s label "%s" ]' % (name, name)
+    for src, dst in adj.keys():
+        print '\tedge [ source %s target %s weight 1 ]' % (src, dst)
+    print ']'
+
+if __name__ == '__main__':
+    main()
+
