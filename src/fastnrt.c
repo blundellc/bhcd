@@ -9,6 +9,7 @@
 static gboolean binary_only = FALSE;
 static gboolean sparse_greedy = FALSE;
 static gboolean lua_shell = FALSE;
+static gboolean disable_fit_file = FALSE;
 static guint build_restarts = 1;
 static guint seed = 0x2a23b6bb;
 static gdouble param_gamma = 0.4;
@@ -33,6 +34,7 @@ static GOptionEntry options[] = {
 	{ "binary-only", 'B', 0, G_OPTION_ARG_NONE,	&binary_only, 	"only construct binary trees",	NULL },
 	{ "restarts",	 'R', 0, G_OPTION_ARG_INT,	&build_restarts,"take best of N restarts",	"N" },
 
+	{ "no-fit-file",   0, 0, G_OPTION_ARG_NONE,	&disable_fit_file, "do not generate .fit file",	NULL },
 	{ "test-file",	 't', 0, G_OPTION_ARG_FILENAME,	&test_fname,	"test dataset", NULL },
 	{ "prefix",	 'p', 0, G_OPTION_ARG_STRING,	&output_prefix,	"prefix for output filenames", NULL },
 	{ "sample-hypers", 0, 0, G_OPTION_ARG_STRING,	&output_hypers_fname,
@@ -213,9 +215,11 @@ int main(int argc, char * argv[]) {
 	root_timer = pair_new(root, timer);
 	io_writefile(output_pred_fname, (IOFunc)eval_test, root_timer);
 
-	root_timer_train = pair_new(root_timer, dataset);
-	io_writefile(output_fit_fname, (IOFunc)save_pred, root_timer_train);
-	pair_free(root_timer_train);
+	if (!disable_fit_file) {
+		root_timer_train = pair_new(root_timer, dataset);
+		io_writefile(output_fit_fname, (IOFunc)save_pred, root_timer_train);
+		pair_free(root_timer_train);
+	}
 	pair_free(root_timer);
 
 	if (output_hypers_fname != NULL) {
