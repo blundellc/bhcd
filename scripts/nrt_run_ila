@@ -4,17 +4,23 @@ out="output/$(date '+%Y%m%d')/"
 mkdir -p $out
 num_restarts=10
 
+params_nips=""
+params_gene="-g 1e-4"
+
 for x in $(seq 1 10); do
     for name in nips gene; do
+        params_name="params_$name"
+        params=${!params_name}
         train=data/ila/${name}/${name}_${x}_train.mat_train.gml
         test=data/ila/${name}/${name}_${x}_train.mat_test.gml
 
-        for mode in blend max; do
+        # for mode in blend max; do
+        for mode in blend; do
 
-            ./scripts/nrt_$mode ${name}${x} $train $test
-            ./scripts/nrt_$mode ${name}${x}bin $train $test --binary-only
-            ./scripts/nrt_$mode ${name}${x}sparse $train $test --sparse
-            ./scripts/nrt_$mode ${name}${x}binsparse $train $test --binary-only --sparse
+            ./scripts/nrt_$mode ${name}${x} $train $test $params
+            ./scripts/nrt_$mode ${name}${x}bin $train $test --binary-only $params
+            ./scripts/nrt_$mode ${name}${x}sparse $train $test --sparse $params
+            ./scripts/nrt_$mode ${name}${x}binsparse $train $test --binary-only --sparse $params
         done
     done
 done
