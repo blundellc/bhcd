@@ -1,0 +1,141 @@
+#!/usr/bin/python
+
+import json, sys
+from collections import defaultdict
+from math import *
+
+def tree_load(fname = "output/out.tree"):
+    with open(fname) as treef:
+        jtree = json.load(treef)
+
+    nodes = {}
+    root_id = None
+    for elem in jtree['tree']:
+        if 'root' in elem:
+            ee = elem['root']
+            assert root_id is None
+            root_id = ee['id']
+            nodes[root_id] = Branch(id=root_id, props=ee)
+        elif 'leaf' in elem:
+            ee = elem['leaf']
+            leaf = Leaf(label=ee['label'], props=ee)
+            nodes[ee['parent']].add_child(leaf)
+        elif 'stem' in elem:
+            ee = elem['stem']
+            id = ee['child']
+            branch = Branch(id=id, props=ee)
+            nodes[id] = branch
+            nodes[ee['parent']].add_child(branch)
+        else:
+            assert False
+    return nodes[root_id]
+
+class Tree(object):
+    def __init__(self, props=None):
+        self.logprob = props['logprob']
+        self.logresp = props['logresp']
+        self.parent = None
+
+    def set_parent(self, parent):
+        self.parent = parent
+
+class Branch(Tree):
+    def __init__(self, id=None, **kwargs):
+        super(Branch, self).__init__(**kwargs)
+        self.id = id
+        self.children = set()
+        self.leaves = set()
+
+    def __str__(self):
+        return '%1.2e:{%s}' % (self.logresp,
+                ', '.join(map(str, self.children)))
+
+    def add_child(self, child):
+        self.children.add(child)
+        child.set_parent(self)
+        self.add_descendant(child)
+
+    def add_descendant(self, descedant):
+        self.leaves.update(descedant.leaves)
+        if self.parent is not None:
+            self.parent.add_descendant(descedant)
+
+    def num_leaves(self):
+        return len(self.leaves)
+
+
+
+class Leaf(Tree):
+    def __init__(self, label=None, **kwargs):
+        super(Leaf, self).__init__(**kwargs)
+        self.label = label
+        self.leaves = set([label])
+
+    def __str__(self):
+        return self.label
+
+    def num_leaves(self):
+        return 1
+
+def data_load(fname = "output/out.fit"):
+    data = Data(fname)
+    with open(fname) as dataf:
+        for line in dataf:
+            data.add_line(line)
+    return data
+
+class Data(object):
+    def __init__(self, fname=None):
+        self.fname = fname
+        self.edges = {}
+        self.popularity = defaultdict(int)
+
+    def add_line(self, line):
+        fields = [field.strip() for field in line.strip().split(",")]
+        timestamp = fields[0]
+        src = fields[1]
+        dst = fields[2]
+        truth = fields[3]
+        if truth == 'true':
+            truth = True
+        elif truth == 'false':
+            truth = False
+        else:
+            assert(False)
+
+        lp_false = float(fields[4])
+        lp_true = float(fields[5])
+        self.add(src, dst, truth, lp_false, lp_true)
+
+    def add(self, src, dst, truth, lp_false, lp_true):
+        if truth:
+            self.popularity[src] += 1
+            self.popularity[dst] += 1
+        self.edges[src, dst] = {None: truth, False: lp_false, True: lp_true}
+
+def main():
+    sys.setrecursionlimit(100000)
+    if len(sys.argv) < 3:
+        print 'usage: %s <tree> <fit>' % (sys.argv[0],)
+        sys.exit(1)
+    tree_name = sys.argv[1]
+    fit_name = sys.argv[2]
+    tree = tree_load(tree_name)
+    data = data_load(fit_name)
+
+    queue = [(tree.logresp, tree)]
+    while queue:
+        logresp, cur = queue.pop()
+        if logresp > log(0.5) or isinstance(cur, Leaf):
+            print ' '.join(['%s(%d)' % (l, data.popularity[l]) for l in
+                sorted(cur.leaves, key=lambda leaf: -data.popularity[leaf])])
+            continue
+
+        lognotresp = 0.0 # log(1.0 - exp(logresp))
+        for child in cur.children:
+            queue.append((lognotresp + child.logresp, child))
+
+
+if __name__ == '__main__':
+    main()
+

@@ -1,0 +1,24 @@
+#!/bin/sh
+
+if [ -z "$1" ]
+then
+    echo usage: $0 cluster_file
+    exit 1
+fi
+
+if [ -z "$2" ]
+then
+    awk 'NF >= 10 {printf "%d ", NF; print}' "$1" | \
+        sort -rn | \
+        awk '{for (ii = 1; ii <= 11; ii++) { printf "%s ", $ii }; print "" }'
+else
+    echo '\\begin{tabular}{|cccccccccc|}\\hline'
+    awk 'NF >= 10 {printf "%d ", NF; print}' "$1" | \
+        sort -rn | \
+        awk '{for (ii = 2; ii <= 11; ii++) { printf "%s ", $ii }; print "" }' | \
+        sed -e 's/([0-9][0-9]*)//g' | \
+        tr '\t' ' ' | tr -s ' ' | \
+        sed -e 's/^ //' -e 's/ $//' -e 's/ / \& /g' -e 's/$/\\\\ \\hline/' | \
+        sed -e 's/_/ /g'
+    echo '\\end{tabular}'
+fi
