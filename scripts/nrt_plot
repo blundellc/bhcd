@@ -1,0 +1,393 @@
+#!/usr/bin/python2.7
+import json, math
+import cairo
+import sys
+
+def data_load(fname = "output/out.fit"):
+    data = Data(fname)
+    with open(fname) as dataf:
+        for line in dataf:
+            data.add_line(line)
+    return data
+
+class Data(object):
+    def __init__(self, fname=None):
+        self.fname = fname
+        self.edges = {}
+
+    def add_line(self, line):
+        fields = [field.strip() for field in line.strip().split(",")]
+        timestamp = fields[0]
+        src = fields[1]
+        dst = fields[2]
+        truth = fields[3]
+        if truth == 'true':
+            truth = True
+        elif truth == 'false':
+            truth = False
+        else:
+            assert(False)
+
+        lp_false = float(fields[4])
+        lp_true = float(fields[5])
+        self.add(src, dst, truth, lp_false, lp_true)
+
+    def add(self, src, dst, truth, lp_false, lp_true):
+        self.edges[src, dst] = {None: truth, False: lp_false, True: lp_true}
+        self.edges[dst, src] = {None: truth, False: lp_false, True: lp_true}
+
+    def min_size(self, ctx, labels):
+        num_labels = len(labels)
+        label_extents = [ctx.text_extents(label) for label in labels]
+        max_label_width = max([ctx.user_to_device_distance(ex[2], 0)[0] for ex in label_extents])
+        max_label_height = max([ctx.user_to_device_distance(0, ex[3])[1] for ex in label_extents])
+
+        min_dim = max_label_width + num_labels*max_label_height
+        # border
+        min_dim += 2
+        return min_dim, min_dim
+
+    def draw(self, ctx, labels):
+        left,top,right,bottom = ctx.clip_extents()
+        width = right-left
+        height = bottom-top
+        min_width, min_height = self.min_size(ctx, labels)
+        assert width >= min_width
+        assert height >= min_height
+
+        # remove border
+        width -= 2
+        height -= 2
+        num_labels = len(labels)
+        label_extents = [ctx.text_extents(label) for label in labels]
+        max_label_width = max([ctx.user_to_device_distance(ex[2], 0)[0] for ex in label_extents])
+        max_label_height = max([ctx.user_to_device_distance(0, ex[3])[1] for ex in label_extents])
+        box_width = (width-max_label_width)/(num_labels+1)
+        box_height = (height-max_label_width)/(num_labels+1)
+
+        ctx.translate(left+1, top+1)
+        ctx.set_source_rgb(0.0, 0.0, 0.0)
+
+        self.draw_row_labels(ctx, labels, label_extents, max_label_height)
+        self.draw_column_labels(ctx, labels, label_extents, max_label_width,
+                max_label_height)
+        self.draw_cells(ctx, labels, max_label_width, max_label_height,
+                box_width, box_height)
+
+    def draw_row_labels(self, ctx, labels, label_extents, max_label_height):
+        for nn, label in enumerate(labels):
+            ctx.move_to(0 - label_extents[nn][0],
+                    nn*max_label_height - label_extents[nn][1])
+            ctx.show_text(label)
+
+    def draw_column_labels(self, ctx, labels, label_extents, max_label_width, max_label_height):
+        for nn, label in enumerate(labels):
+            ctx.move_to(max_label_width + nn*max_label_height, len(labels)*max_label_height)
+            ctx.save()
+            ctx.rotate(math.pi/2)
+            ctx.show_text(label)
+            ctx.restore()
+
+    def draw_cells(self, ctx, labels, max_label_width, max_label_height, box_width, box_height):
+        for xx, xlabel in enumerate(labels):
+            for yy, ylabel in enumerate(labels):
+                ctx.save()
+                ctx.rectangle(max_label_width + xx*max_label_height, yy*max_label_height, box_width, box_height)
+                if (xlabel,ylabel) not in self.edges or xlabel == ylabel:
+                    exists = 0.5
+                    prob = 0.5
+                else:
+                    prob = math.exp(self.edges[xlabel,ylabel][True])
+                    if self.edges[xlabel,ylabel][None]:
+                        exists = 1.0
+                    else:
+                        exists = 0.0
+
+                ctx.set_source_rgb(prob, exists, exists)
+                #ctx.set_source_rgb(kk, kk, kk)
+                ctx.fill()
+                ctx.restore()
+
+
+def tree_load(fname = "output/out.tree"):
+    with open(fname) as treef:
+        jtree = json.load(treef)
+
+    nodes = {}
+    root_id = None
+    for elem in jtree['tree']:
+        if 'root' in elem:
+            ee = elem['root']
+            assert root_id is None
+            root_id = ee['id']
+            nodes[root_id] = Branch(id=root_id, props=ee)
+        elif 'leaf' in elem:
+            ee = elem['leaf']
+            leaf = Leaf(label=ee['label'], props=ee)
+            nodes[ee['parent']].add_child(leaf)
+        elif 'stem' in elem:
+            ee = elem['stem']
+            id = ee['child']
+            branch = Branch(id=id, props=ee)
+            nodes[id] = branch
+            nodes[ee['parent']].add_child(branch)
+        else:
+            assert False
+    return nodes[root_id]
+
+class Tree(object):
+    def __init__(self, props=None):
+        self.logprob = props['logprob']
+        self.logresp = props['logresp']
+        self.parent = None
+
+    def height_position(self):
+        logh = 0.0
+#        pa = self.parent
+#        while pa is not None:
+#            logh += math.log1p(-math.exp(pa.logresp))
+#            pa = pa.parent
+        logh += self.logresp
+        return math.pow(max(0,-logh), 0.1)
+
+    def order_avg_index(self, order):
+        ix = self.order_index(order)
+        mx = self.order_max_index(order)
+        return ix + 0.5*(mx-ix)
+
+    def order_index(self, order):
+        return min([order.index(ll) for ll in self.leaves])
+
+    def order_max_index(self, order):
+        return max([order.index(ll) for ll in self.leaves])
+
+    def set_parent(self, parent):
+        self.parent = parent
+
+class Branch(Tree):
+    def __init__(self, id=None, **kwargs):
+        super(Branch, self).__init__(**kwargs)
+        self.id = id
+        self.children = set()
+        self.leaves = set()
+
+    def __str__(self):
+        return '%1.2e:{%s}' % (self.logresp,
+                ', '.join(map(str, self.children)))
+
+    def add_child(self, child):
+        self.children.add(child)
+        child.set_parent(self)
+        self.add_descendant(child)
+
+    def add_descendant(self, descedant):
+        self.leaves.update(descedant.leaves)
+        if self.parent is not None:
+            self.parent.add_descendant(descedant)
+
+    def num_leaves(self):
+        return len(self.leaves)
+
+    def topological_labels(self):
+        queue = [self]
+        labels = []
+        while queue:
+            cur = queue.pop()
+            if hasattr(cur, 'label'):
+                labels.append(cur.label)
+            if hasattr(cur, 'children'):
+                # sort children alphabetically
+                for child in sorted(cur.children, key=lambda ch: min(ch.leaves)):
+                    queue.insert(0, child)
+        return labels
+
+    def max_depth(self):
+        queue = [(1, self)]
+        max_depth = 0
+        max_height_pos = 0
+        while queue:
+            depth, cur = queue.pop()
+            max_depth = max(depth, max_depth)
+            max_height_pos = max(cur.height_position(), max_height_pos)
+            if hasattr(cur, 'children'):
+                for child in cur.children:
+                    queue.insert(0, (depth+1, child))
+        return max_depth, max_height_pos
+
+    def sizes(self, ctx, labels):
+        label_extents = [ctx.text_extents(label) for label in labels]
+        max_label_width = max([ctx.user_to_device_distance(ex[2], 0)[0] for ex in label_extents])
+        max_label_height = max([ctx.user_to_device_distance(0, ex[3])[1] for ex in label_extents])
+        return max_label_width, max_label_height
+
+    def min_size(self, ctx, labels):
+        max_label_width, max_label_height = self.sizes(ctx, labels)
+        min_height = len(labels)*max_label_height
+        max_depth, max_height_pos = self.max_depth()
+        min_space_per_depth = max_label_height + 0.5
+        min_width = min_space_per_depth*max_depth
+
+        # border
+        min_width += 2
+        min_height += 2
+        return min_width, min_height
+
+    def draw(self, ctx, labels):
+        left,top,right,bottom = ctx.clip_extents()
+        width = right-left
+        height = bottom-top
+        min_width, min_height = self.min_size(ctx, labels)
+        assert width >= min_width
+        assert height >= min_height
+        max_label_width, max_label_height = self.sizes(ctx, labels)
+        height = len(labels)*max_label_height
+        max_depth, max_height_pos = self.max_depth()
+
+        ctx.translate(left+1, top+1)
+        width -= 2
+        height -= 2
+
+
+        ctx.set_line_width(0.5)
+#        ctx.rectangle(0, 0, width, height)
+#        ctx.set_source_rgb(1.0, 0, 0)
+#        ctx.stroke()
+
+        # transform so height_position (x) fits in clip, and so
+        # integer values (y) map onto middle of boxes.
+        ctx.save()
+        ctx.scale(width/max_height_pos, max_label_height)
+        ctx.translate(0, 0.5)
+        trans_tree = ctx.get_matrix()
+        ctx.restore()
+
+#        ctx.save()
+#        ctx.set_matrix(trans_tree)
+#        ctx.rectangle(0, 0, max_height_pos, len(labels))
+#        # don't deform the pen
+#        ctx.restore()
+#        ctx.set_source_rgb(0.0, 0.0, 1.0)
+#        ctx.stroke()
+
+        ctx.set_source_rgb(0.0, 0.0, 0.0)
+        queue = [self]
+        while queue:
+            cur = queue.pop()
+            cur.draw_edges(ctx, labels, trans_tree)
+            if hasattr(cur, 'children'):
+                for child in cur.sorted_children(labels):
+                    queue.insert(0, child)
+
+
+    def sorted_children(self, order):
+        children = list(self.children)
+        children.sort(key=lambda ch: ch.order_index(order))
+        return children
+
+    def draw_edges(self, ctx, labels, trans_tree):
+        children = self.sorted_children(labels)
+        my_height = self.height_position()
+        my_across = self.order_avg_index(labels)
+
+        # draw node node
+        ctx.save()
+        ctx.save()
+        ctx.set_matrix(trans_tree)
+        ctx.move_to(my_height, my_across)
+        # close the path, so there is actually a path to draw.
+        ctx.close_path()
+        ctx.restore()
+        ctx.set_line_width(1.0)
+        ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+        ctx.stroke()
+        ctx.restore()
+
+        # draw across to the first and last child.
+        first_across = children[0].order_avg_index(labels)
+        last_across = children[-1].order_avg_index(labels)
+        ctx.save()
+        ctx.set_matrix(trans_tree)
+        ctx.move_to(my_height, first_across)
+        ctx.line_to(my_height, last_across)
+        ctx.restore()
+        ctx.stroke()
+
+        for child in children:
+            ch_height = child.height_position()
+            ch_across = child.order_avg_index(labels)
+            if ch_height > my_height:
+                print my_height, my_across,'->',ch_height, ch_across
+            ctx.save()
+            ctx.set_matrix(trans_tree)
+            ctx.move_to(my_height, ch_across)
+            ctx.line_to(ch_height, ch_across)
+            ctx.restore()
+            ctx.stroke()
+
+
+class Leaf(Tree):
+    def __init__(self, label=None, **kwargs):
+        super(Leaf, self).__init__(**kwargs)
+        self.label = label
+        self.leaves = set([label])
+
+    def __str__(self):
+        return self.label
+
+    def num_leaves(self):
+        return 1
+
+    def draw_edges(self, ctx, labels, trans_tree):
+        pass
+
+def draw(treename='output/out.tree', fitname='output/out.fit', pdfname='output/out.pdf'):
+    data = data_load(fitname)
+    tree = tree_load(treename)
+    print tree
+    labels = tree.topological_labels()
+    width = 10
+    height = 10
+    buffer = 10
+    surf = cairo.PDFSurface(pdfname, width, height)
+    ctx = cairo.Context(surf)
+
+    min_data_width, min_data_height = data.min_size(ctx, labels)
+    min_tree_width, min_tree_height = tree.min_size(ctx, labels)
+
+    # tree should align with the cells in the data.
+    assert min_tree_width < min_data_width
+
+    width = max(width, min_data_width+min_tree_width)
+    height = max(height, min_data_height)
+    data_prop = min_data_width/(min_data_width+min_tree_width)
+    surf.set_size(width + buffer, height + buffer)
+    ctx = cairo.Context(surf)
+
+    ctx.set_source_rgb(1.0, 1.0, 1.0)
+    ctx.paint()
+    ctx.set_source_rgb(0.0, 0.0, 0.0)
+
+    ctx.save()
+    ctx.rectangle(0, 0, data_prop*width, height)
+    ctx.clip()
+    data.draw(ctx, labels)
+    ctx.restore()
+
+    ctx.save()
+    ctx.rectangle(data_prop*width, 0, (1-data_prop)*width, height)
+    ctx.clip()
+    tree.draw(ctx, labels)
+    ctx.restore()
+
+    surf.flush()
+    ctx.show_page()
+
+def main():
+    sys.setrecursionlimit(100000)
+    if len(sys.argv) < 4:
+        print 'usage: tree_file fit_file pdf_file'
+        sys.exit(1)
+    draw(sys.argv[1], sys.argv[2], sys.argv[3])
+
+if __name__ == '__main__':
+    main()
