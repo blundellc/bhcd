@@ -3,6 +3,9 @@
 #include "counts.h"
 #include "params.h"
 
+// allocate at most ~1GB for the cache.
+#define	MAX_CACHE_SIZE	11585
+
 typedef void (*ParamsSetFunc)(Params *, gdouble);
 
 static void params_set_gamma(Params *, gdouble);
@@ -39,6 +42,9 @@ Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble bet
 	params_set_gamma(params, gamma);
 
 	cache_size = dataset_num_labels(dataset);
+	if (cache_size > MAX_CACHE_SIZE) {
+		cache_size = MAX_CACHE_SIZE;
+	}
 	/* SEE ALSO: params_set_alpha, params_set_beta */
 	params->alpha = alpha;
 	params->beta = beta;
