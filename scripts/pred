@@ -3,6 +3,8 @@
 import sys
 from math import *
 from collections import defaultdict
+import numpy as np
+from scikits.learn import metrics
 
 # only look at the upper triangluar results.
 upper_only = True
@@ -152,6 +154,14 @@ def auc(truth, lprob):
             So += ii+1
 
     return (So - (nl*(nl+1))/2)/(nl*nn)
+
+def sklearn_auc(truth, lprob):
+    """ matches above, bit slower """
+    ks = list(truth.keys())
+    fpr, tpr, thresholds = metrics.roc_curve(
+            np.array([truth[kk] for kk in ks]),
+            np.array([np.exp(lprob[kk][True]) for kk in ks]))
+    return metrics.auc(fpr, tpr)
 
 def main():
     truthfiles = []

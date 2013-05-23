@@ -28,11 +28,6 @@ mkplot <- function(dim, index=data_index()) {
     pp <- ggplot(df, aes_string(x='time', y=dim, color='name'))
     #pp <- ggplot(df, aes(x=time, y=auc, color=name))
     pp <- pp + geom_point() + geom_line()
-    if (dim == 'lpred_mean') {
-        limits <- aes(ymin = lpred_mean - lpred_se,
-                      ymax = lpred_mean + lpred_se)
-        pp <- pp + geom_errorbar(limits)
-    }
     pp <- pp + scale_x_log10() + xlab('time') + ylab(dim)
     pp <- pp + guides(color = guide_legend(title='',nrow=3, direction='horizontal'))
     pp <- pp + theme(legend.position = 'top')
