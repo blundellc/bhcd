@@ -11,26 +11,44 @@ load_data <- function(name, fname) {
 
 data_index <- function(fold='nips1', fit_or_pred='pred') {
     return(data.frame(rbind(
-        cbind('nrt',            paste('output/latest/blend/',fold,'.score_',fit_or_pred,sep='')),
-        cbind('nrt-bin',        paste('output/latest/blend/',fold,'bin.score_',fit_or_pred,sep='')),
-        cbind('nrt-sparse',     paste('output/latest/blend/',fold,'sparse.score_',fit_or_pred,sep='')),
-        cbind('nrt-bin-sparse', paste('output/latest/blend/',fold,'binsparse.score_',fit_or_pred,sep='')),
-        cbind('irm',        paste('output/latest/irm/',fold,'/score_',fit_or_pred, sep='')),
+        cbind('bhcd',       paste('output/latest/blend/',fold,'.score_',fit_or_pred,sep='')),
+        cbind('bhcd-bin',   paste('output/latest/blend/',fold,'bin.score_',fit_or_pred,sep='')),
+        cbind('bhcd-sp',    paste('output/latest/blend/',fold,'sparse.score_',fit_or_pred,sep='')),
+        cbind('bhcd-spbin', paste('output/latest/blend/',fold,'binsparse.score_',fit_or_pred,sep='')),
+        cbind('irm-mcmc',   paste('output/latest/irm/',fold,'/score_',fit_or_pred, sep='')),
         cbind('irm-greedy', paste('output/latest/irm/',fold,'search/score_',fit_or_pred, sep=''))
         )))
 }
+
+dim_labels = data.frame(lpred_mean='Average Log Predictive', loss01='Accuracy', auc='Area Under the Curve (AUC)')
 
 mkplot <- function(dim, index=data_index()) {
     df = c()
     for (ii in 1:nrow(index)) {
         df = rbind(df, load_data(index[ii, 1], index[ii, 2]))
     }
-    pp <- ggplot(df, aes_string(x='time', y=dim, color='name'))
-    #pp <- ggplot(df, aes(x=time, y=auc, color=name))
+    pp <- ggplot(df, aes_string(x='time', y=dim, color='name', shape='name', linetype='name'))
     pp <- pp + geom_point() + geom_line()
-    pp <- pp + scale_x_log10() + xlab('time') + ylab(dim)
-    pp <- pp + guides(color = guide_legend(title='',nrow=3, direction='horizontal'))
-    pp <- pp + theme(legend.position = 'top')
+    pp <- pp + scale_x_log10() + xlab('Run time (s)') + ylab(dim_labels[1, dim])
+    pp <- pp + scale_color_discrete(name='',
+                breaks=c('irm-mcmc', 'irm-greedy', 'bhcd-bin', 'bhcd', 'bhcd-spbin', 'bhcd-sp'),
+                labels=c('MCMC', 'Greedy', 'Binary ', 'Rose ', 'Binary', 'Rose'))
+    pp <- pp + scale_shape_discrete(name='',
+                breaks=c('irm-mcmc', 'irm-greedy', 'bhcd-bin', 'bhcd', 'bhcd-spbin', 'bhcd-sp'),
+                labels=c('MCMC', 'Greedy', 'Binary ', 'Rose ', 'Binary', 'Rose'))
+    pp <- pp + scale_linetype_manual(name='',
+                breaks=c('irm-mcmc', 'irm-greedy', 'bhcd-bin', 'bhcd', 'bhcd-spbin', 'bhcd-sp'),
+                labels=c('MCMC', 'Greedy', 'Binary ', 'Rose ', 'Binary', 'Rose'),
+                values=c(1, 2, 3, 4, 5, 6))
+    pp <- pp + theme_bw()
+    if (dim == 'lpred_mean') {
+        gg <- guide_legend(title='IRM             BHCD        BHCD sparse',
+                title.position='top', nrow=2, direction='horizontal')
+        pp <- pp + guides(color = gg, shape = gg, linetype=gg)
+        pp <- pp + theme(legend.position = c(0.65,0.15))
+    } else {
+        pp <- pp + theme(legend.position = 'none')
+    }
 
     return(pp)
 }
@@ -39,12 +57,13 @@ mkplot <- function(dim, index=data_index()) {
 main <- function() {
     for (type in c('pred', 'fit')) {
         for (field in c('lpred_mean','loss01','rmse','auc')) {
-            for (fold in 1) {
+            #for (fold in c('_cv_', 1,2,3,4,5,6,7,8,9,10)) {
+            for (fold in c('_cv_')) {
                 for (data in c('nips','gene')) {
                     foldname <- paste(data, fold, sep='')
                     print(paste(foldname,field))
                     pp <- mkplot(field, data_index(foldname,type))
-                    ggsave(paste('output/plots/', foldname, '_', field, '_',type,'.pdf', sep=''), plot=pp)
+                    ggsave(paste('output/plots/', foldname, '_', field, '_',type,'.pdf', sep=''), plot=pp, width=5, height=4)
                 }
             }
         }

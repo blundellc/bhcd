@@ -1,0 +1,64 @@
+#!/usr/bin/python2.7
+
+import numpy as np
+import os
+
+def load(fname):
+    with open(fname) as inp:
+        names = inp.readline().split(',')
+        names = [name.strip() for name in names]
+        results = None
+        for line in inp.readlines():
+            fields = [float(field.strip()) for field in line.split(',')]
+            assert(len(fields) == len(names))
+            if results is None:
+                results = np.array(fields)
+            else:
+                results = np.vstack((results, fields))
+    return names, results
+
+def avg_results(results):
+    return np.mean(np.dstack(results), axis=2)
+
+
+def load_all(prefix, suffix):
+    all_data = [load(prefix+str(fold)+suffix)
+                for fold in range(1, 10+1)]
+    names = all_data[0][0]
+    for elem in all_data:
+        assert(elem[0] == names)
+
+    return names, [elem[1] for elem in all_data]
+
+def output(prefix, suffix, names, result):
+    with open(prefix+'_cv_'+suffix, 'w') as out:
+        out.write(', '.join(names) + '\n')
+
+        for rr in range(result.shape[0]):
+            out.write(', '.join(['%e' % (cc,) for cc in result[rr,:]]) + '\n')
+
+def main():
+    prefix_path = 'output/latest/'
+    suffix_path = '.score_pred'
+    # nrt first
+    for prefix_atom in ['blend/nips', 'blend/gene']:
+        for suffix_atom in ['', 'bin', 'sparse', 'binsparse']:
+            prefix = prefix_path + prefix_atom
+            suffix = suffix_atom + suffix_path
+            names, results = load_all(prefix, suffix)
+            result = avg_results(results)
+            output(prefix, suffix, names, result)
+    # irm
+    suffix_path = '/score_pred'
+    for prefix_atom in ['irm/nips', 'irm/gene']:
+        for suffix_atom in ['', 'search']:
+            prefix = prefix_path + prefix_atom
+            suffix = suffix_atom + suffix_path
+            if not os.path.exists(prefix+'_cv_'+suffix_atom):
+                os.mkdir(prefix+'_cv_'+suffix_atom)
+            names, results = load_all(prefix, suffix)
+            result = avg_results(results)
+            output(prefix, suffix, names, result)
+
+if __name__ == '__main__':
+    main()
