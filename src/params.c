@@ -149,6 +149,31 @@ gdouble params_logprob_off(Params * params, gpointer pcounts) {
 	return logprob;
 }
 
+gdouble params_logprob_offscore(Params * params, gpointer pcounts) {
+	Counts * counts = pcounts;
+	gdouble logprob;
+
+	if (counts->num_total == 0) {
+		return 0.0;
+	}
+	if (0) {
+		// previous, incorrect
+		logprob = lnbetacache_get(params->logbeta_delta_lambda,
+				counts->num_ones,
+				counts->num_total - counts->num_ones) -
+			  lnbetacache_get(params->logbeta_delta_lambda, 0, 0);
+	} else {
+		// independents
+		gdouble logprob_zero;
+		gdouble logprob_one;
+
+		logprob_zero = lnbetacache_get(params->logbeta_delta_lambda, 0, 1);
+		logprob_one = lnbetacache_get(params->logbeta_delta_lambda, 1, 1);
+		logprob = logprob_one*counts->num_ones +
+			  logprob_zero*(counts->num_total - counts->num_ones);
+	}
+	return logprob;
+}
 
 gdouble params_logpred_on(Params * params, gpointer pcounts, gboolean value) {
 	Counts * counts = pcounts;
