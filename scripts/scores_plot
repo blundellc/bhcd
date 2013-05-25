@@ -28,6 +28,9 @@ mkplot <- function(dim, index=data_index()) {
         df = rbind(df, load_data(index[ii, 1], index[ii, 2]))
     }
     pp <- ggplot(df, aes_string(x='time', y=dim, color='name', shape='name', linetype='name'))
+    if (dim == 'loss01') {
+        pp <- pp + scale_y_continuous(labels=function(x) 1-x, trans="reverse")
+    }
     pp <- pp + geom_point() + geom_line()
     pp <- pp + scale_x_log10() + xlab('Run time (s)') + ylab(dim_labels[1, dim])
     pp <- pp + scale_color_discrete(name='',
