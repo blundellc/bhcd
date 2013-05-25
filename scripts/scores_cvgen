@@ -1,7 +1,7 @@
 #!/usr/bin/python2.7
 
 import numpy as np
-import os
+import os, datetime
 
 def load(fname):
     with open(fname) as inp:
@@ -39,26 +39,31 @@ def output(prefix, suffix, names, result):
 
 def main():
     prefix_path = 'output/latest/'
+    out_prefix_path = 'output/' + datetime.datetime.now().strftime('%Y%m%d') + '/'
     suffix_path = '.score_pred'
     # nrt first
     for prefix_atom in ['blend/nips', 'blend/gene']:
+        out_prefix = out_prefix_path + prefix_atom
+        prefix = prefix_path + prefix_atom
+        if not os.path.exists(os.path.dirname(out_prefix)):
+            os.makedirs(os.path.dirname(out_prefix))
         for suffix_atom in ['', 'bin', 'sparse', 'binsparse']:
-            prefix = prefix_path + prefix_atom
             suffix = suffix_atom + suffix_path
             names, results = load_all(prefix, suffix)
             result = avg_results(results)
-            output(prefix, suffix, names, result)
+            output(out_prefix, suffix, names, result)
     # irm
     suffix_path = '/score_pred'
     for prefix_atom in ['irm/nips', 'irm/gene']:
+        prefix = prefix_path + prefix_atom
+        out_prefix = out_prefix_path + prefix_atom
         for suffix_atom in ['', 'search']:
-            prefix = prefix_path + prefix_atom
+            if not os.path.exists(out_prefix+'_cv_'+suffix_atom):
+                os.makedirs(out_prefix+'_cv_'+suffix_atom)
             suffix = suffix_atom + suffix_path
-            if not os.path.exists(prefix+'_cv_'+suffix_atom):
-                os.mkdir(prefix+'_cv_'+suffix_atom)
             names, results = load_all(prefix, suffix)
             result = avg_results(results)
-            output(prefix, suffix, names, result)
+            output(out_prefix, suffix, names, result)
 
 if __name__ == '__main__':
     main()
