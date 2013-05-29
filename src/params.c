@@ -156,8 +156,8 @@ gdouble params_logprob_offscore(Params * params, gpointer pcounts) {
 	if (counts->num_total == 0) {
 		return 0.0;
 	}
-	if (0) {
-		// previous, incorrect
+	if (1) {
+		// marginal score
 		logprob = lnbetacache_get(params->logbeta_delta_lambda,
 				counts->num_ones,
 				counts->num_total - counts->num_ones) -
@@ -166,9 +166,10 @@ gdouble params_logprob_offscore(Params * params, gpointer pcounts) {
 		// independents
 		gdouble logprob_zero;
 		gdouble logprob_one;
+		gdouble zz = lnbetacache_get(params->logbeta_delta_lambda, 0, 0);
 
-		logprob_zero = lnbetacache_get(params->logbeta_delta_lambda, 0, 1);
-		logprob_one = lnbetacache_get(params->logbeta_delta_lambda, 1, 1);
+		logprob_zero = lnbetacache_get(params->logbeta_delta_lambda, 0, 1) - zz;
+		logprob_one = lnbetacache_get(params->logbeta_delta_lambda, 1, 0) - zz;
 		logprob = logprob_one*counts->num_ones +
 			  logprob_zero*(counts->num_total - counts->num_ones);
 	}
