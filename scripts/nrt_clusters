@@ -127,11 +127,11 @@ def main():
     while queue:
         logresp, cur = queue.pop()
         if logresp > log(0.5) or isinstance(cur, Leaf):
-            print ' '.join(['%s(%d)' % (l, data.popularity[l]) for l in
+            print logresp, ' '.join(['%s(%d)' % (l, data.popularity[l]) for l in
                 sorted(cur.leaves, key=lambda leaf: -data.popularity[leaf])])
             continue
 
-        lognotresp = 0.0 # log(1.0 - exp(logresp))
+        lognotresp = log(1.0 - exp(logresp))
         for child in cur.children:
             queue.append((lognotresp + child.logresp, child))
 

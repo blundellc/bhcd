@@ -103,8 +103,8 @@ class Data(object):
                     else:
                         exists = 0.0
 
-                ctx.set_source_rgb(prob, exists, exists)
-                #ctx.set_source_rgb(kk, kk, kk)
+                #ctx.set_source_rgb(prob, exists, exists)
+                ctx.set_source_rgb(exists, exists, exists)
                 ctx.fill()
                 ctx.restore()
 
@@ -164,6 +164,17 @@ class Tree(object):
     def set_parent(self, parent):
         self.parent = parent
 
+    def check(self):
+        qq = [(self, None)]
+        while qq:
+            cur, pa = qq.pop()
+            if pa is not None:
+                if cur.height_position() >= pa.height_position():
+                    print 'height inverted', cur
+            if hasattr(cur, 'children'):
+                for child in cur.children:
+                    qq.append((child, cur))
+
 class Branch(Tree):
     def __init__(self, id=None, **kwargs):
         super(Branch, self).__init__(**kwargs)
@@ -194,11 +205,11 @@ class Branch(Tree):
         while queue:
             cur = queue.pop()
             if hasattr(cur, 'label'):
-                labels.append(cur.label)
+                labels.insert(0, cur.label)
             if hasattr(cur, 'children'):
                 # sort children alphabetically
                 for child in sorted(cur.children, key=lambda ch: min(ch.leaves)):
-                    queue.insert(0, child)
+                    queue.append(child)
         return labels
 
     def max_depth(self):
@@ -297,7 +308,7 @@ class Branch(Tree):
         # close the path, so there is actually a path to draw.
         ctx.close_path()
         ctx.restore()
-        ctx.set_line_width(1.0)
+        ctx.set_line_width(1.5)
         ctx.set_line_cap(cairo.LINE_CAP_ROUND)
         ctx.stroke()
         ctx.restore()
@@ -344,6 +355,7 @@ def draw(treename='output/out.tree', fitname='output/out.fit', pdfname='output/o
     data = data_load(fitname)
     tree = tree_load(treename)
     print tree
+    tree.check()
     labels = tree.topological_labels()
     width = 10
     height = 10
