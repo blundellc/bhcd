@@ -19,6 +19,14 @@ void counts_add(Counts * dst, Counts * src) {
 	dst->num_total += src->num_total;
 }
 
+guint counts_num_zeros(Counts * counts) {
+	return counts->num_total - counts->num_ones;
+}
+
+guint counts_num_ones(Counts * counts) {
+	return counts->num_ones;
+}
+
 void counts_ref(Counts * counts) {
 	counts->ref_count++;
 }

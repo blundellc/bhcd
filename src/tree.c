@@ -4,6 +4,7 @@
 #include "tree.h"
 #include "sscache.h"
 #include "util.h"
+#include "counts.h"
 
 static const gboolean tree_debug = FALSE;
 
@@ -305,7 +306,11 @@ void tree_println(Tree * tree, const gchar *prefix) {
 }
 
 void tree_tostring(Tree * tree, GString *str) {
-	g_string_append_printf(str, "logprob: %2.2e #intern: %u ", tree->logprob, tree_num_intern(tree));
+	g_string_append_printf(str, "logprob: %2.2e (0:%d, 1:%d) #intern: %u ",
+			tree->logprob,
+			counts_num_zeros(tree->suffstats_on),
+			counts_num_ones(tree->suffstats_on),
+			tree_num_intern(tree));
 	tree_struct_tostring(tree, str);
 }
 
