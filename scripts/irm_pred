@@ -79,7 +79,7 @@ def load_edges(graph_file, names_file):
     names = {}
     with open(names_file) as ff:
         for line in ff:
-            idx, name = line.strip().split()
+            idx, name = line.strip().split(None, 1)
             names[int(idx)] = name
 
     edges = {}
