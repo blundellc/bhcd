@@ -112,7 +112,6 @@ class Data(object):
 def tree_load(fname = "output/out.tree"):
     with open(fname) as treef:
         jtree = json.load(treef)
-
     nodes = {}
     root_id = None
     for elem in jtree['tree']:
@@ -142,13 +141,20 @@ class Tree(object):
         self.parent = None
 
     def height_position(self):
-        logh = 0.0
-#        pa = self.parent
-#        while pa is not None:
-#            logh += math.log1p(-math.exp(pa.logresp))
-#            pa = pa.parent
-        logh += self.logresp
-        return math.pow(max(0,-logh), 0.1)
+#        logh = 0.0
+##        pa = self.parent
+##        while pa is not None:
+##            logh += math.log1p(-math.exp(pa.logresp))
+##            pa = pa.parent
+#        logh += self.logresp
+#        return math.pow(max(0,-logh), 0.1)
+        max_depth = -1
+        if hasattr(self, 'children'):
+            for ch in self.children:
+                hh = ch.height_position()
+                if hh > max_depth:
+                    max_depth = hh
+        return 1 + max_depth
 
     def order_avg_index(self, order):
         ix = self.order_index(order)
