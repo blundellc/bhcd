@@ -1,0 +1,70 @@
+#!/usr/bin/python
+
+import subprocess
+from collections import defaultdict
+
+def load_assignments():
+    best_index = int(subprocess.check_output(
+            "sort -k2 -n output/20130530/irm/sampson_t4search_status  | tail -n 1 | cut -d: -f1",
+            shell=True))
+    assignments = subprocess.check_output(
+            "head -n "+str(best_index)+" output/20130530/irm/sampson_t4search_dom0  | tail -n1",
+            shell=True)
+    return map(int, assignments.split())
+
+def load_names():
+    names = {}
+    with open('output/20130530/irm/sampson_t4search/names') as ff:
+        for line in ff.readlines():
+            idx, name = line.strip().split(None, 1)
+            names[int(idx)] = name
+    return names
+
+
+def load_clusters():
+    assign = load_assignments()
+    names = load_names()
+    clusters = defaultdict(list)
+    for idx, cluster_idx in enumerate(assign):
+        clusters[cluster_idx].append(names[idx])
+
+    return clusters.values()
+
+def write_fake_gml(clusters, fname):
+    with open(fname, 'w') as out:
+        out.write('{"tree":[\n\t { "root": {"logprob": 0.0, "logresp": 0.0, "id": 0}}\n')
+        for idx, cluster in enumerate(clusters):
+            out.write('\t, {"stem": {"logprob": 0.0, "logresp": 0.0, "parent": 0, "child": %d}}\n'
+                % (idx+1))
+            for vertex in cluster:
+                out.write('\t, {"leaf": {"logprob": 0.0, "logresp": 0.0, "parent": %d, "label": "%s"}}\n'
+                    % (idx+1, vertex))
+        out.write(']}\n')
+
+def main():
+    clusters = [
+        ["Albert", "Boniface", "Gregory", "Hugh", "John Bosco", "Mark", "Winfrid"],
+        ["Ambrose", "Berthold", "Bonaventure", "Louis", "Peter"],
+        ["Basil", "Elias", "Simplicius"],
+        ["Amand", "Ramuald", "Victor"]]
+    for cluster in clusters:
+        print ' '.join(cluster)
+    write_fake_gml(clusters, 'output/20130530/sampson_t4_truth.gml')
+    clusters = load_clusters()
+    for cluster in clusters:
+        print ' '.join(cluster)
+    write_fake_gml(clusters, 'output/20130530/sampson_t4_irm.gml')
+    subprocess.call([
+        './scripts/nrt_plot',
+        'output/20130530/sampson_t4_irm.gml',
+        'output/20130530/sampson_t4.fit',
+        'output/20130530/sampson_t4_irm.pdf'])
+    subprocess.call([
+        './scripts/nrt_plot',
+        'output/20130530/sampson_t4_truth.gml',
+        'output/20130530/sampson_t4.fit',
+        'output/20130530/sampson_t4_truth.pdf'])
+
+if __name__ == '__main__':
+    main()
+
