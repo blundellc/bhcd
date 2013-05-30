@@ -8,6 +8,7 @@ struct SSCache_t {
 	guint		ref_count;
 	gboolean	not_found_zero;
 	Dataset *	dataset;
+	Labelset *	emptyset;
 	GHashTable *	suffstats_labels;
 	GHashTable *	suffstats_offblocks;
 };
@@ -38,6 +39,7 @@ SSCache * sscache_new(Dataset *dataset) {
 	cache->not_found_zero = TRUE;
 	cache->dataset = dataset;
 	dataset_ref(cache->dataset);
+	cache->emptyset = labelset_new(cache->dataset);
 	cache->suffstats_labels = g_hash_table_new_full(NULL, NULL, NULL, suffstats_unref);
 	cache->suffstats_offblocks = g_hash_table_new_full(
 			offblock_key_hash, offblock_key_equal,
@@ -49,6 +51,7 @@ void sscache_unref(SSCache *cache) {
 	if (cache->ref_count <= 1) {
 		g_hash_table_unref(cache->suffstats_labels);
 		g_hash_table_unref(cache->suffstats_offblocks);
+		labelset_unref(cache->emptyset);
 		dataset_unref(cache->dataset);
 		g_free(cache);
 	} else {
@@ -122,8 +125,7 @@ static gboolean offblock_key_equal(gconstpointer paa, gconstpointer pbb) {
 gpointer sscache_get_offblock_full(SSCache *cache, gconstpointer ii, gconstpointer jj) {
 	Labelset * xx = labelset_new(cache->dataset, ii);
 	Labelset * yy = labelset_new(cache->dataset, jj);
-	Labelset * empty = labelset_new(cache->dataset);
-	gpointer suffstats = sscache_get_offblock(cache, xx, empty, yy, empty);
+	gpointer suffstats = sscache_get_offblock(cache, xx, cache->emptyset, yy, cache->emptyset);
 	labelset_unref(xx);
 	labelset_unref(yy);
 	return suffstats;
