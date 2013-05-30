@@ -1,0 +1,4 @@
+#!/bin/sh
+
+./src/fastnrt -S -p output/$(date +%Y%m%d)/nipsf data/nips-full.gml
+

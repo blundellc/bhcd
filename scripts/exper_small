@@ -1,0 +1,8 @@
+#!/bin/sh
+
+dd=$(date +%Y%m%d)
+./src/fastnrt -S -p output/$dd/sampson_t4 data/pajek/Sampson_Sampson_T4.gml
+./scripts/nrt_plot output/$dd/sampson_t4.tree output/$dd/sampson_t4.fit output/$dd/sampson_t4.pdf
+
+./src/fastnrt -S -p output/$dd/noisy-blocks data/noisy-blocks.gml
+./scripts/nrt_plot output/$dd/noisy-blocks.tree output/$dd/noisy-blocks.fit output/$dd/noisy-blocks.pdf
