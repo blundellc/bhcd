@@ -19,8 +19,8 @@ struct Tree_t {
 	GList *		children;
 
 	Labelset *	labels;
-	/* elements shared */
-	GList *		labelsets;
+	Labelset *	merge_left;
+	Labelset *	merge_right;
 
 	gboolean	dirty;
 	gdouble		log_pi;
@@ -49,17 +49,17 @@ void tree_assert(Tree * tree) {
 	assert_lefloat(tree->logprob, 0.0, EQFLOAT_DEFAULT_PREC);
 	if (tree_is_leaf(tree)) {
 		g_assert(labelset_count(tree->labels) == 1);
-		g_assert(g_list_length(tree->labelsets) == 1);
-		g_assert(labelset_equal(tree->labels, tree->labelsets->data));
+		g_assert(labelset_count(tree->merge_left) == 1);
+		g_assert(labelset_count(tree->merge_right) == 0);
 	} else {
 		GList *child;
 		Labelset *combined;
 
 		combined = labelset_new(tree->params->dataset);
-		for (child = tree->labelsets; child != NULL; child = g_list_next(child)) {
-			g_assert(labelset_disjoint(combined, child->data));
-			labelset_union(combined, child->data);
-		}
+		g_assert(tree->merge_left != NULL);
+		g_assert(tree->merge_right != NULL);
+		labelset_union(combined, tree->merge_left);
+		labelset_union(combined, tree->merge_right);
 		g_assert(labelset_equal(combined, tree->labels));
 		labelset_unref(combined);
 
@@ -82,7 +82,8 @@ static Tree * tree_new(Params * params) {
 	tree->suffstats_off = NULL;
 	tree->children = NULL;
 	tree->labels = NULL;
-	tree->labelsets = NULL;
+	tree->merge_left = NULL;
+	tree->merge_right = NULL;
 
 	tree->dirty = TRUE;
 	tree->log_pi = 0.0;
@@ -107,10 +108,8 @@ Tree * tree_copy(Tree * orig) {
 	tree->suffstats_on = suffstats_copy(orig->suffstats_on);
 	tree->suffstats_off = suffstats_copy(orig->suffstats_off);
 	tree->labels = labelset_copy(orig->labels);
-	tree->labelsets = g_list_copy(orig->labelsets);
-	for (child = tree->labelsets; child != NULL; child = g_list_next(child)) {
-		labelset_ref(child->data);
-	}
+	tree->merge_left = labelset_copy(orig->merge_left);
+	tree->merge_right = labelset_copy(orig->merge_right);
 	tree->children = g_list_copy(orig->children);
 	for (child = tree->children; child != NULL; child = g_list_next(child)) {
 		tree_ref(child->data);
@@ -151,7 +150,8 @@ Tree * leaf_new(Params * params, gconstpointer label) {
 	suffstats_ref(leaf->suffstats_on);
 	leaf->suffstats_off = suffstats_new_empty();
 	leaf->labels = labelset_new(params->dataset, label);
-	leaf->labelsets = list_new(leaf->labels);
+	leaf->merge_left = labelset_new(params->dataset, label);
+	leaf->merge_right = labelset_new(params->dataset);
 	labelset_ref(leaf->labels);
 	leaf->logprob = tree_get_logprob(leaf);
 	tree_assert(leaf);
@@ -167,7 +167,8 @@ Tree * branch_new(Params * params) {
 	branch->suffstats_off = suffstats_new_empty();
 	branch->children = NULL;
 	branch->labels = labelset_new(params->dataset);
-	branch->labelsets = NULL;
+	branch->merge_left = labelset_new(params->dataset);
+	branch->merge_right = labelset_new(params->dataset);
 	branch->logprob = tree_get_logprob(branch);
 	tree_assert(branch);
 	return branch;
@@ -198,7 +199,8 @@ void tree_unref(Tree * tree) {
 		if (!tree_is_leaf(tree)) {
 			g_list_free_full(tree->children, (GDestroyNotify)tree_unref);
 		}
-		g_list_free_full(tree->labelsets, (GDestroyNotify)labelset_unref);
+		labelset_unref(tree->merge_left);
+		labelset_unref(tree->merge_right);
 		labelset_unref(tree->labels);
 		suffstats_unref(tree->suffstats_on);
 		suffstats_unref(tree->suffstats_off);
@@ -217,8 +219,12 @@ Labelset * tree_get_labels(Tree * tree) {
 	return tree->labels;
 }
 
-GList * tree_get_labelsets(Tree * tree) {
-	return tree->labelsets;
+Labelset * tree_get_merge_left(Tree * tree) {
+	return tree->merge_left;
+}
+
+Labelset * tree_get_merge_right(Tree * tree) {
+	return tree->merge_right;
 }
 
 Params * tree_get_params(Tree * tree) {
@@ -335,36 +341,60 @@ void branch_add_child(Tree * branch, Tree * child) {
 	g_assert(!tree_is_leaf(branch));
 	tree_ref(child);
 
-	/* only if branch has labelsets can we look at offblocks */
-	if (branch->labelsets != NULL) {
-		/* data on the new offset par takes in both the off and on suff stats of
-		 * the branch
+	if (branch->children != NULL) {
+		/* once there is more than one child, we'd better start adding
+		 * off diagonal terms.
 		 */
-		new_off = suffstats_new_empty();
-		for (GList * iter = branch->children; iter != NULL; iter = g_list_next(iter)) {
-			Tree * branch_child = iter->data;
-			if (FALSE) {
-				g_print("branch_add_child: ");
-				list_labelset_print(branch_child->labelsets);
-				g_print(" <-> ");
-				list_labelset_print(child->labelsets);
-				g_print("\n");
-			}
-			suffstats_add(new_off, 
-				sscache_get_offblock(branch->params->sscache,
-					branch_child->labelsets, child->labelsets));
+		if (tree_debug) {
+			tree_println(branch, "branch: ");
+			labelset_print(branch->merge_left);
+			g_print("/");
+			labelset_print(branch->merge_right);
+			g_print("\n");
+			labelset_print(child->merge_left);
+			g_print("/");
+			labelset_print(child->merge_right);
+			g_print("\n");
+			tree_println(child, "child: ");
 		}
+		new_off = sscache_get_offblock(branch->params->sscache,
+				branch->merge_left,
+				branch->merge_right,
+				child->merge_left,
+				child->merge_right);
+		if (tree_debug) {
+			g_print("new off: ");
+			suffstats_print(new_off);
+			g_print("\n");
+		}
+		g_assert(new_off != NULL);
 		suffstats_add(branch->suffstats_off, new_off);
 		suffstats_add(branch->suffstats_on, new_off);
-		suffstats_unref(new_off);
+		new_off = NULL;
+
+		labelset_set_equal(branch->merge_left, child->labels);
+		labelset_set_equal(branch->merge_right, branch->labels);
+	} else {
+		labelset_set_equal(branch->merge_left, child->merge_left);
+		labelset_set_equal(branch->merge_right, child->merge_right);
 	}
 
 	branch->children = g_list_prepend(branch->children, child);
 	suffstats_add(branch->suffstats_on, child->suffstats_on);
+	if (tree_debug) {
+		g_print("branch on: "); suffstats_print(branch->suffstats_on); g_print("\n");
+		g_print("branch off: "); suffstats_print(branch->suffstats_off); g_print("\n");
+	}
 
 	labelset_union(branch->labels, child->labels);
-	branch->labelsets = g_list_prepend(branch->labelsets, child->labels);
-	labelset_ref(child->labels);
+
+	if (tree_debug) {
+		g_print("post merge: ");
+		labelset_print(branch->merge_left);
+		g_print("/");
+		labelset_print(branch->merge_right);
+		g_print("\n");
+	}
 	branch->dirty = TRUE;
 	branch->logprob = tree_get_logprob(branch);
 	tree_assert(branch);

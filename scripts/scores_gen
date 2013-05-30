@@ -12,8 +12,8 @@ do
             echo $c$n $type
             mkdir -p output/$cur/irm/$c$n
             mkdir -p output/$cur/irm/$c${n}search
-            ./scripts/pred output/latest/irm/$c${n}search/$type >output/$cur/irm/$c${n}search/score_$type &
-            ./scripts/pred output/latest/irm/$c$n/$type >output/$cur/irm/$c$n/score_$type &
+#            ./scripts/pred output/latest/irm/$c${n}search/$type >output/$cur/irm/$c${n}search/score_$type &
+#            ./scripts/pred output/latest/irm/$c$n/$type >output/$cur/irm/$c$n/score_$type &
             wait
             for x in "" sparse bin binsparse
             do

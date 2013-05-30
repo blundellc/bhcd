@@ -22,7 +22,7 @@ for restart in $(seq $num_restarts); do
     mkdir -p $myout
     opts="--restarts=1 --seed=$seed"
     /usr/bin/time -o $myout/$tag.systime ./src/fastnrt $opts "$@" -p $myout/$tag -t $test $train &
-    if [ $(($restart % 5)) == 0 ]
+    if [ $(($restart % 4)) == 0 ]
     then
         wait
     fi

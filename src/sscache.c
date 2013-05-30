@@ -6,7 +6,6 @@
 
 struct SSCache_t {
 	guint		ref_count;
-	gboolean	debug;
 	gboolean	not_found_zero;
 	Dataset *	dataset;
 	GHashTable *	suffstats_labels;
@@ -20,12 +19,14 @@ typedef struct {
 	Labelset *snd;
 } Offblock_Key;
 
+static const gboolean cache_debug = FALSE;
+
 static Offblock_Key * offblock_key_new(Labelset * fst, Labelset * snd);
 static void offblock_key_free(gpointer pkey);
 static gboolean offblock_key_equal(gconstpointer paa, gconstpointer pbb);
 static guint offblock_key_hash(gconstpointer pkey);
 static gpointer sscache_lookup_offblock_sparse(SSCache *cache, Labelset * kk, Labelset * zz);
-static gpointer sscache_lookup_offblock_ordered(SSCache *cache, Labelset * kk, GList * zzxx);
+static gpointer sscache_lookup_offblock_merge(SSCache *cache, Labelset * xx, Labelset * yy_left, Labelset * yy_right);
 static gpointer sscache_lookup_offblock_simple(SSCache *cache, Labelset * xx, Labelset * yy);
 static gpointer sscache_lookup_offblock_full(SSCache *cache, gconstpointer ii, gconstpointer jj);
 
@@ -35,7 +36,6 @@ SSCache * sscache_new(Dataset *dataset) {
 	cache = g_new(SSCache, 1);
 	cache->ref_count = 1;
 	cache->not_found_zero = TRUE;
-	cache->debug = FALSE;
 	cache->dataset = dataset;
 	dataset_ref(cache->dataset);
 	cache->suffstats_labels = g_hash_table_new_full(NULL, NULL, NULL, suffstats_unref);
@@ -120,54 +120,49 @@ static gboolean offblock_key_equal(gconstpointer paa, gconstpointer pbb) {
 
 
 gpointer sscache_get_offblock_full(SSCache *cache, gconstpointer ii, gconstpointer jj) {
-	Labelset * kk = labelset_new(cache->dataset, ii);
-	Labelset * zz = labelset_new(cache->dataset, jj);
-	GList * kkii = list_new(kk);
-	GList * zzxx = list_new(zz);
-	gpointer suffstats = sscache_get_offblock(cache, kkii, zzxx);
-	labelset_unref(kk);
-	labelset_unref(zz);
-	g_list_free(kkii);
-	g_list_free(zzxx);
+	Labelset * xx = labelset_new(cache->dataset, ii);
+	Labelset * yy = labelset_new(cache->dataset, jj);
+	Labelset * empty = labelset_new(cache->dataset);
+	gpointer suffstats = sscache_get_offblock(cache, xx, empty, yy, empty);
+	labelset_unref(xx);
+	labelset_unref(yy);
 	return suffstats;
 }
 
-gpointer sscache_get_offblock(SSCache *cache, GList * kkii, GList * zzxx) {
+gpointer sscache_get_offblock(SSCache *cache, Labelset * xx_left, Labelset * xx_right, Labelset * yy_left, Labelset * yy_right) {
 	gpointer suffstats;
-	Labelset * kk;
-	Labelset * zz;
 	Offblock_Key * key;
+	Labelset * xx;
+	Labelset * yy;
 
-	g_assert(kkii != NULL);
-	g_assert(zzxx != NULL);
-
-	if (cache->debug) {
-		g_print("sscache_get_offblock: {");
-		list_labelset_print(kkii);
-		g_print("} ** {");
-		list_labelset_print(zzxx);
-		g_print("}\n");
-	}
+	g_assert(xx_left != NULL);
+	g_assert(xx_right != NULL);
+	g_assert(yy_left != NULL);
+	g_assert(yy_right != NULL);
 
 	/* first, let's union everything and see if that exists already */
-	kk = labelset_new(cache->dataset);
-	zz = labelset_new(cache->dataset);
-	for (GList * jj = kkii; jj != NULL; jj = g_list_next(jj)) {
-		labelset_union(kk, jj->data);
-	}
-	for (GList * yy = zzxx; yy != NULL; yy = g_list_next(yy)) {
-		labelset_union(zz, yy->data);
-	}
-	key = offblock_key_new(kk, zz);
+	xx = labelset_copy(xx_left);
+	labelset_union(xx, xx_right);
+
+	yy = labelset_copy(yy_left);
+	labelset_union(yy, yy_right);
+	key = offblock_key_new(xx, yy);
 	suffstats = g_hash_table_lookup(cache->suffstats_offblocks, key);
+
+	if (suffstats != NULL) {
+		goto out_found;
+	}
 
 	/* if both are singletons, then let's go visit the full data matrix
 	 * not really any way around that...
 	 */
-	if (suffstats == NULL && labelset_count(kk) == 1 && labelset_count(zz) == 1) {
+	if (suffstats == NULL && labelset_count(xx) == 1 && labelset_count(yy) == 1) {
+		if (cache_debug) {
+			g_print("singleton\n");
+		}
 		suffstats = sscache_lookup_offblock_full(cache,
-				labelset_any_label(kk),
-				labelset_any_label(zz));
+				labelset_any_label(xx),
+				labelset_any_label(yy));
 		goto out;
 	}
 
@@ -177,29 +172,34 @@ gpointer sscache_get_offblock(SSCache *cache, GList * kkii, GList * zzxx) {
 	 *          or sigma_{zi} and sigma_{zj}
 	 * have been computed already.
 	 *
-	 * likewise we will say that
-	 * if k = {k_i} and z = {z_x}
-	 * then either sigma_{k z_x} for all x
-	 *          or sigma_{z k_i} for all i
-	 * have been computed.
-	 *
 	 * note that i,j,x,y and k_i and z_x are all sets of labels.
 	 * ergo, we need two lists of sets of labels: kk and zz.
 	 */
-	suffstats = sscache_lookup_offblock_ordered(cache, kk, zzxx);
 	if (suffstats == NULL) {
-		suffstats = sscache_lookup_offblock_ordered(cache, zz, kkii);
+		if (cache_debug) {
+			g_print("merge x y\n");
+		}
+		suffstats = sscache_lookup_offblock_merge(cache, xx, yy_left, yy_right);
 	}
 	if (suffstats == NULL) {
-		suffstats = sscache_lookup_offblock_sparse(cache, kk, zz);
+		if (cache_debug) {
+			g_print("merge y x\n");
+		}
+		suffstats = sscache_lookup_offblock_merge(cache, yy, xx_left, xx_right);
+	}
+	if (suffstats == NULL) {
+		if (cache_debug) {
+			g_print("sparse\n");
+		}
+		suffstats = sscache_lookup_offblock_sparse(cache, xx, yy);
 	}
 	if (suffstats == NULL) {
 		sscache_println(cache, "sscache: ");
 		// thm failure
 		g_print("failed offblock: ");
-		list_labelset_print(kkii);
+		labelset_print(xx);
 		g_print(" <-> ");
-		list_labelset_print(zzxx);
+		labelset_print(yy);
 		g_print("\n");
 		g_error("theorem failure?!");
 	}
@@ -207,35 +207,51 @@ out:
 	if (suffstats != NULL) {
 		g_hash_table_insert(cache->suffstats_offblocks, key, suffstats);
 	} else {
+out_found:
 		offblock_key_free(key);
 	}
-	labelset_unref(kk);
-	labelset_unref(zz);
+	labelset_unref(xx);
+	labelset_unref(yy);
 	return suffstats;
 }
 
-static gpointer sscache_lookup_offblock_ordered(SSCache *cache, Labelset * kk, GList * zzxx) {
-	gpointer suffstats = suffstats_new_empty();
-	gboolean found = FALSE;
-	for (GList * xx = zzxx; xx != NULL; xx = g_list_next(xx)) {
-		gpointer offblock_suffstats = sscache_lookup_offblock_simple(cache, kk, xx->data);
-		found = offblock_suffstats != NULL;
-		if (found) {
-			break;
+static gpointer sscache_lookup_offblock_merge(SSCache *cache, Labelset * xx, Labelset * yy_left, Labelset * yy_right) {
+	gpointer suffstats, offblock_suffstats;
+
+	suffstats = suffstats_new_empty();
+	offblock_suffstats = sscache_lookup_offblock_simple(cache, xx, yy_right);
+	if (offblock_suffstats == NULL) {
+		if (cache_debug) {
+			g_print("merge not found first: ");
+			labelset_print(xx);
+			g_print("/");
+			labelset_print(yy_left);
+			g_print("\n");
 		}
-	}
-	if (!found) {
 		goto not_found;
 	}
-	for (; zzxx != NULL; zzxx = g_list_next(zzxx)) {
-		gpointer offblock_suffstats = sscache_lookup_offblock_simple(cache, kk, zzxx->data);
-		if (offblock_suffstats == NULL) {
-			offblock_suffstats = sscache_lookup_offblock_sparse(cache, kk, zzxx->data);
+	suffstats_add(suffstats, offblock_suffstats);
+	offblock_suffstats = sscache_lookup_offblock_simple(cache, xx, yy_left);
+	if (offblock_suffstats == NULL) {
+		if (cache_debug) {
+			g_print("merge not found second: ");
+			labelset_print(xx);
+			g_print("/");
+			labelset_print(yy_left);
+			g_print("\n");
 		}
-		if (offblock_suffstats == NULL) {
-			goto not_found;
-		}
-		suffstats_add(suffstats, offblock_suffstats);
+		goto not_found;
+	}
+	suffstats_add(suffstats, offblock_suffstats);
+	if (cache_debug) {
+		g_print("merge off ");
+		labelset_print(xx);
+		g_print("/");
+		labelset_print(yy_left);
+		labelset_print(yy_right);
+		g_print(": ");
+		suffstats_print(suffstats);
+		g_print("\n");
 	}
 	return suffstats;
 not_found:
@@ -243,11 +259,12 @@ not_found:
 	return NULL;
 }
 
+
 static gpointer sscache_lookup_offblock_simple(SSCache *cache, Labelset * ii, Labelset * jj) {
 	gpointer suffstats;
 	Offblock_Key * key;
 
-	if (cache->debug) {
+	if (cache_debug) {
 		g_print("sscache_lookup_offblock_simple: {");
 		labelset_print(ii);
 		g_print("} ** {");
@@ -259,12 +276,12 @@ static gpointer sscache_lookup_offblock_simple(SSCache *cache, Labelset * ii, La
 	if (!g_hash_table_lookup_extended(cache->suffstats_offblocks,
 				key, NULL, &suffstats)) {
 		offblock_key_free(key);
-		if (cache->debug) {
+		if (cache_debug) {
 			g_print("sscache_lookup_offblock_simple end: fail\n");
 		}
 		return NULL;
 	}
-	if (cache->debug) {
+	if (cache_debug) {
 		g_print("sscache_lookup_offblock_simple end: ");
 		suffstats_print(suffstats);
 		g_print("\n");
@@ -296,7 +313,7 @@ static gpointer sscache_lookup_offblock_full(SSCache *cache, gconstpointer ii, g
 			suffstats->num_total += 1;
 		}
 	}
-	if (cache->debug) {
+	if (cache_debug) {
 		g_print("sscache_lookup_offblock_full: ");
 		suffstats_print(suffstats);
 		g_print("\n");
@@ -361,6 +378,6 @@ void suffstats_add(gpointer pdst, gpointer psrc) {
 
 void suffstats_print(gpointer ss) {
 	Counts * cc = ss;
-	g_print("<0: %d, 1: %d>", cc->num_ones, cc->num_total-cc->num_ones);
+	g_print("<1: %d, 0: %d>", cc->num_ones, cc->num_total-cc->num_ones);
 }
 

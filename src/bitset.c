@@ -150,6 +150,12 @@ void bitset_clear(Bitset *bitset, guint32 index) {
 	bitset->elems[elem_index] &= ~bit;
 }
 
+void bitset_clear_all(Bitset *bitset) {
+	for (guint32 ii = 0; ii < bitset->size; ii++) {
+		bitset->elems[ii] = 0;
+	}
+}
+
 gboolean bitset_contains(Bitset *bitset, guint32 index) {
 	guint64 bit;
 	guint32 elem_index;

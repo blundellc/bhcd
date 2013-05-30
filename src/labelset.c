@@ -34,8 +34,7 @@ Labelset * labelset_new_full(Dataset * dataset, ...) {
 
 Labelset * labelset_copy(Labelset *other) {
 	Labelset * lset = labelset_new(other->dataset);
-	bitset_unref(lset->bits);
-	lset->bits = bitset_copy(other->bits);
+	labelset_union(lset, other);
 	return lset;
 }
 
@@ -91,6 +90,11 @@ gboolean labelset_contains(Labelset *lset, gconstpointer label) {
 }
 
 void labelset_union(Labelset *aa, Labelset *bb) {
+	bitset_union(aa->bits, bb->bits);
+}
+
+void labelset_set_equal(Labelset *aa, Labelset *bb) {
+	bitset_clear_all(aa->bits);
 	bitset_union(aa->bits, bb->bits);
 }
 

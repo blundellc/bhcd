@@ -19,6 +19,7 @@ gint bitset_cmp(gconstpointer paa, gconstpointer pbb);
 guint32 bitset_any(Bitset *);
 void bitset_set(Bitset *bitset, guint32 index);
 void bitset_clear(Bitset *bitset, guint32 index);
+void bitset_clear_all(Bitset *bitset);
 gboolean bitset_contains(Bitset *bitset, guint32 index);
 void bitset_union(Bitset *dst, Bitset *src);
 gboolean bitset_disjoint(Bitset *, Bitset *);

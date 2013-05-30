@@ -25,6 +25,7 @@ void labelset_add(Labelset *lset, gconstpointer label);
 gboolean labelset_contains(Labelset *lset, gconstpointer label);
 void labelset_del(Labelset *lset, gconstpointer label);
 void labelset_union(Labelset *aa, Labelset *bb);
+void labelset_set_equal(Labelset *aa, Labelset *bb);
 
 void labelset_print(Labelset * lset);
 void labelset_tostring(Labelset * lset, GString * out);

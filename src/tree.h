@@ -27,7 +27,8 @@ gconstpointer leaf_get_label(Tree * leaf);
 
 gboolean tree_is_leaf(Tree * tree);
 Labelset * tree_get_labels(Tree * tree);
-GList * tree_get_labelsets(Tree * tree);
+Labelset * tree_get_merge_left(Tree * tree);
+Labelset * tree_get_merge_right(Tree * tree);
 Params * tree_get_params(Tree * tree);
 gdouble tree_get_logprob(Tree *tree);
 gdouble tree_get_logresponse(Tree *tree);
