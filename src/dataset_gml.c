@@ -60,8 +60,11 @@ static void parse_node(Tokens * toks, Dataset * dd, GHashTable * id_labels) {
 		g_free(next);
 	}
 	tokens_expect(toks, "]");
-	if (id == NULL || node_label == NULL) {
-		tokens_fail(toks, "missing id/label");
+	if (id == NULL) {
+		tokens_fail(toks, "missing id");
+	}
+	if (node_label == NULL) {
+		node_label = g_strdup(id);
 	}
 	label = dataset_label_create(dd, strip_quotes(node_label));
 	g_free(node_label);
