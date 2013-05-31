@@ -14,7 +14,7 @@ Dataset * dataset_gml_load(const gchar *fname) {
 	gchar *next;
 
 	id_labels = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
-	dd = dataset_new(TRUE);
+	dd = dataset_new(FALSE);
 	dataset_set_filename(dd, fname);
 	toks = tokens_open(fname);
 	while (tokens_has_next(toks)) {
