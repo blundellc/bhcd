@@ -160,6 +160,9 @@ gpointer sscache_get_offblock(SSCache *cache, GList * kkii, GList * zzxx) {
 	}
 	key = offblock_key_new(kk, zz);
 	suffstats = g_hash_table_lookup(cache->suffstats_offblocks, key);
+	if (suffstats != NULL) {
+		goto found_out;
+	}
 
 	/* if both are singletons, then let's go visit the full data matrix
 	 * not really any way around that...
@@ -186,7 +189,9 @@ gpointer sscache_get_offblock(SSCache *cache, GList * kkii, GList * zzxx) {
 	 * note that i,j,x,y and k_i and z_x are all sets of labels.
 	 * ergo, we need two lists of sets of labels: kk and zz.
 	 */
-	suffstats = sscache_lookup_offblock_ordered(cache, kk, zzxx);
+	if (suffstats == NULL) {
+		suffstats = sscache_lookup_offblock_ordered(cache, kk, zzxx);
+	}
 	if (suffstats == NULL) {
 		suffstats = sscache_lookup_offblock_ordered(cache, zz, kkii);
 	}
@@ -207,6 +212,7 @@ out:
 	if (suffstats != NULL) {
 		g_hash_table_insert(cache->suffstats_offblocks, key, suffstats);
 	} else {
+found_out:
 		offblock_key_free(key);
 	}
 	labelset_unref(kk);
@@ -229,13 +235,18 @@ static gpointer sscache_lookup_offblock_ordered(SSCache *cache, Labelset * kk, G
 	}
 	for (; zzxx != NULL; zzxx = g_list_next(zzxx)) {
 		gpointer offblock_suffstats = sscache_lookup_offblock_simple(cache, kk, zzxx->data);
+		gboolean sparse = FALSE;
 		if (offblock_suffstats == NULL) {
 			offblock_suffstats = sscache_lookup_offblock_sparse(cache, kk, zzxx->data);
+			sparse = TRUE;
 		}
 		if (offblock_suffstats == NULL) {
 			goto not_found;
 		}
 		suffstats_add(suffstats, offblock_suffstats);
+		if (sparse) {
+			suffstats_unref(offblock_suffstats);
+		}
 	}
 	return suffstats;
 not_found:
