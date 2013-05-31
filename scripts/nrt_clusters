@@ -60,10 +60,24 @@ class Branch(Tree):
         if self.parent is not None:
             self.parent.add_descendant(descedant)
 
+    def remove_child(self, old_child):
+        for ii, ch in enumerate(self.children):
+            if ch is old_child:
+                del self.children[ii]
+                if len(self.children) == 0:
+                    self.parent.remove_child(self)
+                elif len(self.children) == 1:
+                    if self.parent is not None:
+                        self.parent.replace_child(self, self.children[0])
+                return
+        assert False
+
     def replace_child(self, old_child, new_child):
         for ii, ch in enumerate(self.children):
             if ch is old_child:
-                self.children[ii] = new_child
+                old_child.parent = None
+                del self.children[ii]
+                self.add_child(new_child)
                 return
         assert False
 
@@ -150,12 +164,17 @@ def main():
     tree = tree_load(tree_name)
     data = data_load(fit_name)
 
+    max_labels = 10
+    max_cluster = 15
     queue = [(tree.logresp, tree)]
     while queue:
         logresp, cur = queue.pop()
         if logresp > log(0.5) or isinstance(cur, Leaf):
-            label = ' '.join(['%s(%d)' % (l, data.popularity[l]) for l in
-                sorted(cur.leaves, key=lambda leaf: -data.popularity[leaf])])
+            if len(cur.leaves) <= max_cluster:
+                cur.parent.remove_child(cur)
+                continue
+            label = ' '.join(['%s' % (l) for l in
+                sorted(cur.leaves, key=lambda leaf: -data.popularity[leaf])][:max_labels])
             props = {'logresp': cur.logresp, 'logprob': cur.logprob}
             new_leaf = Leaf(label=label, props=props)
             cur.parent.replace_child(cur, new_leaf)
@@ -166,6 +185,11 @@ def main():
         for child in cur.children:
             queue.append((lognotresp + child.logresp, child))
 
+    # in case we thinned out a lot
+    while len(tree.children) == 1:
+        tree = tree.children[0]
+
+    print tree
     with open(json_name, 'w') as out:
         tree.write_json(out)
 
