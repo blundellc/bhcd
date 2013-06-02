@@ -37,8 +37,8 @@ void params_ref(Params * params);
 void params_unref(Params * params);
 
 gdouble params_logprob_off(Params *, gpointer);
-gdouble params_logprob_on(Params *, gpointer);
 gdouble params_logprob_offscore(Params *, gpointer);
+gdouble params_logprob_on(Params *, gpointer);
 gdouble params_logpred_off(Params *, gpointer, gboolean);
 gdouble params_logpred_on(Params *, gpointer, gboolean);
 

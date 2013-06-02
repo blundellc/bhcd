@@ -150,9 +150,8 @@ gpointer sscache_get_offblock(SSCache *cache, Labelset * xx_left, Labelset * xx_
 	labelset_union(yy, yy_right);
 	key = offblock_key_new(xx, yy);
 	suffstats = g_hash_table_lookup(cache->suffstats_offblocks, key);
-
 	if (suffstats != NULL) {
-		goto out_found;
+		goto found_out;
 	}
 
 	/* if both are singletons, then let's go visit the full data matrix
@@ -165,7 +164,6 @@ gpointer sscache_get_offblock(SSCache *cache, Labelset * xx_left, Labelset * xx_
 		suffstats = sscache_lookup_offblock_full(cache,
 				labelset_any_label(xx),
 				labelset_any_label(yy));
-		goto out;
 	}
 
 	/*
@@ -205,11 +203,10 @@ gpointer sscache_get_offblock(SSCache *cache, Labelset * xx_left, Labelset * xx_
 		g_print("\n");
 		g_error("theorem failure?!");
 	}
-out:
 	if (suffstats != NULL) {
 		g_hash_table_insert(cache->suffstats_offblocks, key, suffstats);
 	} else {
-out_found:
+found_out:
 		offblock_key_free(key);
 	}
 	labelset_unref(xx);
