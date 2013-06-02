@@ -327,7 +327,7 @@ static gpointer sscache_lookup_offblock_sparse(SSCache *cache, Labelset * kk, La
 		return NULL;
 	}
 	counts = suffstats_new_empty();
-	counts->num_total = labelset_count(kk)*labelset_count(zz);
+	counts->num_total = 2*labelset_count(kk)*labelset_count(zz);
 	return counts;
 }
 
