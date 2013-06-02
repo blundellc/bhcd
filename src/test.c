@@ -333,7 +333,6 @@ gdouble test_build_logpred4_sparse(gboolean sparse) {
 	dataset = dataset_gen_toy4(sparse);
 	params = params_default(dataset);
 	build = build_new(rng, params, 10, FALSE);
-	build_set_verbose(build, FALSE);
 	build_run(build);
 	root = build_get_best_tree(build);
 	tree_ref(root);

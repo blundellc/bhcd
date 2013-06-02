@@ -352,16 +352,16 @@ void branch_add_child(Tree * branch, Tree * child) {
 		 * off diagonal terms.
 		 */
 		if (tree_debug) {
-			tree_println(branch, "branch: ");
+			tree_println(branch, "adding child to branch: ");
 			labelset_print(branch->merge_left);
 			g_print("/");
 			labelset_print(branch->merge_right);
 			g_print("\n");
+			tree_println(child, "child: ");
 			labelset_print(child->merge_left);
 			g_print("/");
 			labelset_print(child->merge_right);
 			g_print("\n");
-			tree_println(child, "child: ");
 		}
 		new_off = sscache_get_offblock(branch->params->sscache,
 				branch->merge_left,
@@ -381,6 +381,14 @@ void branch_add_child(Tree * branch, Tree * child) {
 		labelset_set_equal(branch->merge_left, child->labels);
 		labelset_set_equal(branch->merge_right, branch->labels);
 	} else {
+		if (tree_debug) {
+			tree_println(branch, "adding child to empty branch: ");
+			tree_println(child, "child: ");
+			labelset_print(child->merge_left);
+			g_print("/");
+			labelset_print(child->merge_right);
+			g_print("\n");
+		}
 		labelset_set_equal(branch->merge_left, child->merge_left);
 		labelset_set_equal(branch->merge_right, child->merge_right);
 	}

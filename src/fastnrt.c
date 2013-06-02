@@ -9,6 +9,7 @@
 static gboolean binary_only = FALSE;
 static gboolean sparse_greedy = FALSE;
 static gboolean lua_shell = FALSE;
+static gboolean verbose = FALSE;
 static gboolean disable_fit_file = FALSE;
 static guint build_restarts = 1;
 static guint seed = 0x2a23b6bb;
@@ -29,6 +30,7 @@ static gchar *	output_hypers_fname = NULL;
 static GOptionEntry options[] = {
 	{ "seed",	 's', 0, G_OPTION_ARG_INT,	&seed,		"set RNG seed to S",		"S" },
 	{ "lua",	 'L', 0, G_OPTION_ARG_NONE,	&lua_shell,	"drop to lua shell",		NULL },
+	{ "verbose",	 'v', 0, G_OPTION_ARG_NONE,	&verbose,	"be verbose",			NULL },
 
 	{ "sparse",	 'S', 0, G_OPTION_ARG_NONE,	&sparse_greedy,	"use sparse greedy algorithm",	NULL },
 	{ "binary-only", 'B', 0, G_OPTION_ARG_NONE,	&binary_only, 	"only construct binary trees",	NULL },
@@ -49,7 +51,7 @@ static GOptionEntry options[] = {
 };
 
 static gchar * parse_args(int *argc, char ***argv);
-static Tree * run(GRand * rng, Dataset * dataset, gboolean verbose);
+static Tree * run(GRand * rng, Dataset * dataset);
 static void save_pred(Pair * tree_dataset, GIOChannel * io);
 static void timer_save_io(GTimer * timer, GIOChannel * io);
 
@@ -85,7 +87,7 @@ error:
 	exit(1);
 }
 
-static Tree * run(GRand * rng, Dataset * dataset, gboolean verbose) {
+static Tree * run(GRand * rng, Dataset * dataset) {
 	Params * params;
 	Tree * root;
 	Build * build;
@@ -101,6 +103,7 @@ static Tree * run(GRand * rng, Dataset * dataset, gboolean verbose) {
 	params->binary_only = binary_only;
 
 	build = build_new(rng, params, build_restarts, sparse_greedy);
+	build_set_verbose(build, verbose);
 	params_unref(params);
 	build_run(build);
 	root = build_get_best_tree(build);
@@ -203,7 +206,7 @@ int main(int argc, char * argv[]) {
 	dataset = dataset_gml_load(train_fname);
 
 	g_timer_start(timer);
-	root = run(rng, dataset, FALSE);
+	root = run(rng, dataset);
 	g_timer_stop(timer);
 
 	io_stdout((IOFunc)timer_save_io, timer);

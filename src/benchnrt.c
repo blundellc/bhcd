@@ -87,7 +87,6 @@ static Tree * run_blocks(guint num_items, gdouble sparsity) {
 	dataset_unref(dataset);
 
 	build = build_new(rng, params, 200, FALSE);
-	build_set_verbose(build, FALSE);
 	build_run(build);
 	root = build_get_best_tree(build);
 	tree_ref(root);

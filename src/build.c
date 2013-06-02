@@ -40,13 +40,14 @@ static void build_remove_tree(Build * build, guint ii);
 static void build_cleanup(Build * build);
 static void build_assert(Build * build);
 static void build_flatten_trees(Build * build);
+static void build_println(Build * build);
 
 
 Build * build_new(GRand *rng, Params * params, guint num_restarts, gboolean sparse) {
 	Build * build;
 
 	build = g_new(Build, 1);
-	build->verbose = TRUE;
+	build->verbose = FALSE;
 	build->rng = rng;
 	build->params = params;
 	params_ref(params);
@@ -122,6 +123,19 @@ static void build_cleanup(Build * build) {
 	}
 }
 
+static void build_println(Build * build) {
+	guint ii;
+	Tree * tt;
+
+	g_print("%d in queue\n", g_sequence_get_length(build->merges));
+	for (ii = 0; ii < build->trees->len; ii++) {
+		tt = g_ptr_array_index(build->trees, ii);
+		if (tt != NULL) {
+			g_print("\t%d: ", ii);
+			tree_println(tt,"");
+		}
+	}
+}
 
 void build_once(Build * build) {
 	params_reset_cache(build->params);
@@ -312,16 +326,14 @@ static void build_greedy(Build * build) {
 			merge_println(cur, "best merge: ");
 		}
 
-		if ((iter % 100) == 0) {
-			g_print("%d: %d in queue\n", iter, g_sequence_get_length(build->merges));
-		}
 		build_remove_tree(build, cur->ii);
 		build_remove_tree(build, cur->jj);
 		build->add_merges(build, cur->tree, cur->ii, cur->jj);
 		g_ptr_array_add(build->trees, cur->tree);
 		tree_ref(cur->tree);
-		if ((iter++ % 100) == 0) {
-			g_print("%d: fini %d in queue\n", iter, g_sequence_get_length(build->merges));
+		if (build->verbose && (iter++ % 100) == 0) {
+			g_print("%d: ", iter);
+			build_println(build);
 		}
 again:
 		merge_free(cur);

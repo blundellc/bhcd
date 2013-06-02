@@ -3,6 +3,7 @@
 #include "counts.h"
 #include "labelset.h"
 
+static const gboolean cache_debug = FALSE;
 
 struct SSCache_t {
 	guint		ref_count;
@@ -19,8 +20,6 @@ typedef struct {
 	Labelset *fst;
 	Labelset *snd;
 } Offblock_Key;
-
-static const gboolean cache_debug = FALSE;
 
 static Offblock_Key * offblock_key_new(Labelset * fst, Labelset * snd);
 static void offblock_key_free(gpointer pkey);
