@@ -3,6 +3,19 @@ import json, math
 import cairo
 import sys
 
+max_labels = 10
+
+def get_label_sizes(ctx, labels):
+    sublabels = [[sublabel for sublabel in label.split()[:max_labels]]
+                 for label in labels]
+    num_columns = len(sublabels)
+    num_rows = max((len(labels) for labels in sublabels))
+    label_extents = [[ctx.text_extents(label) for label in labels] for labels in sublabels]
+    max_label_width = max([ctx.user_to_device_distance(ex[2], 0)[0] for exs in label_extents for ex in exs])
+    max_label_height = max([ctx.user_to_device_distance(0, ex[3])[1] for exs in label_extents for ex in exs])
+    max_label_width -= 13
+    return sublabels, num_columns, num_rows, label_extents, max_label_width, max_label_height
+
 def tree_load(fname = "output/out.tree"):
     with open(fname) as treef:
         jtree = json.load(treef)
@@ -33,6 +46,7 @@ class Tree(object):
         self.logprob = props['logprob']
         self.logresp = props['logresp']
         self.parent = None
+        self.border = 2
 
     def height_position(self):
 #        logh = 0.0
@@ -125,22 +139,16 @@ class Branch(Tree):
                     queue.insert(0, (depth+1, child))
         return max_depth, max_height_pos
 
-    def sizes(self, ctx, labels):
-        label_extents = [ctx.text_extents(label) for label in labels]
-        max_label_width = max([ctx.user_to_device_distance(ex[2], 0)[0] for ex in label_extents])
-        max_label_height = max([ctx.user_to_device_distance(0, ex[3])[1] for ex in label_extents])
-        return max_label_width, max_label_height
-
     def min_size(self, ctx, labels):
-        max_label_width, max_label_height = self.sizes(ctx, labels)
-        min_height = len(labels)*max_label_height
+        sublabels, num_columns, num_rows, label_extents, max_label_width, max_label_height = get_label_sizes(ctx, labels)
+        min_width = len(labels)*max_label_width
         max_depth, max_height_pos = self.max_depth()
         min_space_per_depth = max_label_height + 0.5
-        min_width = min_space_per_depth*max_depth
+        min_height = min_space_per_depth*max_depth
 
         # border
-        min_width += 2
-        min_height += 2
+        min_width += self.border
+        min_height += self.border
         return min_width, min_height
 
     def draw(self, ctx, labels):
@@ -150,8 +158,8 @@ class Branch(Tree):
         min_width, min_height = self.min_size(ctx, labels)
         assert width >= min_width
         assert height >= min_height
-        max_label_width, max_label_height = self.sizes(ctx, labels)
-        height = len(labels)*max_label_height
+        sublabels, num_columns, num_rows, label_extents, max_label_width, max_label_height = get_label_sizes(ctx, labels)
+        #height = len(labels)*max_label_height
         max_depth, max_height_pos = self.max_depth()
 
         ctx.translate(left+1, top+1)
@@ -167,8 +175,9 @@ class Branch(Tree):
         # transform so height_position (x) fits in clip, and so
         # integer values (y) map onto middle of boxes.
         ctx.save()
-        ctx.scale(width/max_height_pos, max_label_height)
-        ctx.translate(0, 0.5)
+        ctx.translate(0, height)
+        ctx.scale(max_label_width, -height/max_height_pos)
+        ctx.translate(0.5, 0)
         trans_tree = ctx.get_matrix()
         ctx.restore()
 
@@ -204,7 +213,7 @@ class Branch(Tree):
         ctx.save()
         ctx.save()
         ctx.set_matrix(trans_tree)
-        ctx.move_to(my_height, my_across)
+        ctx.move_to(my_across, my_height)
         # close the path, so there is actually a path to draw.
         ctx.close_path()
         ctx.restore()
@@ -218,8 +227,8 @@ class Branch(Tree):
         last_across = children[-1].order_avg_index(labels)
         ctx.save()
         ctx.set_matrix(trans_tree)
-        ctx.move_to(my_height, first_across)
-        ctx.line_to(my_height, last_across)
+        ctx.move_to(first_across, my_height)
+        ctx.line_to(last_across, my_height)
         ctx.restore()
         ctx.stroke()
 
@@ -230,8 +239,8 @@ class Branch(Tree):
                 print my_height, my_across,'->',ch_height, ch_across
             ctx.save()
             ctx.set_matrix(trans_tree)
-            ctx.move_to(my_height, ch_across)
-            ctx.line_to(ch_height, ch_across)
+            ctx.move_to(ch_across, my_height)
+            ctx.line_to(ch_across, ch_height)
             ctx.restore()
             ctx.stroke()
 
@@ -257,12 +266,8 @@ class Labelbox(object):
         self.border = border
 
     def min_size(self, ctx):
-        num_labels = len(self.labels)
-        label_extents = [ctx.text_extents(label) for label in self.labels]
-        max_label_width = max([ctx.user_to_device_distance(ex[2], 0)[0] for ex in label_extents])
-        max_label_height = max([ctx.user_to_device_distance(0, ex[3])[1] for ex in label_extents])
-
-        return max_label_width+self.border, max_label_height+self.border
+        sublabels, num_columns, num_rows, label_extents, max_label_width, max_label_height = get_label_sizes(ctx, self.labels)
+        return num_columns*max_label_width+self.border, num_rows*max_label_height+self.border,
 
     def draw(self, ctx):
         left,top,right,bottom = ctx.clip_extents()
@@ -275,20 +280,19 @@ class Labelbox(object):
         # remove border
         width -= 2
         height -= 2
-        num_labels = len(self.labels)
-        label_extents = [ctx.text_extents(label) for label in self.labels]
-        max_label_width = max([ctx.user_to_device_distance(ex[2], 0)[0] for ex in label_extents])
-        max_label_height = max([ctx.user_to_device_distance(0, ex[3])[1] for ex in label_extents])
-        box_width = (width-max_label_width)/(num_labels+1)
-        box_height = (height-max_label_width)/(num_labels+1)
+
+        sublabels, num_columns, num_rows, label_extents, max_label_width, max_label_height = get_label_sizes(ctx, self.labels)
 
         ctx.translate(left+1, top+1)
         ctx.set_source_rgb(0.0, 0.0, 0.0)
 
-        for nn, label in enumerate(self.labels):
-            ctx.move_to(0 - label_extents[nn][0],
-                    nn*max_label_height - label_extents[nn][1])
-            ctx.show_text(label)
+        for cc, labels in enumerate(sublabels):
+            for rr, label in enumerate(labels):
+                width = ctx.user_to_device_distance(label_extents[cc][rr][2],0)[0]
+                shift = 0.5*(max_label_width - width)
+                ctx.move_to(cc*max_label_width +shift - label_extents[cc][rr][0],
+                        rr*max_label_height - label_extents[cc][rr][1])
+                ctx.show_text(label.replace('_', ' '))
 
 def draw(treename='output/out.tree', pdfname='output/out.pdf'):
     tree = tree_load(treename)
@@ -305,9 +309,11 @@ def draw(treename='output/out.tree', pdfname='output/out.pdf'):
     min_tree_width, min_tree_height = tree.min_size(ctx, labels)
     min_labelbox_width, min_labelbox_height = labelbox.min_size(ctx)
 
-    width = max(width, min_tree_width + min_labelbox_width)
-    height = max(height, min_tree_height, min_labelbox_height)
-    labelbox_prop = min_labelbox_width/(min_labelbox_width+min_tree_width)
+    width = max(width, min_tree_width, min_labelbox_width)
+    height = max(height, min_tree_height + min_labelbox_height)
+    labelbox_prop = min_labelbox_height/(min_labelbox_height+min_tree_height)
+    print min_tree_width, min_tree_height
+    print labelbox_prop
     surf.set_size(width + buffer, height + buffer)
     ctx = cairo.Context(surf)
 
@@ -316,23 +322,14 @@ def draw(treename='output/out.tree', pdfname='output/out.pdf'):
     ctx.set_source_rgb(0.0, 0.0, 0.0)
 
     ctx.save()
-    ctx.rectangle((1-labelbox_prop)*width, 0, labelbox_prop*width, height)
+    ctx.rectangle(0, (1-labelbox_prop)*height, width, labelbox_prop*height)
     ctx.clip()
     labelbox.draw(ctx)
     ctx.restore()
 
     ctx.save()
-    ctx.rectangle(0, 0, (1-labelbox_prop)*width, height)
+    ctx.rectangle(0, 0, width, (1-labelbox_prop)*height)
     ctx.clip()
-    cx = 0 #0.5*(1-labelbox_prop)*width
-    cy = 0 #0.5*height
-    fx = -1
-    fy = 1
-    ctx.transform(cairo.Matrix(
-        fx, 0,
-        0, fy,
-        cx*(1-fx), cy*(fy-1)
-        ))
     tree.draw(ctx, labels)
     ctx.restore()
 
