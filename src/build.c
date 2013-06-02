@@ -326,12 +326,13 @@ static void build_greedy(Build * build) {
 			merge_println(cur, "best merge: ");
 		}
 
+		iter++;
 		build_remove_tree(build, cur->ii);
 		build_remove_tree(build, cur->jj);
 		build->add_merges(build, cur->tree, cur->ii, cur->jj);
 		g_ptr_array_add(build->trees, cur->tree);
 		tree_ref(cur->tree);
-		if (build->verbose && (iter++ % 100) == 0) {
+		if (build->verbose && (iter < 100 || (iter++ % 100) == 0)) {
 			g_print("%d: ", iter);
 			build_println(build);
 		}
