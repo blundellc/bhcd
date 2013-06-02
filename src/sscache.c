@@ -203,6 +203,17 @@ gpointer sscache_get_offblock(SSCache *cache, Labelset * xx_left, Labelset * xx_
 		g_error("theorem failure?!");
 	}
 	if (suffstats != NULL) {
+		if (cache_debug) {
+			Counts * counts = suffstats;
+			if (counts->num_total > 2*labelset_count(xx)*labelset_count(yy)) {
+				g_print("too many elements! ");
+				labelset_print(xx);
+				g_print(" <-> ");
+				labelset_print(yy);
+				g_print("\n");
+				g_assert(FALSE);
+			}
+		}
 		g_hash_table_insert(cache->suffstats_offblocks, key, suffstats);
 	} else {
 found_out:
@@ -214,45 +225,50 @@ found_out:
 }
 
 static gpointer sscache_lookup_offblock_merge(SSCache *cache, Labelset * xx, Labelset * yy_left, Labelset * yy_right) {
-	gpointer suffstats, offblock_suffstats;
+	gpointer suffstats, off_left, off_right, off_sparse;
 
+	off_sparse = NULL;
 	suffstats = suffstats_new_empty();
-	offblock_suffstats = sscache_lookup_offblock_simple(cache, xx, yy_right);
-	if (offblock_suffstats == NULL) {
+	off_left  = sscache_lookup_offblock_simple(cache, xx, yy_left);
+	off_right = sscache_lookup_offblock_simple(cache, xx, yy_right);
+	/* if just one is missing, try doing it with sparsity. */
+	if (off_left == NULL && off_right == NULL) {
+		goto not_found;
+	} else if (off_left == NULL) {
+		off_sparse = sscache_lookup_offblock_sparse(cache, xx, yy_left);
+		off_left = off_sparse;
+	} else if (off_right == NULL) {
+		off_sparse = sscache_lookup_offblock_sparse(cache, xx, yy_right);
+		off_right = off_sparse;
+	}
+	/* if we still have one missing, give up */
+	if (off_left == NULL || off_right == NULL) {
 		if (cache_debug) {
-			g_print("merge not found first: ");
-			labelset_print(xx);
-			g_print("/");
-			labelset_print(yy_left);
-			g_print("\n");
+			if (off_left == NULL) {
+				g_print("merge not found: left: ");
+				labelset_print(xx);
+				g_print("/");
+				labelset_print(yy_left);
+				g_print("\n");
+			}
+			if (off_right == NULL) {
+				g_print("merge not found: right: ");
+				labelset_print(xx);
+				g_print("/");
+				labelset_print(yy_right);
+				g_print("\n");
+			}
 		}
 		goto not_found;
 	}
-	suffstats_add(suffstats, offblock_suffstats);
-	offblock_suffstats = sscache_lookup_offblock_simple(cache, xx, yy_left);
-	if (offblock_suffstats == NULL) {
-		if (cache_debug) {
-			g_print("merge not found second: ");
-			labelset_print(xx);
-			g_print("/");
-			labelset_print(yy_left);
-			g_print("\n");
-		}
-		goto not_found;
-	}
-	suffstats_add(suffstats, offblock_suffstats);
-	if (cache_debug) {
-		g_print("merge off ");
-		labelset_print(xx);
-		g_print("/");
-		labelset_print(yy_left);
-		labelset_print(yy_right);
-		g_print(": ");
-		suffstats_print(suffstats);
-		g_print("\n");
+	suffstats_add(suffstats, off_left);
+	suffstats_add(suffstats, off_right);
+	if (off_sparse != NULL) {
+		suffstats_unref(off_sparse);
 	}
 	return suffstats;
 not_found:
+	g_assert(off_sparse == NULL);
 	suffstats_unref(suffstats);
 	return NULL;
 }
@@ -326,6 +342,13 @@ static gpointer sscache_lookup_offblock_sparse(SSCache *cache, Labelset * kk, La
 	}
 	counts = suffstats_new_empty();
 	counts->num_total = 2*labelset_count(kk)*labelset_count(zz);
+	if (cache_debug) {
+		g_print("sparse: ");
+		labelset_print(kk);
+		g_print(" <-> ");
+		labelset_print(zz);
+		g_print(" %d\n", counts->num_total);
+	}
 	return counts;
 }
 
