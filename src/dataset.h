@@ -28,10 +28,9 @@ typedef struct DatasetPairIter_t {
 	} u;
 } DatasetPairIter;
 
-Dataset * dataset_new(gboolean);
+Dataset * dataset_new(void);
 void dataset_ref(Dataset *);
 void dataset_unref(Dataset *);
-gboolean dataset_is_symmetric(Dataset *);
 const gchar * dataset_get_filename(Dataset *);
 void dataset_set_filename(Dataset *, const gchar *);
 void dataset_set_omitted(Dataset *, gboolean omitted);

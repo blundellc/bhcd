@@ -303,13 +303,11 @@ static gpointer sscache_lookup_offblock_full(SSCache *cache, gconstpointer ii, g
 	} else {
 		suffstats = counts_new(value, 1);
 	}
-	// now add in the opposing direction... if not symmetric:
-	if (!dataset_is_symmetric(cache->dataset)) {
-		value = dataset_get(cache->dataset, jj, ii, &missing);
-		if (!missing) {
-			suffstats->num_ones += value;
-			suffstats->num_total += 1;
-		}
+	// now add in the opposing direction...
+	value = dataset_get(cache->dataset, jj, ii, &missing);
+	if (!missing) {
+		suffstats->num_ones += value;
+		suffstats->num_total += 1;
 	}
 	if (cache_debug) {
 		g_print("sscache_lookup_offblock_full: ");

@@ -9,7 +9,6 @@
 struct Dataset_t {
 	guint		ref_count;
 	gchar *		filename;
-	gboolean	symmetric;
 	gint		omitted;
 	GQuark		max_qlabel;
 	GHashTable *	labels;
@@ -30,11 +29,10 @@ static gboolean dataset_key_eq(gconstpointer, gconstpointer);
 static gint dataset_label_cmp(gconstpointer, gconstpointer);
 static void dataset_set_full(Dataset *, gpointer, gpointer, gint);
 
-Dataset* dataset_new(gboolean symmetric) {
+Dataset* dataset_new(void) {
 	Dataset * data = g_new(Dataset, 1);
 	data->ref_count = 1;
 	data->filename = NULL;
-	data->symmetric = symmetric;
 	data->omitted = -1;
 	data->cells = g_hash_table_new_full(
 				dataset_key_hash,
@@ -65,10 +63,6 @@ void dataset_unref(Dataset* dataset) {
 	} else {
 		dataset->ref_count--;
 	}
-}
-
-gboolean dataset_is_symmetric(Dataset * dataset) {
-	return dataset->symmetric;
 }
 
 void dataset_set_filename(Dataset *dataset, const gchar *filename) {
@@ -351,14 +345,9 @@ static Dataset_Key * dataset_key(Dataset * dd, gconstpointer psrc, gconstpointer
 
 	src = GPOINTER_TO_INT(psrc);
 	dst = GPOINTER_TO_INT(pdst);
+	key->src = src;
+	key->dst = dst;
 
-	if (!dd->symmetric || src < dst) {
-		key->src = src;
-		key->dst = dst;
-	} else {
-		key->src = dst;
-		key->dst = src;
-	}
 	return key;
 }
 
