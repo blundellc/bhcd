@@ -35,7 +35,7 @@ Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble bet
 
 	params->dataset = dataset;
 	dataset_ref(dataset);
-	params->sscache = sscache_new(dataset);
+	params->sscache = sscache_new(dataset, FALSE);
 
 	params->binary_only = FALSE;
 
@@ -70,7 +70,12 @@ static Params * params_copy(const Params * orig) {
 
 void params_reset_cache(Params *params) {
 	sscache_unref(params->sscache);
-	params->sscache = sscache_new(params->dataset);
+	params->sscache = sscache_new(params->dataset, params->sparse);
+}
+
+void params_set_sparse(Params *params, gboolean sparse) {
+	params->sparse = sparse;
+	params_reset_cache(params);
 }
 
 void params_ref(Params * params) {

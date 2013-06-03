@@ -13,6 +13,7 @@ typedef struct {
 	Dataset *	dataset;
 	SSCache *	sscache;
 	gboolean	binary_only;
+	gboolean	sparse;
 
 	gdouble		gamma;
 	gdouble		alpha;
@@ -33,6 +34,7 @@ typedef gdouble (*ParamsProbFunc)(Params *, gpointer);
 Params * params_new(Dataset * dataset, gdouble gamma, gdouble alpha, gdouble beta, gdouble delta, gdouble lambda);
 Params * params_default(Dataset * dataset);
 void params_reset_cache(Params *);
+void params_set_sparse(Params *, gboolean);
 void params_ref(Params * params);
 void params_unref(Params * params);
 

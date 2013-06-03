@@ -7,7 +7,7 @@ static const gboolean cache_debug = FALSE;
 
 struct SSCache_t {
 	guint		ref_count;
-	gboolean	not_found_zero;
+	gboolean	enable_sparse;
 	Dataset *	dataset;
 	Labelset *	emptyset;
 	GHashTable *	suffstats_labels;
@@ -30,12 +30,12 @@ static gpointer sscache_lookup_offblock_merge(SSCache *cache, Labelset * xx, Lab
 static gpointer sscache_lookup_offblock_simple(SSCache *cache, Labelset * xx, Labelset * yy);
 static gpointer sscache_lookup_offblock_full(SSCache *cache, gconstpointer ii, gconstpointer jj);
 
-SSCache * sscache_new(Dataset *dataset) {
+SSCache * sscache_new(Dataset *dataset, gboolean sparse) {
 	SSCache * cache;
 
 	cache = g_new(SSCache, 1);
 	cache->ref_count = 1;
-	cache->not_found_zero = TRUE;
+	cache->enable_sparse = sparse;
 	cache->dataset = dataset;
 	dataset_ref(cache->dataset);
 	cache->emptyset = labelset_new(cache->dataset);
@@ -337,7 +337,8 @@ static gpointer sscache_lookup_offblock_full(SSCache *cache, gconstpointer ii, g
 static gpointer sscache_lookup_offblock_sparse(SSCache *cache, Labelset * kk, Labelset *zz) {
 	Counts * counts;
 
-	if (!cache->not_found_zero) {
+	if (!cache->enable_sparse) {
+		g_print("sparse not enabled\n");
 		return NULL;
 	}
 	counts = suffstats_new_empty();

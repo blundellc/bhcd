@@ -456,7 +456,7 @@ void test_sscache_stats(void) {
 	Labelset * dst_right;
 
 	init_test_toy4(&laa, &lbb, &lcc, &ldd);
-	cache = sscache_new(tree_get_params(laa)->dataset);
+	cache = sscache_new(tree_get_params(laa)->dataset, FALSE);
 	dataset = tree_get_params(laa)->dataset;
 
 	counts = sscache_get_label(cache, aa = leaf_get_label(laa));

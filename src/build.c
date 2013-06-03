@@ -50,6 +50,7 @@ Build * build_new(GRand *rng, Params * params, guint num_restarts, gboolean spar
 	build->verbose = FALSE;
 	build->rng = rng;
 	build->params = params;
+	params_set_sparse(params, sparse);
 	params_ref(params);
 	build->num_restarts = num_restarts;
 
