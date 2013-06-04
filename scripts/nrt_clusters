@@ -180,10 +180,10 @@ def main():
             if len(cur.leaves) <= max_cluster:
                 cur.parent.remove_child(cur)
                 continue
-#            label = ' '.join(['%s' % (l) for l in
-#                sorted(cur.leaves, key=lambda leaf: -data.popularity[leaf])][:max_labels])
             label = ' '.join(['%s' % (l) for l in
-                sorted(cur.leaves, key=lambda leaf: -data.popularity_among(leaf, cur.leaves))][:max_labels])
+                sorted(cur.leaves, key=lambda leaf: -data.popularity[leaf])][:max_labels])
+#            label = ' '.join(['%s' % (l) for l in
+#                sorted(cur.leaves, key=lambda leaf: -data.popularity_among(leaf, cur.leaves))][:max_labels])
             props = {'logresp': cur.logresp, 'logprob': cur.logprob}
             new_leaf = Leaf(label=label, props=props)
             cur.parent.replace_child(cur, new_leaf)
