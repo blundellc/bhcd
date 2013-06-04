@@ -1,8 +1,8 @@
 #!/bin/bash
 
 dd=$(date +%Y%m%d)
-params=''
 params_sparse='-S'
+params_binsparse='-SB'
 
 for mode in _sparse _binsparse
 do
