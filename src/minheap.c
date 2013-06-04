@@ -27,14 +27,52 @@ MinHeap * minheap_new(MinHeapCompare elem_cmp, MinHeapFree elem_free) {
 	return heap;
 }
 
+MinHeap * minheap_copy(MinHeap * orig, MinHeapCopy elem_copy, MinHeapFree elem_free) {
+	MinHeap * heap;
+	gpointer elem;
+
+	heap = minheap_new(orig->elem_cmp, elem_free);
+	g_ptr_array_set_size(heap->elems, orig->num_elems);
+	for (guint ii = 0; ii < orig->num_elems; ii++) {
+		elem = elem_copy(g_ptr_array_index(orig->elems, ii));
+		g_ptr_array_index(heap->elems, ii) = elem;
+	}
+	heap->num_elems = orig->num_elems;
+	return heap;
+}
+
 void minheap_free(MinHeap * heap) {
 	if (heap->elem_free != NULL) {
-		for (guint ii = 0; ii < heap->elems->len; ii++) {
+		for (guint ii = 0; ii < heap->num_elems; ii++) {
 			heap->elem_free(g_ptr_array_index(heap->elems, ii));
 		}
 	}
 	g_free(g_ptr_array_free(heap->elems, TRUE));
 	g_free(heap);
+}
+
+gpointer minheap_elem_no_copy(gpointer pp) {
+	return pp;
+}
+
+void minheap_elem_no_free(gpointer pp) {
+}
+
+
+void minheap_print(MinHeap * heap) {
+	guint index, left_index, right_index;
+	gpointer left, right;
+
+	for (index = 0; index < heap->num_elems; index++) {
+		left_index = MINHEAP_LEFT(index);
+		right_index = MINHEAP_RIGHT(index);
+		left = (left_index < heap->num_elems? g_ptr_array_index(heap->elems, left_index): 0);
+		right = (right_index < heap->num_elems? g_ptr_array_index(heap->elems, right_index): 0);
+		g_print("%d: %ld, left(%d): %ld, right(%d): %ld\n",
+			index, (unsigned long)g_ptr_array_index(heap->elems, index),
+			left_index, (unsigned long)left,
+			right_index, (unsigned long)right);
+	}
 }
 
 
@@ -97,7 +135,7 @@ static void minheap_bubble_down(MinHeap * heap, guint index) {
 	guint left_index, right_index, smallest_index;
 	gpointer tmp;
 
-	do {
+	while (1) {
 		left_index = MINHEAP_LEFT(index);
 		right_index = MINHEAP_RIGHT(index);
 		smallest_index = index;
@@ -115,13 +153,14 @@ static void minheap_bubble_down(MinHeap * heap, guint index) {
 				) < 0) {
 			smallest_index = right_index;
 		}
-		if (smallest_index != index) {
-			tmp = g_ptr_array_index(heap->elems, index);
-			g_ptr_array_index(heap->elems, index) = g_ptr_array_index(heap->elems, smallest_index);
-			g_ptr_array_index(heap->elems, smallest_index) = tmp;
-			index = smallest_index;
+		if (smallest_index == index) {
+			break;
 		}
-	} while (smallest_index != index);
+		tmp = g_ptr_array_index(heap->elems, index);
+		g_ptr_array_index(heap->elems, index) = g_ptr_array_index(heap->elems, smallest_index);
+		g_ptr_array_index(heap->elems, smallest_index) = tmp;
+		index = smallest_index;
+	}
 }
 
 

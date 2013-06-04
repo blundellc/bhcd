@@ -11,10 +11,15 @@ typedef struct MinHeapIter_t {
 
 typedef gint (*MinHeapCompare)(gconstpointer, gconstpointer);
 typedef void (*MinHeapFree)(gpointer);
+typedef gpointer (*MinHeapCopy)(gpointer);
 
 MinHeap * minheap_new(MinHeapCompare cmp, MinHeapFree elem_free);
 void minheap_free(MinHeap *);
+MinHeap * minheap_copy(MinHeap * heap, MinHeapCopy elem_copy, MinHeapFree elem_free);
+gpointer minheap_elem_no_copy(gpointer);
+void minheap_elem_no_free(gpointer);
 
+void minheap_print(MinHeap *);
 guint minheap_size(MinHeap *);
 
 void minheap_iter_init(MinHeap *, MinHeapIter *);
