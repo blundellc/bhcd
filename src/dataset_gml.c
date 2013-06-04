@@ -146,6 +146,7 @@ void dataset_gml_save_io(Dataset * dataset, GIOChannel * io) {
 	gboolean omitted;
 	DatasetLabelIter iter_src, iter_dst;
 	gpointer src, dst;
+	gchar * escaped;
 
 	io_printf(io, "graph [\n");
 
@@ -156,9 +157,11 @@ void dataset_gml_save_io(Dataset * dataset, GIOChannel * io) {
 
 	dataset_labels_iter_init(dataset, &iter_src);
 	while (dataset_labels_iter_next(&iter_src, &src)) {
+		escaped = g_strescape(dataset_label_to_string(dataset, src), "");
 		io_printf(io, "\tnode [ id %d label \"%s\" ]\n",
 				GPOINTER_TO_INT(src),
-				dataset_label_to_string(dataset, src));
+				escaped);
+		g_free(escaped);
 	}
 
 	dataset_labels_iter_init(dataset, &iter_src);
