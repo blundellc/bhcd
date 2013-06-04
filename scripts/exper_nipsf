@@ -1,4 +1,14 @@
-#!/bin/sh
+#!/bin/bash
 
-./src/fastnrt -S -p output/$(date +%Y%m%d)/nipsf data/nips-full.gml
+dd=$(date +%Y%m%d)
+params=''
+params_sparse='-S'
 
+for mode in _sparse _binsparse
+do
+    params_name="params${mode}"
+    pp=${!params_name}
+    ./src/fastnrt $pp -p output/${dd}/nipsf${mode} data/nips-full.gml || exit 1
+    ./scripts/nrt_clusters output/${dd}/nipsf${mode}.tree output/${dd}/nipsf${mode}.fit output/${dd}/nipsf${mode}.cluster_tree || exit 1
+    ./scripts/nrt_plot_tree output/${dd}/nipsf${mode}.cluster_tree output/${dd}/nipsf${mode}.cluster_pdf || exit 1
+done
