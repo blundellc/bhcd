@@ -15,5 +15,6 @@
 #include "labelset.h"
 #include "lua_nrt.h"
 #include "lnbetacache.h"
+#include "minheap.h"
 
 #endif

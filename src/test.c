@@ -809,6 +809,80 @@ void test_lnbetacache(void) {
 	}
 }
 
+gint intp_cmp(gconstpointer aa, gconstpointer bb) {
+	return GPOINTER_TO_INT(aa) - GPOINTER_TO_INT(bb);
+}
+
+gpointer intp(gint aa) {
+	return GINT_TO_POINTER(aa);
+}
+
+void test_minheap(void) {
+	MinHeap * heap;
+
+	heap = minheap_new(intp_cmp, NULL);
+	g_assert(minheap_size(heap) == 0);
+
+	minheap_enq(heap, intp(0xfeed));
+	g_assert(minheap_size(heap) == 1);
+	g_assert(minheap_deq(heap) == intp(0xfeed));
+	g_assert(minheap_size(heap) == 0);
+
+	minheap_enq(heap, intp(14));
+	minheap_enq(heap, intp(13));
+	minheap_enq(heap, intp(12));
+	g_assert(minheap_size(heap) == 3);
+	g_assert(minheap_deq(heap) == intp(12));
+	g_assert(minheap_deq(heap) == intp(13));
+	g_assert(minheap_deq(heap) == intp(14));
+	g_assert(minheap_size(heap) == 0);
+
+	minheap_enq(heap, intp(5));
+	minheap_enq(heap, intp(4));
+	minheap_enq(heap, intp(3));
+	minheap_enq(heap, intp(2));
+	minheap_enq(heap, intp(1));
+	g_assert(minheap_size(heap) == 5);
+	g_assert(minheap_deq(heap) == intp(1));
+	g_assert(minheap_deq(heap) == intp(2));
+	g_assert(minheap_deq(heap) == intp(3));
+	g_assert(minheap_deq(heap) == intp(4));
+	g_assert(minheap_deq(heap) == intp(5));
+	g_assert(minheap_size(heap) == 0);
+
+	minheap_enq(heap, intp(3));
+	minheap_enq(heap, intp(5));
+	minheap_enq(heap, intp(1));
+	g_assert(minheap_size(heap) == 3);
+	g_assert(minheap_deq(heap) == intp(1));
+	g_assert(minheap_deq(heap) == intp(3));
+	minheap_enq(heap, intp(2));
+	minheap_enq(heap, intp(4));
+	g_assert(minheap_size(heap) == 3);
+	{
+		gboolean seen2, seen4, seen5;
+		MinHeapIter iter;
+		gpointer elem;
+		guint num_seen;
+
+		seen2 = seen4 = seen5 = FALSE;
+		num_seen = 0;
+		for (minheap_iter_init(heap, &iter); minheap_iter_next(&iter, &elem);) {
+			seen2 |= (elem == intp(2));
+			seen4 |= (elem == intp(4));
+			seen5 |= (elem == intp(5));
+			num_seen++;
+		}
+		g_assert(seen2 && seen4 && seen5);
+		g_assert(num_seen == 3);
+	}
+	g_assert(minheap_deq(heap) == intp(2));
+	g_assert(minheap_deq(heap) == intp(4));
+	g_assert(minheap_deq(heap) == intp(5));
+	g_assert(minheap_size(heap) == 0);
+	minheap_free(heap);
+}
+
 int main(int argc, char *argv[]) {
 	g_test_init(&argc, &argv, NULL);
 	g_test_add_func("/tree/logprob3", test_tree_logprob3);
@@ -821,6 +895,7 @@ int main(int argc, char *argv[]) {
 	g_test_add_func("/sscache/stats", test_sscache_stats);
 	g_test_add_func("/util/log_add_exp", test_log_add_exp);
 	g_test_add_func("/util/lnbetacache", test_lnbetacache);
+	g_test_add_func("/util/minheap", test_minheap);
 	g_test_run();
 	return 0;
 }

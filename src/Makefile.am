@@ -8,7 +8,7 @@ lib_LTLIBRARIES = libnrt.la
 libnrt_la_SOURCES = dataset.c util.c counts.c params.c tree.c merge.c \
 					build.c tokens.c dataset_gml.c tree_io.c sscache.c \
 					bitset.c labelset.c dataset_gen.c islands.c lua_nrt.c \
-					lnbetacache.c
+					lnbetacache.c minheap.c
 libnrt_la_LIBADD = $(DEPS_LIBS)
 
 fastnrt_SOURCES = fastnrt.c
