@@ -1,6 +1,7 @@
 #include "build.h"
 #include "islands.h"
 #include "merge.h"
+#include "minheap.h"
 
 
 static const gboolean build_debug = FALSE;
@@ -19,7 +20,7 @@ struct Build_t {
 
 	/* work in progress storage */
 	GPtrArray * trees;
-	GSequence * merges;
+	MinHeap * merges;
 
 	InitMergesFunc init_merges;
 	AddMergesFunc add_merges;
@@ -78,22 +79,22 @@ void build_free(Build * build) {
 }
 
 static void build_assert(Build * build) {
-	GSequenceIter * head;
-	GSequenceIter * prev;
 	if (!build_debug) {
 		return;
 	}
-	if (build->merges != NULL) {
-		// make sure merges is sorted
-		prev = g_sequence_get_begin_iter(build->merges);
-		for (head = g_sequence_iter_next(prev);
-			!g_sequence_iter_is_end(head); 
-			head = g_sequence_iter_next(head)) {
+	if (build->merges != NULL && minheap_size(build->merges) > 1) {
+		MinHeap * check;
+		gdouble last_score;
+		Merge * cur;
 
-			Merge * prev_merge = g_sequence_get(prev);
-			Merge * head_merge = g_sequence_get(head);
-			assert_lefloat(head_merge->score, prev_merge->score, EQFLOAT_DEFAULT_PREC);
-			prev = head;
+		check = minheap_copy(build->merges, minheap_elem_no_copy, minheap_elem_no_free);
+		cur = minheap_deq(check);
+		last_score = cur->score;
+		while (minheap_size(check) > 0) {
+			cur = minheap_deq(check);
+			g_print("prev: %f, cur: %f\n", last_score, cur->score);
+			g_assert(last_score >= cur->score);
+			last_score = cur->score;
 		}
 	}
 }
@@ -118,8 +119,7 @@ static void build_cleanup(Build * build) {
 		build->trees = NULL;
 	}
 	if (build->merges != NULL) {
-		g_sequence_foreach(build->merges, merge_free1, NULL);
-		g_sequence_free(build->merges);
+		minheap_free(build->merges);
 		build->merges = NULL;
 	}
 }
@@ -128,7 +128,7 @@ static void build_println(Build * build) {
 	guint ii;
 	Tree * tt;
 
-	g_print("%d in queue\n", g_sequence_get_length(build->merges));
+	g_print("%d in queue\n", minheap_size(build->merges));
 	for (ii = 0; ii < build->trees->len; ii++) {
 		tt = g_ptr_array_index(build->trees, ii);
 		if (tt != NULL) {
@@ -186,7 +186,7 @@ static void build_init_merges(Build * build) {
 	g_assert(build->trees != NULL);
 	g_assert(build->merges == NULL);
 	g_assert(build->merges_data == NULL);
-	build->merges = g_sequence_new(NULL);
+	build->merges = minheap_new((build->trees->len*(build->trees->len-1))/2, merge_cmp_neg_score, (MinHeapFree)merge_free);
 
 	for (ii = 0; ii < build->trees->len; ii++) {
 		aa = g_ptr_array_index(build->trees, ii);
@@ -196,7 +196,7 @@ static void build_init_merges(Build * build) {
 			if (build_debug) {
 				merge_println(new_merge, "\tadd init merge: ");
 			}
-			g_sequence_insert_sorted(build->merges, new_merge, merge_cmp_score, NULL);
+			minheap_enq(build->merges, new_merge);
 		}
 	}
 }
@@ -220,7 +220,7 @@ static void build_add_merges(Build * build, Tree * tkk, guint ii, guint jj) {
 		if (build_debug) {
 			merge_println(new_merge, "\tadd merge: ");
 		}
-		g_sequence_insert_sorted(build->merges, new_merge, merge_cmp_score, NULL);
+		minheap_enq(build->merges, new_merge);
 	}
 }
 
@@ -237,11 +237,12 @@ static void build_sparse_init_merges(Build * build) {
 	g_assert(build->merges == NULL);
 	g_assert(build->merges_data == NULL);
 
-	build->merges = g_sequence_new(NULL);
 	islands = islands_new(build->params->dataset, build->trees);
 	build->merges_data = islands;
-
 	edges = islands_get_edges(islands);
+
+	build->merges = minheap_new(g_list_length(edges), merge_cmp_neg_score, (MinHeapFree)merge_free);
+
 	for (GList * xx = edges; xx != NULL; xx = g_list_next(xx)) {
 		Pair * pair = xx->data;
 		guint ii = GPOINTER_TO_INT(pair->fst);
@@ -255,7 +256,7 @@ static void build_sparse_init_merges(Build * build) {
 		if (build_debug) {
 			merge_println(new_merge, "\tadd init merge: ");
 		}
-		g_sequence_insert_sorted(build->merges, new_merge, merge_cmp_score, NULL);
+		minheap_enq(build->merges, new_merge);
 	}
 	islands_get_edges_free(edges);
 }
@@ -287,7 +288,7 @@ static void build_sparse_add_merges(Build * build, Tree * tkk, guint ii, guint j
 		if (build_debug) {
 			merge_println(new_merge, "\tadd merge: ");
 		}
-		g_sequence_insert_sorted(build->merges, new_merge, merge_cmp_score, NULL);
+		minheap_enq(build->merges, new_merge);
 	}
 	islands_get_neigh_free(neigh);
 }
@@ -299,22 +300,17 @@ static void build_sparse_fini_merges(Build * build) {
 
 static void build_greedy(Build * build) {
 	Merge * cur;
-	GSequenceIter * head;
 	guint iter;
 
 	iter = 0;
-	for (head = g_sequence_get_begin_iter(build->merges);
-	    !g_sequence_iter_is_end(head);
-	    head = g_sequence_get_begin_iter(build->merges)) {
-
+	while (minheap_size(build->merges) > 0) {
 		build_assert(build);
-		cur = g_sequence_get(head);
-		g_sequence_remove(head);
+		cur = minheap_deq(build->merges);
 
 		/*
 		if (build_debug && len > 0) {
 			Merge * cur_next = g_sequence_get(g_sequence_get_begin_iter(build->merges));
-			g_assert(merge_cmp_score(cur, cur_next, NULL) != 0);
+			g_assert(merge_cmp_neg_score(cur, cur_next, NULL) != 0);
 		}
 		*/
 

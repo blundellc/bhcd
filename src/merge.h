@@ -26,6 +26,6 @@ Merge * merge_collapse(GRand *, Params * params, guint ii, Tree * aa, guint jj, 
 
 void merge_println(const Merge * merge, const gchar * prefix);
 void merge_tostring(const Merge * merge, GString * out);
-gint merge_cmp_score(gconstpointer paa, gconstpointer pbb, gpointer userdata);
+gint merge_cmp_neg_score(gconstpointer paa, gconstpointer pbb);
 
 #endif /*MERGE_H*/
