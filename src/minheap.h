@@ -13,7 +13,7 @@ typedef gint (*MinHeapCompare)(gconstpointer, gconstpointer);
 typedef void (*MinHeapFree)(gpointer);
 typedef gpointer (*MinHeapCopy)(gpointer);
 
-MinHeap * minheap_new(MinHeapCompare cmp, MinHeapFree elem_free);
+MinHeap * minheap_new(guint hint_size, MinHeapCompare cmp, MinHeapFree elem_free);
 void minheap_free(MinHeap *);
 MinHeap * minheap_copy(MinHeap * heap, MinHeapCopy elem_copy, MinHeapFree elem_free);
 gpointer minheap_elem_no_copy(gpointer);

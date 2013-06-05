@@ -820,7 +820,7 @@ gpointer intp(gint aa) {
 void test_minheap(void) {
 	MinHeap * heap;
 
-	heap = minheap_new(intp_cmp, minheap_elem_no_free);
+	heap = minheap_new(0, intp_cmp, minheap_elem_no_free);
 	g_assert(minheap_size(heap) == 0);
 
 	minheap_enq(heap, intp(0xfeed));
@@ -882,7 +882,7 @@ void test_minheap(void) {
 	g_assert(minheap_size(heap) == 0);
 	minheap_free(heap);
 
-	heap = minheap_new(intp_cmp, minheap_elem_no_free);
+	heap = minheap_new(0, intp_cmp, minheap_elem_no_free);
 	{
 		GRand *rng;
 		gpointer elem;

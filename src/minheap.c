@@ -16,11 +16,11 @@ static void minheap_bubble_down(MinHeap * heap, guint index);
 static void minheap_bubble_up(MinHeap * heap, guint index);
 
 
-MinHeap * minheap_new(MinHeapCompare elem_cmp, MinHeapFree elem_free) {
+MinHeap * minheap_new(guint hint_size, MinHeapCompare elem_cmp, MinHeapFree elem_free) {
 	MinHeap * heap;
 
 	heap = g_new(MinHeap, 1);
-	heap->elems = g_ptr_array_new();
+	heap->elems = g_ptr_array_sized_new(hint_size);
 	heap->num_elems = 0;
 	heap->elem_cmp = elem_cmp;
 	heap->elem_free = elem_free;
@@ -31,7 +31,7 @@ MinHeap * minheap_copy(MinHeap * orig, MinHeapCopy elem_copy, MinHeapFree elem_f
 	MinHeap * heap;
 	gpointer elem;
 
-	heap = minheap_new(orig->elem_cmp, elem_free);
+	heap = minheap_new(orig->num_elems, orig->elem_cmp, elem_free);
 	g_ptr_array_set_size(heap->elems, orig->num_elems);
 	for (guint ii = 0; ii < orig->num_elems; ii++) {
 		elem = elem_copy(g_ptr_array_index(orig->elems, ii));

@@ -138,7 +138,7 @@ static gdouble merge_calc_logprob_rel(Params * params, Tree * aa, Tree * bb) {
 	return logprob_rel;
 }
 
-gint merge_cmp_score(gconstpointer paa, gconstpointer pbb, gpointer userdata) {
+gint merge_cmp_neg_score(gconstpointer paa, gconstpointer pbb) {
 	const Merge * aa = paa;
 	const Merge * bb = pbb;
 	gdouble diff = bb->score - aa->score;
@@ -162,4 +162,5 @@ gint merge_cmp_score(gconstpointer paa, gconstpointer pbb, gpointer userdata) {
 		}
 	}
 }
+
 
