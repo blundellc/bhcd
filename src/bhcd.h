@@ -1,5 +1,5 @@
-#ifndef NRT_H
-#define NRT_H
+#ifndef BHCD_H
+#define BHCD_H
 
 #include "dataset.h"
 #include "dataset_gml.h"
@@ -13,7 +13,7 @@
 #include "build.h"
 #include "bitset.h"
 #include "labelset.h"
-#include "lua_nrt.h"
+#include "lua_bhcd.h"
 #include "lnbetacache.h"
 #include "minheap.h"
 

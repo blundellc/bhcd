@@ -1,6 +1,6 @@
 #!/usr/bin/lua
 
-require 'nrt'
+require 'bhcd'
 
 AdjMtx = {}
 function AdjMtx:new(names)

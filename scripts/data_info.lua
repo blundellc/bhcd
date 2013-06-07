@@ -1,6 +1,6 @@
 #!/usr/bin/lua
 
-require 'nrt'
+require 'bhcd'
 
 function ls(tbl)
     for kk, vv in pairs(tbl) do

@@ -55,12 +55,12 @@ def main():
         print ' '.join(cluster)
     write_fake_gml(clusters, 'output/20130530/sampson_t4_irm.gml')
     subprocess.call([
-        './scripts/nrt_plot',
+        './scripts/bhcd_plot',
         'output/20130530/sampson_t4_irm.gml',
         'output/20130530/sampson_t4.fit',
         'output/20130530/sampson_t4_irm.pdf'])
     subprocess.call([
-        './scripts/nrt_plot',
+        './scripts/bhcd_plot',
         'output/20130530/sampson_t4_truth.gml',
         'output/20130530/sampson_t4.fit',
         'output/20130530/sampson_t4_truth.pdf'])

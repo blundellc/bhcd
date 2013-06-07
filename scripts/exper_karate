@@ -3,10 +3,10 @@
 opt='-R 50 -a 0.2 -b 1.0 -d 1.0 -l 0.2'
 prefix="output/$(date +%Y%m%d)/karate"
 
-./src/fastnrt $opt -p $prefix data/karate.gml
-./src/fastnrt -R 50 -p ${prefix}_norm data/karate.gml
-./src/fastnrt $opt -p ${prefix}_sparse -S data/karate.gml
-./scripts/nrt_plot ${prefix}.tree ${prefix}.fit ${prefix}.pdf
-./scripts/nrt_plot ${prefix}_sparse.tree ${prefix}_sparse.fit ${prefix}_sparse.pdf
-./scripts/nrt_plot ${prefix}_norm.tree ${prefix}_norm.fit ${prefix}_norm.pdf
+./src/bhcd $opt -p $prefix data/karate.gml
+./src/bhcd -R 50 -p ${prefix}_norm data/karate.gml
+./src/bhcd $opt -p ${prefix}_sparse -S data/karate.gml
+./scripts/bhcd_plot ${prefix}.tree ${prefix}.fit ${prefix}.pdf
+./scripts/bhcd_plot ${prefix}_sparse.tree ${prefix}_sparse.fit ${prefix}_sparse.pdf
+./scripts/bhcd_plot ${prefix}_norm.tree ${prefix}_norm.fit ${prefix}_norm.pdf
 

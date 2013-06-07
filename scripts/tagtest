@@ -18,13 +18,13 @@ def main():
             ['diff', '-u', 'regress/standard-toy3.adj', 'output/toy3.adj'],
             ['diff', '-u', 'regress/standard-toy4dense.adj', 'output/toy4dense.adj'],
             ['diff', '-u', 'regress/standard-toy4sparse.adj', 'output/toy4sparse.adj'],
-            ['./src/fastnrt', '-t', 'data/blocks.gml', 'data/noisy-blocks.gml'],
+            ['./src/bhcd', '-t', 'data/blocks.gml', 'data/noisy-blocks.gml'],
             ['diff', '-u', 'regress/standard-noisy-blocks.tree', 'output/out.tree'],
             ['/bin/sh','-c',' cut -d, -f2- output/out.pred | '+
                 'diff -u regress/standard-noisy-blocks.pred -'],
             ['/bin/sh','-c',' cut -d, -f2- output/out.fit | '+
                 'diff -u regress/standard-noisy-blocks.fit -'],
-            ['./src/fastnrt', '-S', '-t', 'data/blocks.gml', 'data/noisy-blocks.gml'],
+            ['./src/bhcd', '-S', '-t', 'data/blocks.gml', 'data/noisy-blocks.gml'],
             ['diff', '-u', 'regress/standard-noisy-blocks-sparse.tree', 'output/out.tree'],
             ['/bin/sh','-c',' cut -d, -f2- output/out.pred | '+
                 'diff -u regress/standard-noisy-blocks.pred -'],
@@ -34,13 +34,13 @@ def main():
                     'write_gml', 'output/out.gml', 'output/out.adj'],
             ['diff', '-u', 'regress/standard-gene1.gml', 'output/out.gml'],
             ['diff', '-u', 'regress/standard-gene1.adj', 'output/out.adj'],
-            leak_check + ['./src/fastnrt', '-t', 'data/noisy-blocks.gml', 'data/blocks.gml'],
+            leak_check + ['./src/bhcd', '-t', 'data/noisy-blocks.gml', 'data/blocks.gml'],
             ['diff', '-u', 'regress/standard-blocks.tree', 'output/out.tree'],
             ['/bin/sh','-c',' cut -d, -f2- output/out.pred | '+
                 'diff -u regress/standard-blocks.pred -'],
             ['/bin/sh','-c',' cut -d, -f2- output/out.fit | '+
                 'diff -u regress/standard-blocks.fit -'],
-            leak_check + ['./src/fastnrt', '-S', '-t', 'data/noisy-blocks.gml', 'data/blocks.gml'],
+            leak_check + ['./src/bhcd', '-S', '-t', 'data/noisy-blocks.gml', 'data/blocks.gml'],
             ['diff', '-u', 'regress/standard-blocks-sparse.tree', 'output/out.tree'],
             ['/bin/sh','-c',' cut -d, -f2- output/out.pred | '+
                 'diff -u regress/standard-blocks-sparse.pred -'],

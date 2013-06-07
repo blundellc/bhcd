@@ -3,7 +3,7 @@
 #include <lualib.h>
 #include <string.h>
 #include <glib.h>
-#include "lua_nrt.h"
+#include "lua_bhcd.h"
 #include "dataset.h"
 #include "dataset_gml.h"
 
@@ -62,7 +62,7 @@ static const struct luaL_reg treelua[] = {
 	{ NULL, NULL },
 };
 
-int luaopen_nrt(lua_State * ss) {
+int luaopen_bhcd(lua_State * ss) {
 	luaL_newmetatable(ss, "dataset");
 	lua_pushstring(ss, "__index");
 	lua_pushvalue(ss, -2);
@@ -276,14 +276,14 @@ static int treelua_children(lua_State *ss) {
 }
 
 
-void nrt_lua_shell(Tree * tree) {
+void bhcd_lua_shell(Tree * tree) {
 	char line[1024];
 	lua_State * ss;
 	int error;
 
 	ss = lua_open();
 	luaL_openlibs(ss);
-	luaopen_nrt(ss);
+	luaopen_bhcd(ss);
 
 	treelua_share(ss, "res", tree);
 

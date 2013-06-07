@@ -41,7 +41,7 @@ def main():
     prefix_path = 'output/latest/'
     out_prefix_path = 'output/' + datetime.datetime.now().strftime('%Y%m%d') + '/'
     suffix_path = '.score_pred'
-    # nrt first
+    # bhcd first
     for prefix_atom in ['blend/nips', 'blend/gene']:
         out_prefix = out_prefix_path + prefix_atom
         prefix = prefix_path + prefix_atom

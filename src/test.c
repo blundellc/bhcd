@@ -3,7 +3,7 @@
 #include <gsl/gsl_sf_exp.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_sf_pow_int.h>
-#include "nrt.h"
+#include "bhcd.h"
 
 
 void init_test_toy3(Tree **laa, Tree **lbb, Tree **lcc) {

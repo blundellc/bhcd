@@ -4,6 +4,7 @@
 #include "labelset.h"
 
 static const gboolean cache_debug = FALSE;
+static const gboolean cache_symmetric = TRUE;
 
 struct SSCache_t {
 	guint		ref_count;
@@ -319,14 +320,16 @@ static gpointer sscache_lookup_offblock_full(SSCache *cache, gconstpointer ii, g
 	} else {
 		suffstats = counts_new(value, 1);
 	}
-	// now add in the opposing direction...
-	value = dataset_get(cache->dataset, jj, ii, &missing);
-	if (!missing) {
-		suffstats->num_ones += value;
-		suffstats->num_total += 1;
+	if (!cache_symmetric) {
+		// now add in the opposing direction...
+		value = dataset_get(cache->dataset, jj, ii, &missing);
+		if (!missing) {
+			suffstats->num_ones += value;
+			suffstats->num_total += 1;
+		}
 	}
 	if (cache_debug) {
-		g_print("sscache_lookup_offblock_full: ");
+		g_print("sscache_lookup_offblock_sparse: ");
 		suffstats_print(suffstats);
 		g_print("\n");
 	}
@@ -342,7 +345,10 @@ static gpointer sscache_lookup_offblock_sparse(SSCache *cache, Labelset * kk, La
 		return NULL;
 	}
 	counts = suffstats_new_empty();
-	counts->num_total = 2*labelset_count(kk)*labelset_count(zz);
+	counts->num_total = labelset_count(kk)*labelset_count(zz);
+	if (!cache_symmetric) {
+		counts->num_total *= 2;
+	}
 	if (cache_debug) {
 		g_print("sparse: ");
 		labelset_print(kk);

@@ -3,7 +3,7 @@
 #include <string.h>
 #include <glib.h>
 #include <glib/gprintf.h>
-#include "nrt.h"
+#include "bhcd.h"
 
 
 static gboolean binary_only = FALSE;
@@ -60,7 +60,7 @@ static gchar * parse_args(int *argc, char ***argv) {
 	GError * error;
 	GOptionContext * ctx;
 
-	ctx = g_option_context_new("FILE -- fit an NRT");
+	ctx = g_option_context_new("FILE -- fit an BHCD");
 	g_option_context_add_main_entries(ctx, options, NULL);
 	error = NULL;
 	if (!g_option_context_parse(ctx, argc, argv, &error)) {
@@ -230,7 +230,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	if (lua_shell) {
-		nrt_lua_shell(root);
+		bhcd_lua_shell(root);
 	}
 
 	tree_unref(root);

@@ -1,7 +1,7 @@
 #!/bin/sh
-./src/fastnrt --lua data/blocks.gml <scripts/test.lua | \
+./src/bhcd --lua data/blocks.gml <scripts/test.lua | \
     grep -v '^time:' | \
     diff -us - regress/blocks-lua.out && \
-    ./scripts/leak --error-exitcode=1 ./src/fastnrt --lua data/blocks.gml <scripts/test.lua ||
+    ./scripts/leak --error-exitcode=1 ./src/bhcd --lua data/blocks.gml <scripts/test.lua ||
     exit 1
 

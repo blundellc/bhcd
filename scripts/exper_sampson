@@ -3,12 +3,12 @@
 opt='-R 50'
 prefix="output/$(date +%Y%m%d)/sampson_t4"
 
-./src/fastnrt $opt -p ${prefix} data/pajek/Sampson_Sampson_T4.gml
-./src/fastnrt $opt -p ${prefix}_bin -B data/pajek/Sampson_Sampson_T4.gml
-./src/fastnrt $opt -p ${prefix}_sparse -S data/pajek/Sampson_Sampson_T4.gml
-./src/fastnrt $opt -p ${prefix}_binsparse -BS data/pajek/Sampson_Sampson_T4.gml
+./src/bhcd $opt -p ${prefix} data/pajek/Sampson_Sampson_T4.gml
+./src/bhcd $opt -p ${prefix}_bin -B data/pajek/Sampson_Sampson_T4.gml
+./src/bhcd $opt -p ${prefix}_sparse -S data/pajek/Sampson_Sampson_T4.gml
+./src/bhcd $opt -p ${prefix}_binsparse -BS data/pajek/Sampson_Sampson_T4.gml
 
 for x in '' _bin _sparse _binsparse
 do
-    ./scripts/nrt_plot $prefix$x.tree $prefix$x.fit $prefix$x.pdf
+    ./scripts/bhcd_plot $prefix$x.tree $prefix$x.fit $prefix$x.pdf
 done

@@ -17,5 +17,5 @@ num_restarts=10
 myout="$out/max/$restart"
 mkdir -p $myout
 opts="--restarts=$num_restarts"
-/usr/bin/time -o $myout/$tag.systime ./src/fastnrt $opts "$@" -p $myout/$tag -t $test $train
+/usr/bin/time -o $myout/$tag.systime ./src/bhcd $opts "$@" -p $myout/$tag -t $test $train
 

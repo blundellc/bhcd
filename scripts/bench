@@ -1,3 +1,3 @@
 #!/bin/sh
 
-stdbuf -oL ./src/benchnrt  | tee output/bench_output
+stdbuf -oL ./src/benchbhcd  | tee output/bench_output
