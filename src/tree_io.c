@@ -1,5 +1,6 @@
 #include "tree_io.h"
 #include "util.h"
+#include "version.h"
 
 
 Tree * tree_io_load(const gchar *fname) {
@@ -27,7 +28,9 @@ void tree_io_save_io(Tree *root, GIOChannel *io) {
 			params->alpha, params->beta,
 			params->delta, params->lambda
 			);
-	io_printf(io, "\t\"fit\": { \"logprob\": %1.17e },\n", tree_get_logprob(root));
+	io_printf(io, "\t\"fit\": { \"logprob\": %1.17e, \"method\": \"%s\" },\n",
+			tree_get_logprob(root),
+			BHCD_NAME_VERSION);
 	io_printf(io, "\t\"tree\": [\n");
 
 	qq = g_queue_new();
