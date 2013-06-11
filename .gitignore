@@ -14,8 +14,8 @@ autom4te.cache/
 depcomp
 aclocal.m4
 output/
-src/benchnrt
-src/fastnrt
+src/benchbhcd
+src/bhcd
 src/loadgml
 src/savetoy
 src/test
