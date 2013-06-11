@@ -1,7 +1,7 @@
 #!/bin/sh
 
 opt='-R 50'
-prefix="output/$(date +%Y%m%d)/sampson_t4"
+prefix="output/$(./scripts/datestamp)/sampson_t4"
 
 ./src/bhcd $opt -p ${prefix} data/pajek/Sampson_Sampson_T4.gml
 ./src/bhcd $opt -p ${prefix}_bin -B data/pajek/Sampson_Sampson_T4.gml

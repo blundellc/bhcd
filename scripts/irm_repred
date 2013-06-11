@@ -1,7 +1,7 @@
 #!/bin/bash -x
 
 # for output
-curdate=$(date +%Y%m%d)
+curdate=$(./scripts/datestamp)
 
 search=""
 if [ ! -z "$1" ]

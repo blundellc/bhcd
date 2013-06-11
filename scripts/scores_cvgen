@@ -1,7 +1,7 @@
 #!/usr/bin/python2.7
 
 import numpy as np
-import os, datetime
+import os
 
 def load(fname):
     with open(fname) as inp:
@@ -39,7 +39,11 @@ def output(prefix, suffix, names, result):
 
 def main():
     prefix_path = 'output/latest/'
-    out_prefix_path = 'output/' + datetime.datetime.now().strftime('%Y%m%d') + '/'
+    date_str = subprocess.check_output(['./scripts/datestamp']).strip()
+    if not date_str:
+        print 'bad date stamp'
+        sys.exit(1)
+    out_prefix_path = 'output/' + date_str + '/'
     suffix_path = '.score_pred'
     # bhcd first
     for prefix_atom in ['blend/nips', 'blend/gene']:

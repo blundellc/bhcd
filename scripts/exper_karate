@@ -1,7 +1,7 @@
 #!/bin/sh
 
 opt='-R 50 -a 0.2 -b 1.0 -d 1.0 -l 0.2'
-prefix="output/$(date +%Y%m%d)/karate"
+prefix="output/$(./scripts/datestamp)/karate"
 
 ./src/bhcd $opt -p $prefix data/karate.gml
 ./src/bhcd -R 50 -p ${prefix}_norm data/karate.gml

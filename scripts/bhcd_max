@@ -11,7 +11,7 @@ if [ -z "$test" ]; then
     exit 1
 fi
 
-out="output/$(date '+%Y%m%d')/"
+out="output/$(./scripts/datestamp)/"
 mkdir -p $out
 num_restarts=10
 myout="$out/max/$restart"

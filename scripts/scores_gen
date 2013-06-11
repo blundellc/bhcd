@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cur=$(date +%Y%m%d)
+cur=$(./scripts/datestamp)
 mkdir -p output/$cur/blend
 
 for type in pred fit

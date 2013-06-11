@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from itertools import izip
-import argparse, datetime
+import argparse, subprocess
 from scipy.special import betaln
 from collections import defaultdict
 from math import log
@@ -10,13 +10,19 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--tag',  help="tag of run")
     parser.add_argument('-d', '--date',  help="date of run",
-            default=datetime.datetime.now().strftime('%Y%m%d'))
+            default=None)
     parser.add_argument('-b', '--burnin', help="number of samples to drop (just first by default)",
             type=int, default=1)
     parser.add_argument('--prob-file', help='file with probability trace')
     parser.add_argument('test_file')
     parser.add_argument('pred_file')
     args = parser.parse_args()
+
+    if args.date is None:
+        args.date = subprocess.check_output(['./scripts/datestamp']).strip()
+        if not args.date:
+            print 'bad date stamp'
+            sys.exit(1)
 
     in_dir = 'output/'+args.date+'/irm'
     if args.tag is not None:

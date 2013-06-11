@@ -9,7 +9,7 @@ tag=$1
 train=$2
 test=$3
 
-dd=$(date +%Y%m%d)
+dd=$(./scripts/datestamp)
 out_dir=output/$dd/irm/$tag
 
 search=""

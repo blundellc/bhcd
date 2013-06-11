@@ -1,6 +1,6 @@
 #!/bin/bash
 
-out="output/$(date '+%Y%m%d')/"
+out="output/$(./scripts/datestamp)/"
 mkdir -p $out
 num_restarts=10
 

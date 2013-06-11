@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dd=$(date +%Y%m%d)
+dd=$(./scripts/datestamp)
 params_sparse='-S'
 params_binsparse='-SB'
 

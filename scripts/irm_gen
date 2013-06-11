@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, os, subprocess, datetime, argparse
+import sys, os, subprocess, argparse
 from math import sqrt
 
 def main():
@@ -14,7 +14,10 @@ def main():
             type=int, default=200)
     args = parser.parse_args()
 
-    date_str = datetime.datetime.now().strftime('%Y%m%d')
+    date_str = subprocess.check_output(['./scripts/datestamp']).strip()
+    if not date_str:
+        print 'bad date stamp'
+        sys.exit(1)
     out_dir = 'output/'+date_str+'/irm'
     raw_out_dir = out_dir
     if args.tag is not None:
