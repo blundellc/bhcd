@@ -4,7 +4,7 @@
 #include "labelset.h"
 
 static const gboolean cache_debug = FALSE;
-static const gboolean cache_symmetric = TRUE;
+static const gboolean cache_symmetric = FALSE;
 
 struct SSCache_t {
 	guint		ref_count;

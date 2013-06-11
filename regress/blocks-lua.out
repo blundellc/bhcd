@@ -1,11 +1,11 @@
 seed: 2a23b6bb
 output prefix: output/out
-tree: logprob: -4.89e+00 #intern: 4 -4.89e+00:{-8.86e-01:{g , e , h , f }, -8.86e-01:{b , d , a , c }, -1.18e+00:{i , j }}
-res	tree(logprob: -4.89e+00 #intern: 4 -4.89e+00:{-8.86e-01:{g , e , h , f }, -8.86e-01:{b , d , a , c }, -1.18e+00:{i , j }})
+tree: logprob: -4.89e+00 (0:64,1:36/0:64,1:0) #intern: 4 -4.89e+00:{-8.86e-01:{g , e , h , f }, -8.86e-01:{b , d , a , c }, -1.18e+00:{i , j }}
+res	tree(logprob: -4.89e+00 (0:64,1:36/0:64,1:0) #intern: 4 -4.89e+00:{-8.86e-01:{g , e , h , f }, -8.86e-01:{b , d , a , c }, -1.18e+00:{i , j }})
 -64.267948042818
-ch	tree(logprob: -8.86e-01 #intern: 1 -8.86e-01:{g , e , h , f })
+ch	tree(logprob: -8.86e-01 (0:0,1:16/0:0,1:12) #intern: 1 -8.86e-01:{g , e , h , f })
 -0.0041523370934823
-chch	tree(logprob: -1.82e-01 #intern: 0 g )
+chch	tree(logprob: -1.82e-01 (0:0,1:1/0:0,1:0) #intern: 0 g )
 0
 true
 g

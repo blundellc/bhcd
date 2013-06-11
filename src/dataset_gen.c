@@ -58,8 +58,8 @@ Dataset * dataset_gen_toy3(void) {
 	dataset = dataset_new();
 	/*     aa   bb   cc
 	 * aa   _    1    0
-	 * bb   1    _    0
-	 * cc   0    0    _
+	 * bb   _    _    0
+	 * cc   _    _    _
 	 */
 	aa = dataset_label_create(dataset, "aa");
 	bb = dataset_label_create(dataset, "bb");

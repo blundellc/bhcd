@@ -4,8 +4,5 @@ graph [
 	node [ id 3 label "cc" ]
 	edge [ source 1 target 2 weight 1 ]
 	edge [ source 1 target 3 weight 0 ]
-	edge [ source 2 target 1 weight 1 ]
 	edge [ source 2 target 3 weight 0 ]
-	edge [ source 3 target 1 weight 0 ]
-	edge [ source 3 target 2 weight 0 ]
 ]
