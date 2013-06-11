@@ -1,6 +1,7 @@
 #ifndef BHCD_H
 #define BHCD_H
 
+#include "version.h"
 #include "dataset.h"
 #include "dataset_gml.h"
 #include "util.h"

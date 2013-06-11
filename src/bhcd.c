@@ -60,7 +60,7 @@ static gchar * parse_args(int *argc, char ***argv) {
 	GError * error;
 	GOptionContext * ctx;
 
-	ctx = g_option_context_new("FILE -- fit an BHCD");
+	ctx = g_option_context_new("FILE -- fit an BHCD (" BHCD_VERSION ")");
 	g_option_context_add_main_entries(ctx, options, NULL);
 	error = NULL;
 	if (!g_option_context_parse(ctx, argc, argv, &error)) {

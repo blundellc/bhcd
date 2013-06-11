@@ -32,3 +32,10 @@ test_bitset_hash_LDADD = libbhcd.la $(DEPS_LIBS)
 pagerank_SOURCES = pagerank.c
 pagerank_LDADD = libbhcd.la $(DEPS_LIBS)
 
+BUILT_SOURCES += version.stamp
+CLEANFILES += git_version.h git_version.h.tmp
+
+version.stamp:
+	echo '#define	GIT_VERSION	"git-'`git describe --always`'"'>git_version.h.tmp
+	cmp git_version.h.tmp git_version.h || mv git_version.h.tmp git_version.h
+

@@ -1,3 +1,5 @@
+BUILT_SOURCES =
+CLEANFILES =
 AM_CFLAGS = -Werror $(DEPS_CFLAGS)
 MOSTLYCLEANFILES = *.gcda *.gcno *.gcov
 
