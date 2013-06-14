@@ -136,3 +136,18 @@ gboolean labelset_disjoint(Labelset *aa, Labelset *bb) {
 	return bitset_disjoint(aa->bits, bb->bits);
 }
 
+void labelset_iter_init(LabelsetIter * iter, Labelset * lset) {
+	iter->lset = lset;
+	bitset_iter_init(&iter->bit_iter, lset->bits);
+}
+
+gboolean labelset_iter_next(LabelsetIter * iter, gpointer * label) {
+	guint32 bit;
+
+	if (!bitset_iter_next(&iter->bit_iter, &bit)) {
+		return FALSE;
+	}
+	*label = GINT_TO_POINTER(bit);
+	return TRUE;
+}
+

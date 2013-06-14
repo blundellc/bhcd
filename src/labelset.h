@@ -8,6 +8,11 @@
 
 struct Labelset_t;
 typedef struct Labelset_t Labelset;
+typedef struct {
+	/* private */
+	Labelset * lset;
+	BitsetIter bit_iter;
+} LabelsetIter;
 
 Labelset * labelset_new_full(Dataset * dataset, ...);
 #define	labelset_new(...)	labelset_new_full(__VA_ARGS__, NULL)
@@ -32,5 +37,7 @@ void labelset_tostring(Labelset * lset, GString * out);
 void labelset_union(Labelset *aa, Labelset *bb);
 gboolean labelset_disjoint(Labelset *aa, Labelset *bb);
 
+void labelset_iter_init(LabelsetIter *, Labelset *);
+gboolean labelset_iter_next(LabelsetIter *, gpointer *);
 
 #endif /*LABELSET_H*/
