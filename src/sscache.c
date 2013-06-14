@@ -5,6 +5,7 @@
 
 static const gboolean cache_debug = FALSE;
 static const gboolean cache_symmetric = FALSE;
+static const gboolean cache_disable_offblock = FALSE;
 
 struct SSCache_t {
 	guint		ref_count;
@@ -30,6 +31,7 @@ static gpointer sscache_lookup_offblock_sparse(SSCache *cache, Labelset * kk, La
 static gpointer sscache_lookup_offblock_merge(SSCache *cache, Labelset * xx, Labelset * yy_left, Labelset * yy_right);
 static gpointer sscache_lookup_offblock_simple(SSCache *cache, Labelset * xx, Labelset * yy);
 static gpointer sscache_lookup_offblock_full(SSCache *cache, gconstpointer ii, gconstpointer jj);
+static gpointer sscache_lookup_offblock_naive(SSCache *cache, Labelset * xx, Labelset * yy);
 
 SSCache * sscache_new(Dataset *dataset, gboolean sparse) {
 	SSCache * cache;
@@ -148,11 +150,20 @@ gpointer sscache_get_offblock(SSCache *cache, Labelset * xx_left, Labelset * xx_
 
 	yy = labelset_copy(yy_left);
 	labelset_union(yy, yy_right);
+
 	key = offblock_key_new(xx, yy);
-	suffstats = g_hash_table_lookup(cache->suffstats_offblocks, key);
-	if (suffstats != NULL) {
-		goto found_out;
+
+	if (!cache_disable_offblock) {
+		suffstats = g_hash_table_lookup(cache->suffstats_offblocks, key);
+	} else {
+		suffstats = sscache_lookup_offblock_naive(cache, xx, yy);
+		g_assert(suffstats != NULL);
 	}
+
+	if (suffstats != NULL) {
+		goto free_key_out;
+	}
+
 
 	/* if both are singletons, then let's go visit the full data matrix
 	 * not really any way around that...
@@ -217,7 +228,7 @@ gpointer sscache_get_offblock(SSCache *cache, Labelset * xx_left, Labelset * xx_
 		}
 		g_hash_table_insert(cache->suffstats_offblocks, key, suffstats);
 	} else {
-found_out:
+free_key_out:
 		offblock_key_free(key);
 	}
 	labelset_unref(xx);
@@ -357,6 +368,42 @@ static gpointer sscache_lookup_offblock_sparse(SSCache *cache, Labelset * kk, La
 		g_print(" %d\n", counts->num_total);
 	}
 	return counts;
+}
+
+static gpointer sscache_lookup_offblock_naive(SSCache *cache, Labelset * xx, Labelset * yy) {
+	Counts * suffstats;
+	LabelsetIter iter_xx, iter_yy;
+	gpointer ii, jj;
+	gboolean missing;
+	gboolean value;
+
+	suffstats = suffstats_new_empty();
+	labelset_iter_init(&iter_xx, xx);
+	while (labelset_iter_next(&iter_xx, &ii)) {
+		dataset_label_assert(cache->dataset, ii);
+		labelset_iter_init(&iter_yy, yy);
+		while (labelset_iter_next(&iter_yy, &jj)) {
+			dataset_label_assert(cache->dataset, jj);
+			g_assert(ii != jj);
+
+			value = dataset_get(cache->dataset, ii, jj, &missing);
+			suffstats->num_total += (missing? 0: 1);
+			suffstats->num_ones  += (missing||!value? 0: 1);
+
+			if (!cache_symmetric) {
+				// now add in the opposing direction...
+				value = dataset_get(cache->dataset, jj, ii, &missing);
+				suffstats->num_total += (missing? 0: 1);
+				suffstats->num_ones  += (missing||!value? 0: 1);
+			}
+		}
+	}
+	if (cache_debug) {
+		g_print("sscache_lookup_offblock_naive: ");
+		suffstats_print(suffstats);
+		g_print("\n");
+	}
+	return suffstats;
 }
 
 
