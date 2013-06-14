@@ -181,6 +181,33 @@ gboolean bitset_disjoint(Bitset *aa, Bitset *bb) {
 	return TRUE;
 }
 
+void bitset_iter_init(BitsetIter * iter, Bitset * bitset) {
+	iter->bitset = bitset;
+	iter->elem_index = 0;
+	iter->offset = -1;
+}
+
+gboolean bitset_iter_next(BitsetIter * iter, guint32 * bit) {
+	guint64 elem;
+
+	if (iter->elem_index >= iter->bitset->size) {
+		return FALSE;
+	}
+
+	elem = iter->bitset->elems[iter->elem_index];
+	iter->offset = g_bit_nth_lsf(elem, iter->offset);
+	while (iter->offset == -1 && iter->elem_index < iter->bitset->size-1) {
+		iter->elem_index++;
+		elem = iter->bitset->elems[iter->elem_index];
+		iter->offset = g_bit_nth_lsf(elem, iter->offset);
+	}
+	if (iter->offset == -1) {
+		return FALSE;
+	}
+	*bit = iter->offset + iter->elem_index*BITS_PER_ELEM;
+	return TRUE;
+}
+
 void bitset_foreach(const Bitset *bitset, BitsetFunc func, gpointer user_data) {
 	for (guint32 ii = 0; ii < bitset->size; ii++) {
 		guint64 elem = bitset->elems[ii];

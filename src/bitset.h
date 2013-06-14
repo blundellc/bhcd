@@ -5,6 +5,12 @@
 
 struct Bitset_t;
 typedef struct Bitset_t Bitset;
+typedef struct {
+	/* private */
+	Bitset * bitset;
+	guint32 elem_index;
+	gint offset;
+} BitsetIter;
 
 Bitset * bitset_new(guint32 max_index);
 Bitset * bitset_copy(Bitset *);
@@ -24,6 +30,8 @@ gboolean bitset_contains(Bitset *bitset, guint32 index);
 void bitset_union(Bitset *dst, Bitset *src);
 gboolean bitset_disjoint(Bitset *, Bitset *);
 
+void bitset_iter_init(BitsetIter *, Bitset *);
+gboolean bitset_iter_next(BitsetIter *, guint32 *);
 typedef void (*BitsetFunc)(gpointer, guint32);
 void bitset_foreach(const Bitset *bitset, BitsetFunc func, gpointer user_data);
 
