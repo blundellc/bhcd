@@ -1,2 +1,4 @@
 #!/bin/sh
-date +%Y%m%dtest
+dd=$(date +%Y%m%d)
+mkdir -p output/$dd || exit 1
+echo $dd
