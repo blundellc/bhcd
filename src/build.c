@@ -7,7 +7,7 @@
 static const gboolean build_debug = FALSE;
 
 typedef void (*InitMergesFunc)(Build *);
-typedef void (*AddMergesFunc)(Build *, Tree *, guint, guint);
+typedef void (*AddMergesFunc)(Build *, Merge *);
 typedef void (*FiniMergesFunc)(Build *);
 
 struct Build_t {
@@ -31,10 +31,10 @@ struct Build_t {
 static void build_extract_best_tree(Build * build);
 static void build_greedy(Build * build);
 static void build_init_merges(Build * build);
-static void build_add_merges(Build * build, Tree * tkk, guint ii, guint jj);
+static void build_add_merges(Build * build, Merge * cur);
 static void build_fini_merges(Build * build);
 static void build_sparse_init_merges(Build * build);
-static void build_sparse_add_merges(Build * build, Tree * tkk, guint ii, guint jj);
+static void build_sparse_add_merges(Build * build, Merge * cur);
 static void build_sparse_fini_merges(Build * build);
 static void build_init_trees(Build * build, Dataset * dataset);
 static void build_remove_tree(Build * build, guint ii);
@@ -192,7 +192,7 @@ static void build_init_merges(Build * build) {
 		aa = g_ptr_array_index(build->trees, ii);
 		for (jj = ii + 1; jj < build->trees->len; jj++) {
 			bb = g_ptr_array_index(build->trees, jj);
-			new_merge = merge_join(build->rng, build->params, ii, aa, jj, bb);
+			new_merge = merge_join(build->rng, NULL, build->params, ii, aa, jj, bb);
 			if (build_debug) {
 				merge_println(new_merge, "\tadd init merge: ");
 			}
@@ -201,8 +201,8 @@ static void build_init_merges(Build * build) {
 	}
 }
 
-static void build_add_merges(Build * build, Tree * tkk, guint ii, guint jj) {
-	Tree *tll;
+static void build_add_merges(Build * build, Merge * cur) {
+	Tree * tll;
 	Merge * new_merge;
 	guint ll, kk;
 
@@ -216,7 +216,7 @@ static void build_add_merges(Build * build, Tree * tkk, guint ii, guint jj) {
 		}
 
 		tll = g_ptr_array_index(build->trees, ll);
-		new_merge = merge_best(build->rng, build->params, kk, tkk, ll, tll);
+		new_merge = merge_best(build->rng, cur, build->params, kk, cur->tree, ll, tll);
 		if (build_debug) {
 			merge_println(new_merge, "\tadd merge: ");
 		}
@@ -252,7 +252,7 @@ static void build_sparse_init_merges(Build * build) {
 		g_assert(ii < build->trees->len);
 		g_assert(jj < build->trees->len);
 
-		new_merge = merge_join(build->rng, build->params, ii, aa, jj, bb);
+		new_merge = merge_join(build->rng, NULL, build->params, ii, aa, jj, bb);
 		if (build_debug) {
 			merge_println(new_merge, "\tadd init merge: ");
 		}
@@ -261,7 +261,7 @@ static void build_sparse_init_merges(Build * build) {
 	islands_get_edges_free(edges);
 }
 
-static void build_sparse_add_merges(Build * build, Tree * tkk, guint ii, guint jj) {
+static void build_sparse_add_merges(Build * build, Merge * cur) {
 	Islands * islands;
 	Tree *tll;
 	Merge * new_merge;
@@ -274,7 +274,7 @@ static void build_sparse_add_merges(Build * build, Tree * tkk, guint ii, guint j
 	islands = build->merges_data;
 	kk = build->trees->len;
 
-	islands_merge(islands, kk, ii, jj);
+	islands_merge(islands, kk, cur->ii, cur->jj);
 
 	neigh = islands_get_neigh(islands, kk);
 	for (GList * xx = neigh; xx != NULL; xx = g_list_next(xx)) {
@@ -284,7 +284,7 @@ static void build_sparse_add_merges(Build * build, Tree * tkk, guint ii, guint j
 		}
 
 		tll = g_ptr_array_index(build->trees, ll);
-		new_merge = merge_best(build->rng, build->params, kk, tkk, ll, tll);
+		new_merge = merge_best(build->rng, cur, build->params, kk, cur->tree, ll, tll);
 		if (build_debug) {
 			merge_println(new_merge, "\tadd merge: ");
 		}
@@ -326,7 +326,7 @@ static void build_greedy(Build * build) {
 		iter++;
 		build_remove_tree(build, cur->ii);
 		build_remove_tree(build, cur->jj);
-		build->add_merges(build, cur->tree, cur->ii, cur->jj);
+		build->add_merges(build, cur);
 		g_ptr_array_add(build->trees, cur->tree);
 		tree_ref(cur->tree);
 		if (build->verbose && (iter < 100 || (iter++ % 100) == 0)) {

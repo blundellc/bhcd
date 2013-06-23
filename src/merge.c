@@ -4,7 +4,7 @@
 static gdouble merge_calc_logprob_rel(Params * params, Tree * aa, Tree * bb);
 
 
-Merge * merge_new(GRand * rng, Params * params, guint ii, Tree * aa, guint jj, Tree * bb, Tree * mm) {
+Merge * merge_new(GRand * rng, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb, Tree * mm) {
 	Merge * merge;
 	gdouble logprob_rel;
 
@@ -44,19 +44,19 @@ void merge_tostring(const Merge * merge, GString * out) {
 	tree_tostring(merge->tree, out);
 }
 
-Merge * merge_join(GRand * rng, Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
+Merge * merge_join(GRand * rng, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
 	Tree * tree;
 	Merge * merge;
 
 	tree = branch_new(params);
 	branch_add_child(tree, aa);
 	branch_add_child(tree, bb);
-	merge = merge_new(rng, params, ii, aa, jj, bb, tree);
+	merge = merge_new(rng, parent, params, ii, aa, jj, bb, tree);
 	tree_unref(tree);
 	return merge;
 }
 
-Merge * merge_absorb(GRand * rng, Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
+Merge * merge_absorb(GRand * rng, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
 	/* absorb bb as a child of aa */
 	Tree * tree;
 	Merge * merge;
@@ -67,12 +67,12 @@ Merge * merge_absorb(GRand * rng, Params * params, guint ii, Tree * aa, guint jj
 
 	tree = tree_copy(aa);
 	branch_add_child(tree, bb);
-	merge = merge_new(rng, params, ii, aa, jj, bb, tree);
+	merge = merge_new(rng, parent, params, ii, aa, jj, bb, tree);
 	tree_unref(tree);
 	return merge;
 }
 
-Merge * merge_collapse(GRand * rng, Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
+Merge * merge_collapse(GRand * rng, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
 	/* make children of aa and children of bb all children of a new node */
 	Tree * tree;
 	Merge * merge;
@@ -89,17 +89,17 @@ Merge * merge_collapse(GRand * rng, Params * params, guint ii, Tree * aa, guint 
 	for (child = branch_get_children(bb); child != NULL; child = g_list_next(child)) {
 		branch_add_child(tree, child->data);
 	}
-	merge = merge_new(rng, params, ii, aa, jj, bb, tree);
+	merge = merge_new(rng, parent, params, ii, aa, jj, bb, tree);
 	tree_unref(tree);
 	return merge;
 }
 
-Merge * merge_best(GRand * rng, Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
+Merge * merge_best(GRand * rng, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb) {
 	Merge * merge;
 	Merge * best_merge;
 
-	best_merge = merge_join(rng, params, ii, aa, jj, bb);
-	merge = merge_absorb(rng, params, ii, aa, jj, bb);
+	best_merge = merge_join(rng, parent, params, ii, aa, jj, bb);
+	merge = merge_absorb(rng, parent, params, ii, aa, jj, bb);
 	if (merge != NULL) {
 		if (merge->score > best_merge->score) {
 			merge_free(best_merge);
@@ -108,7 +108,7 @@ Merge * merge_best(GRand * rng, Params * params, guint ii, Tree * aa, guint jj, 
 			merge_free(merge);
 		}
 	}
-	merge = merge_absorb(rng, params, jj, bb, ii, aa);
+	merge = merge_absorb(rng, parent, params, jj, bb, ii, aa);
 	if (merge != NULL) {
 		if (merge->score > best_merge->score) {
 			merge_free(best_merge);

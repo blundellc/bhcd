@@ -295,7 +295,7 @@ void test_tree_logprob4(void) {
 	g_assert(tree_num_intern(tcascade) == 3);
 	assert_eqfloat(tree_get_logprob(tcascade), correct_tcascade, prec);
 
-	merge = merge_join(rng, params, 0, tcascade_intern, 1, ldd);
+	merge = merge_join(rng, NULL, params, 0, tcascade_intern, 1, ldd);
 	assert_eqfloat(tree_get_logprob(merge->tree), correct_tcascade, prec);
 	merge_free(merge);
 
@@ -412,7 +412,7 @@ void test_merge_score3(void) {
 	branch_add_child(tabc, tab);
 	branch_add_child(tabc, lcc);
 
-	merge = merge_new(rng, params, 0, tab, 1, lcc, tabc);
+	merge = merge_new(rng, NULL, params, 0, tab, 1, lcc, tabc);
 
 	correct_tab =
 		log_add_exp(gsl_sf_log(0.4) + gsl_sf_lnbeta(1.0+1, 0.2+0) - gsl_sf_lnbeta(1.0, 0.2)

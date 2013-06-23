@@ -15,14 +15,14 @@ typedef struct {
 } Merge;
 
 
-Merge * merge_new(GRand * rng, Params * params, guint ii, Tree * aa, guint jj, Tree * bb, Tree * mm);
+Merge * merge_new(GRand * rng, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb, Tree * mm);
 void merge_free(Merge * merge);
 void merge_free1(gpointer merge, gpointer data);
 
-Merge * merge_best(GRand *, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
-Merge * merge_absorb(GRand *, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
-Merge * merge_join(GRand *, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
-Merge * merge_collapse(GRand *, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
+Merge * merge_best(GRand *, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
+Merge * merge_absorb(GRand *, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
+Merge * merge_join(GRand *, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
+Merge * merge_collapse(GRand *, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
 
 void merge_println(const Merge * merge, const gchar * prefix);
 void merge_tostring(const Merge * merge, GString * out);
