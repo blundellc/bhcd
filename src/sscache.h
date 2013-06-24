@@ -20,6 +20,7 @@ gpointer suffstats_copy(gpointer src);
 void suffstats_ref(gpointer ss);
 void suffstats_unref(gpointer ss);
 void suffstats_add(gpointer pdst, gpointer psrc);
+void suffstats_sub(gpointer pdst, gpointer psrc);
 void suffstats_print(gpointer ss);
 
 #endif /*SSCACHE_H*/

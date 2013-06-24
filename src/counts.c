@@ -19,6 +19,13 @@ void counts_add(Counts * dst, Counts * src) {
 	dst->num_total += src->num_total;
 }
 
+void counts_sub(Counts * dst, Counts * src) {
+	g_assert(dst->num_ones >= src->num_ones);
+	g_assert(dst->num_total >= src->num_total);
+	dst->num_ones -= src->num_ones;
+	dst->num_total -= src->num_total;
+}
+
 guint counts_num_zeros(Counts * counts) {
 	return counts->num_total - counts->num_ones;
 }

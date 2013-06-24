@@ -14,6 +14,7 @@ typedef struct {
 Counts * counts_new(guint num_ones, guint num_total);
 Counts * counts_copy(Counts *);
 void counts_add(Counts * dst, Counts * src);
+void counts_sub(Counts * dst, Counts * src);
 guint counts_num_zeros(Counts *);
 guint counts_num_ones(Counts *);
 void counts_ref(Counts *);

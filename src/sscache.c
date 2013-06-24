@@ -448,6 +448,12 @@ void suffstats_add(gpointer pdst, gpointer psrc) {
 	counts_add(dst, src);
 }
 
+void suffstats_sub(gpointer pdst, gpointer psrc) {
+	Counts * dst = pdst;
+	Counts * src = psrc;
+	counts_sub(dst, src);
+}
+
 
 void suffstats_print(gpointer ss) {
 	Counts * cc = ss;
