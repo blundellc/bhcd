@@ -30,6 +30,7 @@ Labelset * tree_get_labels(Tree * tree);
 Labelset * tree_get_merge_left(Tree * tree);
 Labelset * tree_get_merge_right(Tree * tree);
 Params * tree_get_params(Tree * tree);
+gpointer tree_get_suffstats(Tree * tree);
 gdouble tree_get_logprob(Tree *tree);
 gdouble tree_get_logresponse(Tree *tree);
 gdouble tree_logpredict(Tree *tree, gconstpointer src, gconstpointer dst, gboolean value);

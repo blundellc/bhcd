@@ -255,6 +255,10 @@ void tree_set_params(Tree * tree, Params * params, gboolean recurse) {
 	}
 }
 
+gpointer tree_get_suffstats(Tree * tree) {
+	return tree->suffstats_on;
+}
+
 guint tree_num_leaves(Tree * tree) {
 	guint total;
 	GList *child;
