@@ -27,5 +27,6 @@ gboolean minheap_iter_next(MinHeapIter *, gpointer *);
 
 void minheap_enq(MinHeap *, gpointer);
 gpointer minheap_deq(MinHeap *);
+void minheap_rebuild(MinHeap *);
 
 #endif /*MINHEAP_H*/

@@ -178,3 +178,9 @@ gboolean minheap_iter_next(MinHeapIter * iter, gpointer * pelem) {
 	return TRUE;
 }
 
+void minheap_rebuild(MinHeap * heap) {
+	for (gint ii = (heap->num_elems+1)/2; ii >= 0; ii--) {
+		minheap_bubble_down(heap, ii);
+	}
+}
+
