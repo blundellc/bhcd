@@ -3,10 +3,10 @@
 opt='-R 50'
 prefix="output/$(./scripts/datestamp)/sampson_t4"
 
-./src/bhcd $opt -p ${prefix} data/pajek/Sampson_Sampson_T4.gml
-./src/bhcd $opt -p ${prefix}_bin -B data/pajek/Sampson_Sampson_T4.gml
-./src/bhcd $opt -p ${prefix}_sparse -S data/pajek/Sampson_Sampson_T4.gml
-./src/bhcd $opt -p ${prefix}_binsparse -BS data/pajek/Sampson_Sampson_T4.gml
+./src/bhcd/bhcd $opt -p ${prefix} data/pajek/Sampson_Sampson_T4.gml
+./src/bhcd/bhcd $opt -p ${prefix}_bin -B data/pajek/Sampson_Sampson_T4.gml
+./src/bhcd/bhcd $opt -p ${prefix}_sparse -S data/pajek/Sampson_Sampson_T4.gml
+./src/bhcd/bhcd $opt -p ${prefix}_binsparse -BS data/pajek/Sampson_Sampson_T4.gml
 
 for x in '' _bin _sparse _binsparse
 do

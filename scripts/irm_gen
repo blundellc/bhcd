@@ -60,7 +60,7 @@ def main():
             print 'using MCMC'
             print >>params, "--mcmcflag=1"
 
-    num_items = int(subprocess.check_output(['./src/loadgml', args.train_file, 'num_items']))
+    num_items = int(subprocess.check_output(['./src/bhcd/loadgml', args.train_file, 'num_items']))
     with open(config_file, 'w') as config:
         print >>config, str(args.tag)
         # number of domains (1) and number of relations (1)
@@ -73,7 +73,7 @@ def main():
         # relation 0: has two dimensions D0 x D0.
         print >>config, "2 0 0"
 
-    subprocess.call(['./src/loadgml', args.train_file, 'write_irm', graph_file, names_file])
+    subprocess.call(['./src/bhcd/loadgml', args.train_file, 'write_irm', graph_file, names_file])
 
 
 if __name__ == '__main__':

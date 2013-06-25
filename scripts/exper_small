@@ -1,5 +1,5 @@
 #!/bin/sh
 
 dd=$(./scripts/datestamp)
-./src/bhcd -S -p output/$dd/noisy-blocks data/noisy-blocks.gml
+./src/bhcd/bhcd -S -p output/$dd/noisy-blocks data/noisy-blocks.gml
 ./scripts/bhcd_plot output/$dd/noisy-blocks.tree output/$dd/noisy-blocks.fit output/$dd/noisy-blocks.pdf

@@ -8,7 +8,7 @@ for mode in _sparse _binsparse
 do
     params_name="params${mode}"
     pp=${!params_name}
-    ./src/bhcd $pp -v -p output/${dd}/nipsf${mode} data/nips-full.gml || exit 1
+    ./src/bhcd/bhcd $pp -v -p output/${dd}/nipsf${mode} data/nips-full.gml || exit 1
     ./scripts/bhcd_clusters output/${dd}/nipsf${mode}.tree output/${dd}/nipsf${mode}.fit output/${dd}/nipsf${mode}.cluster_tree || exit 1
     ./scripts/bhcd_plot_tree output/${dd}/nipsf${mode}.cluster_tree output/${dd}/nipsf${mode}.cluster_pdf || exit 1
 done

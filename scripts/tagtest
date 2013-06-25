@@ -4,13 +4,13 @@ import subprocess, datetime, sys
 
 def main():
     leak_check = ['./scripts/leak', '--error-exitcode=1']
-    tagname = datetime.datetime.now().strftime('tested-%Y%m%d%H%M%S')
+    tagname = datetime.datetime.now().strftime('bhcd-tested-%Y%m%d%H%M%S')
     cmds = [
     # approx in order of run time
             ['./scripts/config', 'debug'],
-            ['./src/test'],
-            leak_check + ['./src/test'],
-            ['./src/savetoy'],
+            ['./src/bhcd/test'],
+            leak_check + ['./src/bhcd/test'],
+            ['./src/bhcd/savetoy'],
             ['./scripts/tagtest_lua'],
             ['diff', '-u', 'regress/standard-toy3.gml', 'output/toy3.gml'],
             ['diff', '-u', 'regress/standard-toy4dense.gml', 'output/toy4dense.gml'],
@@ -18,29 +18,29 @@ def main():
             ['diff', '-u', 'regress/standard-toy3.adj', 'output/toy3.adj'],
             ['diff', '-u', 'regress/standard-toy4dense.adj', 'output/toy4dense.adj'],
             ['diff', '-u', 'regress/standard-toy4sparse.adj', 'output/toy4sparse.adj'],
-            ['./src/bhcd', '-t', 'data/blocks.gml', 'data/noisy-blocks.gml'],
+            ['./src/bhcd/bhcd', '-t', 'data/blocks.gml', 'data/noisy-blocks.gml'],
             ['./scripts/bhcd_tree_diff', 'regress/standard-noisy-blocks.tree', 'output/out.tree'],
             ['/bin/sh','-c',' cut -d, -f2- output/out.pred | '+
                 'diff -u regress/standard-noisy-blocks.pred -'],
             ['/bin/sh','-c',' cut -d, -f2- output/out.fit | '+
                 'diff -u regress/standard-noisy-blocks.fit -'],
-            ['./src/bhcd', '-S', '-R', '50', '-t', 'data/blocks.gml', 'data/noisy-blocks.gml'],
+            ['./src/bhcd/bhcd', '-S', '-R', '50', '-t', 'data/blocks.gml', 'data/noisy-blocks.gml'],
             ['./scripts/bhcd_tree_diff', 'regress/standard-noisy-blocks-sparse.tree', 'output/out.tree'],
             ['/bin/sh','-c',' cut -d, -f2- output/out.pred | '+
                 'diff -u regress/standard-noisy-blocks.pred -'],
             ['/bin/sh','-c',' cut -d, -f2- output/out.fit | '+
                 'diff -u regress/standard-noisy-blocks.fit -'],
-            leak_check + ['./src/loadgml', 'data/ila/gene/gene_1_train.mat_train.gml',
+            leak_check + ['./src/bhcd/loadgml', 'data/ila/gene/gene_1_train.mat_train.gml',
                     'write_gml', 'output/out.gml', 'output/out.adj'],
             ['diff', '-u', 'regress/standard-gene1.gml', 'output/out.gml'],
             ['diff', '-u', 'regress/standard-gene1.adj', 'output/out.adj'],
-            leak_check + ['./src/bhcd', '-t', 'data/noisy-blocks.gml', 'data/blocks.gml'],
+            leak_check + ['./src/bhcd/bhcd', '-t', 'data/noisy-blocks.gml', 'data/blocks.gml'],
             ['./scripts/bhcd_tree_diff', 'regress/standard-blocks.tree', 'output/out.tree'],
             ['/bin/sh','-c',' cut -d, -f2- output/out.pred | '+
                 'diff -u regress/standard-blocks.pred -'],
             ['/bin/sh','-c',' cut -d, -f2- output/out.fit | '+
                 'diff -u regress/standard-blocks.fit -'],
-            leak_check + ['./src/bhcd', '-S', '-R', '50', '-t', 'data/noisy-blocks.gml', 'data/blocks.gml'],
+            leak_check + ['./src/bhcd/bhcd', '-S', '-R', '50', '-t', 'data/noisy-blocks.gml', 'data/blocks.gml'],
             ['./scripts/bhcd_tree_diff', 'regress/standard-blocks-sparse.tree', 'output/out.tree'],
             ['/bin/sh','-c',' cut -d, -f2- output/out.pred | '+
                 'diff -u regress/standard-blocks-sparse.pred -'],

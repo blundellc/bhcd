@@ -3,10 +3,10 @@
 opt='-R 100'
 prefix="output/$(./scripts/datestamp)/football"
 
-./src/bhcd $opt -p ${prefix} data/football.gml
-./src/bhcd $opt -p ${prefix}_bin -B data/football.gml
-./src/bhcd $opt -p ${prefix}_sparse -S data/football.gml
-./src/bhcd $opt -p ${prefix}_binsparse -BS data/football.gml
+./src/bhcd/bhcd $opt -p ${prefix} data/football.gml
+./src/bhcd/bhcd $opt -p ${prefix}_bin -B data/football.gml
+./src/bhcd/bhcd $opt -p ${prefix}_sparse -S data/football.gml
+./src/bhcd/bhcd $opt -p ${prefix}_binsparse -BS data/football.gml
 
 for x in '' _bin _sparse _binsparse
 do

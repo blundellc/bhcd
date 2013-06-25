@@ -21,7 +21,7 @@ for restart in $(seq $num_restarts); do
     myout="$out/blend/$restart"
     mkdir -p $myout
     opts="--restarts=1 --seed=$seed"
-    /usr/bin/time -o $myout/$tag.systime ./src/bhcd $opts "$@" -p $myout/$tag -t $test $train &
+    /usr/bin/time -o $myout/$tag.systime ./src/bhcd/bhcd $opts "$@" -p $myout/$tag -t $test $train &
     if [ $(($restart % 4)) == 0 ]
     then
         wait
