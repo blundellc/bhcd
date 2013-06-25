@@ -4,7 +4,6 @@
 #include <glib.h>
 #include <math.h>
 #include <gsl/gsl_math.h>
-#include "labelset.h"
 
 #define	EQFLOAT_DEFAULT_PREC	1e-4
 #define	assert_eqfloat(expa, expb, prec)							\
@@ -75,7 +74,6 @@ void list_assert_sorted(GList * list, GCompareFunc cmp);
 gboolean list_equal(GList *aa, GList *bb, GEqualFunc equal);
 guint list_hash(GList * list, GHashFunc hash_func);
 
-void list_labelset_print(GList *);
 gchar * strip_quotes(gchar *str);
 
 static inline guint32 pop_count(guint64 xx) {

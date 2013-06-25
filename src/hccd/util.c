@@ -206,17 +206,6 @@ gboolean list_equal(GList *aa, GList *bb, GEqualFunc equal) {
 }
 
 
-void list_labelset_print(GList * list) {
-	for (GList * pp = list; pp != NULL; pp = g_list_next(pp)) {
-		g_print("{ ");
-		labelset_print(pp->data);
-		g_print("}");
-		if (g_list_next(pp) != NULL) {
-			g_print(", ");
-		}
-	}
-}
-
 
 #define	LT(nn)	nn, nn, nn, nn, nn, nn, nn, nn, nn, nn, nn, nn, nn, nn, nn, nn
 static const char log2_32_tbl[256] = { -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, LT(4), LT(5), LT(5), LT(6), LT(6), LT(6), LT(6), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7) };
