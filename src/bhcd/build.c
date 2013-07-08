@@ -92,7 +92,6 @@ static void build_assert(Build * build) {
 		last_score = cur->score;
 		while (minheap_size(check) > 0) {
 			cur = minheap_deq(check);
-			g_print("prev: %f, cur: %f\n", last_score, cur->score);
 			g_assert(last_score >= cur->score);
 			last_score = cur->score;
 		}

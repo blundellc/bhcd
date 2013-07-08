@@ -457,6 +457,6 @@ void suffstats_sub(gpointer pdst, gpointer psrc) {
 
 void suffstats_print(gpointer ss) {
 	Counts * cc = ss;
-	g_print("<1: %d, 0: %d>", cc->num_ones, cc->num_total-cc->num_ones);
+	g_print("<0: %d, 1: %d>", cc->num_total-cc->num_ones, cc->num_ones);
 }
 
