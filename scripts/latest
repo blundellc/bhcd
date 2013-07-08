@@ -1,17 +1,21 @@
 #!/usr/bin/python2.7
 
-import os
+import os,re
 
 root = 'output'
 latest_dir = os.path.join(root, 'latest')
+
+looks_like_date = re.compile(r'^([0-9]+)([a-zA-Z0-9]*)$')
 
 # make output/latest a link farm into the latest version of each file it can find.
 def find_latest():
     latest = {}
     # traverse each output directory in date order
     dirs = os.listdir(root)
-    dirs = filter(lambda path: path.isdigit(), dirs)
-    dirs.sort(key=lambda path: -int(path))
+    dirs = filter(looks_like_date.match, dirs)
+    dirs.sort(key=lambda path:
+                (int(looks_like_date.match(path).group(1)), looks_like_date.match(path).group(2)),
+                reverse=True)
     for date in dirs:
         # walk through the directory, updating latest
         dateprefix = os.path.join(root, date)
