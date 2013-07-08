@@ -391,9 +391,11 @@ void test_merge_score3(void) {
 	Params * params;
 	Tree *laa, *lbb, *lcc;
 	Tree *tab, *tabc;
-	Merge *merge;
+	Merge *merge_ab;
+	Merge *merge_abc;
 	gdouble prec;
-	gdouble score_tabc, correct_tab, correct_tabc;
+	gdouble score_tabc, score_tab, correct_tab, correct_tabc;
+	gpointer global_suffstats;
 
 	prec = 1e-4;
 	rng = g_rand_new();
@@ -403,6 +405,20 @@ void test_merge_score3(void) {
 	tab = branch_new(params);
 	branch_add_child(tab, laa);
 	branch_add_child(tab, lbb);
+	merge_ab = merge_new(rng, NULL, params, 0, laa, 1, lbb, tab);
+	global_suffstats = counts_new(1, 3);
+	merge_notify_global_suffstats(merge_ab, global_suffstats);
+	suffstats_unref(global_suffstats);
+
+	correct_tab =
+		log_add_exp(gsl_sf_log(0.4) + gsl_sf_lnbeta(1.0+1, 0.2+0) - gsl_sf_lnbeta(1.0, 0.2)
+			   ,gsl_sf_log(1.0 - 0.4) + gsl_sf_lnbeta(0.2+1, 1.0+0) - gsl_sf_lnbeta(0.2, 1.0)
+			   );
+	assert_eqfloat(tree_get_logprob(tab), correct_tab, prec);
+	assert_eqfloat(tree_get_logprob(lcc), 0.0, prec);
+
+	score_tab = correct_tab + gsl_sf_lnbeta(0.2, 1.0+2) - gsl_sf_lnbeta(0.2+1, 1.0+2);
+	assert_eqfloat(merge_ab->score, score_tab, prec);
 
 	/* need to update cache with these merges first */
 	tree_unref(branch_new_full(params, laa, lcc));
@@ -412,23 +428,21 @@ void test_merge_score3(void) {
 	branch_add_child(tabc, tab);
 	branch_add_child(tabc, lcc);
 
-	merge = merge_new(rng, NULL, params, 0, tab, 1, lcc, tabc);
+	merge_abc = merge_new(rng, merge_ab, params, 0, tab, 1, lcc, tabc);
 
-	correct_tab =
-		log_add_exp(gsl_sf_log(0.4) + gsl_sf_lnbeta(1.0+1, 0.2+0) - gsl_sf_lnbeta(1.0, 0.2)
-			   ,gsl_sf_log(1.0 - 0.4) + gsl_sf_lnbeta(0.2+1, 1.0+0) - gsl_sf_lnbeta(0.2, 1.0)
-			   );
-	assert_eqfloat(tree_get_logprob(tab), correct_tab, prec);
-	assert_eqfloat(tree_get_logprob(lcc), 0.0, prec);
 	correct_tabc =
 		log_add_exp(gsl_sf_log(0.4) + gsl_sf_lnbeta(1.0+1, 0.2+2) - gsl_sf_lnbeta(1.0, 0.2)
 			   ,gsl_sf_log(1.0 - 0.4) + correct_tab + 0.0 + gsl_sf_lnbeta(0.2, 1.0+2) - gsl_sf_lnbeta(0.2, 1.0)
 			   );
 	assert_eqfloat(tree_get_logprob(tabc), correct_tabc, prec);
 	score_tabc = correct_tabc - (correct_tab + 0.0 + gsl_sf_lnbeta(0.2, 1.0+2) - gsl_sf_lnbeta(0.2, 1.0));
-	assert_eqfloat(merge->score, score_tabc, prec);
+	assert_eqfloat(merge_abc->score, score_tabc, prec);
 
-	merge_free(merge);
+	score_tabc = correct_tabc - correct_tab - gsl_sf_lnbeta(0.2, 1.0+2) + gsl_sf_lnbeta(0.2, 1.0);
+	assert_eqfloat(merge_abc->score, score_tabc, prec);
+
+	merge_free(merge_abc);
+	merge_free(merge_ab);
 	tree_unref(tab);
 	tree_unref(tabc);
 	tree_unref(laa);

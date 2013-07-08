@@ -5,6 +5,7 @@
 #include <glib/gprintf.h>
 #include "bhcd.h"
 
+extern gboolean merge_local_score;
 
 static gboolean binary_only = FALSE;
 static gboolean sparse_greedy = FALSE;
@@ -41,6 +42,8 @@ static GOptionEntry options[] = {
 	{ "prefix",	 'p', 0, G_OPTION_ARG_STRING,	&output_prefix,	"prefix for output filenames", NULL },
 	{ "sample-hypers", 0, 0, G_OPTION_ARG_STRING,	&output_hypers_fname,
 									"slice sample hyperparameters, output to this file", NULL },
+	{ "merge-local-score", 0,0, G_OPTION_ARG_NONE,	&merge_local_score,
+									"use local score for merges", NULL },
 
 	{ "gamma",	 'g', 0, G_OPTION_ARG_DOUBLE,	&param_gamma,	"set mixture parameter to GAMMA","GAMMA" },
 	{ "alpha",	 'a', 0, G_OPTION_ARG_DOUBLE,	&param_alpha,	"set on-diagonal one hyperparameter to ALPHA", "ALPHA" },

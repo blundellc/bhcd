@@ -176,28 +176,51 @@ static void build_remove_tree(Build * build, guint ii) {
 }
 
 static void build_init_merges(Build * build) {
+	MinHeapIter iter;
 	Merge * new_merge;
 	Tree * aa;
 	Tree * bb;
 	guint ii;
 	guint jj;
+	gpointer pmerge, global_suffstats;
 
 	g_assert(build->trees != NULL);
 	g_assert(build->merges == NULL);
 	g_assert(build->merges_data == NULL);
 	build->merges = minheap_new((build->trees->len*(build->trees->len-1))/2, merge_cmp_neg_score, (MinHeapFree)merge_free);
+	global_suffstats = suffstats_new_empty();
 
 	for (ii = 0; ii < build->trees->len; ii++) {
 		aa = g_ptr_array_index(build->trees, ii);
 		for (jj = ii + 1; jj < build->trees->len; jj++) {
 			bb = g_ptr_array_index(build->trees, jj);
 			new_merge = merge_join(build->rng, NULL, build->params, ii, aa, jj, bb);
+			suffstats_add(global_suffstats, tree_get_suffstats(new_merge->tree));
+			/* make sure diagonal elements are not added */
+			suffstats_sub(global_suffstats, tree_get_suffstats(aa));
+			suffstats_sub(global_suffstats, tree_get_suffstats(bb));
 			if (build_debug) {
 				merge_println(new_merge, "\tadd init merge: ");
+				g_print("\t\tsum stats: ");
+				suffstats_print(global_suffstats);
+				g_print("\n");
 			}
 			minheap_enq(build->merges, new_merge);
 		}
 	}
+	if (build_debug) {
+		g_print("global stats: ");
+		suffstats_print(global_suffstats);
+		g_print("\n");
+	}
+	minheap_iter_init(build->merges, &iter);
+	while (minheap_iter_next(&iter, &pmerge)) {
+		new_merge = pmerge;
+		merge_notify_global_suffstats(new_merge, global_suffstats);
+	}
+	/* rebuild to reflect updated scores */
+	minheap_rebuild(build->merges);
+	suffstats_unref(global_suffstats);
 }
 
 static void build_add_merges(Build * build, Merge * cur) {
@@ -228,9 +251,11 @@ static void build_fini_merges(Build * build) {
 }
 
 static void build_sparse_init_merges(Build * build) {
+	MinHeapIter iter;
 	Islands * islands;
 	Merge * new_merge;
 	GList * edges;
+	gpointer pmerge, global_suffstats;
 
 	g_assert(build->trees != NULL);
 	g_assert(build->merges == NULL);
@@ -241,6 +266,7 @@ static void build_sparse_init_merges(Build * build) {
 	edges = islands_get_edges(islands);
 
 	build->merges = minheap_new(g_list_length(edges), merge_cmp_neg_score, (MinHeapFree)merge_free);
+	global_suffstats = suffstats_new_empty();
 
 	for (GList * xx = edges; xx != NULL; xx = g_list_next(xx)) {
 		Pair * pair = xx->data;
@@ -252,12 +278,32 @@ static void build_sparse_init_merges(Build * build) {
 		g_assert(jj < build->trees->len);
 
 		new_merge = merge_join(build->rng, NULL, build->params, ii, aa, jj, bb);
+		suffstats_add(global_suffstats, tree_get_suffstats(new_merge->tree));
+		/* make sure diagonal elements are not added */
+		suffstats_sub(global_suffstats, tree_get_suffstats(aa));
+		suffstats_sub(global_suffstats, tree_get_suffstats(bb));
 		if (build_debug) {
 			merge_println(new_merge, "\tadd init merge: ");
+			g_print("\t\tsum stats: ");
+			suffstats_print(global_suffstats);
+			g_print("\n");
 		}
 		minheap_enq(build->merges, new_merge);
 	}
 	islands_get_edges_free(edges);
+	if (build_debug) {
+		g_print("global stats: ");
+		suffstats_print(global_suffstats);
+		g_print("\n");
+	}
+	minheap_iter_init(build->merges, &iter);
+	while (minheap_iter_next(&iter, &pmerge)) {
+		new_merge = pmerge;
+		merge_notify_global_suffstats(new_merge, global_suffstats);
+	}
+	/* rebuild to reflect updated scores */
+	minheap_rebuild(build->merges);
+	suffstats_unref(global_suffstats);
 }
 
 static void build_sparse_add_merges(Build * build, Merge * cur) {

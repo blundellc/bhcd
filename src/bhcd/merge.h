@@ -9,15 +9,18 @@ typedef struct {
 	guint ii;
 	guint jj;
 	Tree * tree;
+	gdouble tree_score;
 	gdouble score;
 	/* break equal scores at random */
 	gdouble sym_break;
+	gpointer ss_offblock;
+	gpointer ss_hyp;
 } Merge;
 
 
 Merge * merge_new(GRand * rng, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb, Tree * mm);
 void merge_free(Merge * merge);
-void merge_free1(gpointer merge, gpointer data);
+void merge_notify_global_suffstats(Merge *, gpointer);
 
 Merge * merge_best(GRand *, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
 Merge * merge_absorb(GRand *, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);

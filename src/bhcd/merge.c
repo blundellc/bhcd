@@ -1,34 +1,99 @@
 #include "merge.h"
 #include "sscache.h"
+#include "counts.h"
 
-static gdouble merge_calc_logprob_rel(Params * params, Tree * aa, Tree * bb);
+static const gboolean merge_debug = FALSE;
+gboolean merge_local_score = FALSE;
+
+static void merge_calc_score(Merge * merge);
 
 
 Merge * merge_new(GRand * rng, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb, Tree * mm) {
 	Merge * merge;
-	gdouble logprob_rel;
 
 	merge = g_slice_new(Merge);
 	merge->ii = ii;
 	merge->jj = jj;
 	merge->tree = mm;
 	tree_ref(merge->tree);
-	logprob_rel = merge_calc_logprob_rel(params, aa, bb);
-	merge->score = tree_get_logprob(merge->tree)
-	       		- tree_get_logprob(aa) - tree_get_logprob(bb) - logprob_rel;
+
+	merge->tree_score = tree_get_logprob(merge->tree)
+	       		- tree_get_logprob(aa)
+			- tree_get_logprob(bb);
+
+	merge->ss_offblock = sscache_get_offblock(params->sscache,
+			tree_get_merge_left(aa),
+			tree_get_merge_right(aa),
+			tree_get_merge_left(bb),
+			tree_get_merge_right(bb));
+	suffstats_ref(merge->ss_offblock);
+	merge->ss_hyp = NULL;
 	merge->sym_break = g_rand_double(rng);
+	if (parent != NULL && parent->ss_hyp != NULL) {
+		merge_notify_global_suffstats(merge, parent->ss_hyp);
+	}
+	merge_calc_score(merge);
 	return merge;
 }
 
 void merge_free(Merge * merge) {
+	suffstats_unref(merge->ss_offblock);
+	if (merge->ss_hyp != NULL) {
+		suffstats_unref(merge->ss_hyp);
+	}
 	tree_unref(merge->tree);
 	g_slice_free(Merge, merge);
 }
 
-void merge_free1(gpointer merge, gpointer data) {
-	merge_free(merge);
+
+void merge_notify_global_suffstats(Merge * merge, gpointer global_suffstats) {
+	/* the first pairwise merges have no parents, but we want an alternate
+	 * hypothesis
+	 */
+	g_assert(merge->ss_hyp == NULL);
+	merge->ss_hyp = suffstats_new_empty();
+	suffstats_add(merge->ss_hyp, global_suffstats);
+	suffstats_sub(merge->ss_hyp, merge->ss_offblock);
+	merge_calc_score(merge);
 }
 
+static void merge_calc_score(Merge * merge) {
+	Params * params;
+
+	params = tree_get_params(merge->tree);
+	if (merge_local_score || merge->ss_hyp == NULL) {
+		/* local score */
+		merge->score = merge->tree_score - params_logprob_offscore(params, merge->ss_offblock);
+		if (merge_debug) {
+			merge_println(merge, "");
+		}
+	} else {
+		gpointer ss_all;
+
+		ss_all = suffstats_new_empty();
+		suffstats_add(ss_all, merge->ss_hyp);
+		suffstats_add(ss_all, merge->ss_offblock);
+		merge->score = merge->tree_score
+			+ params_logprob_offscore(params, merge->ss_hyp)
+			- params_logprob_offscore(params, ss_all);
+		if (merge_debug) {
+			merge_println(merge, "");
+			g_print("tree score: %e, hyp score: %e(%d,%d), all score: %e(%d,%d), off score %e(%d,%d)\n",
+					merge->tree_score,
+					params_logprob_offscore(params, merge->ss_hyp),
+					((Counts *)merge->ss_hyp)->num_ones,
+					((Counts *)merge->ss_hyp)->num_total,
+					params_logprob_offscore(params, ss_all),
+					((Counts *)ss_all)->num_ones,
+					((Counts *)ss_all)->num_total,
+					params_logprob_offscore(params, merge->ss_offblock),
+					((Counts *)merge->ss_offblock)->num_ones,
+					((Counts *)merge->ss_offblock)->num_total
+			       );
+		}
+		suffstats_unref(ss_all);
+	}
+}
 
 void merge_println(const Merge * merge, const gchar * prefix) {
 	GString * out;
@@ -120,23 +185,6 @@ Merge * merge_best(GRand * rng, Merge * parent, Params * params, guint ii, Tree 
 	return best_merge;
 }
 
-static gdouble merge_calc_logprob_rel(Params * params, Tree * aa, Tree * bb) {
-	gpointer offblock;
-	gdouble logprob_rel;
-
-	offblock = sscache_get_offblock(params->sscache,
-			tree_get_merge_left(aa),
-			tree_get_merge_right(aa),
-			tree_get_merge_left(bb),
-			tree_get_merge_right(bb));
-	/*
-	g_print("score offblock: ");
-	suffstats_print(offblock);
-	g_print("\n");
-	*/
-	logprob_rel = params_logprob_offscore(params, offblock);
-	return logprob_rel;
-}
 
 gint merge_cmp_neg_score(gconstpointer paa, gconstpointer pbb) {
 	const Merge * aa = paa;
