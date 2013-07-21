@@ -95,6 +95,7 @@ static void build_assert(Build * build) {
 			g_assert(last_score >= cur->score);
 			last_score = cur->score;
 		}
+		minheap_free(check);
 	}
 }
 
