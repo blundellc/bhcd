@@ -3,6 +3,7 @@
 Counts * counts_new(guint num_ones, guint num_total) {
 	Counts * counts;
 
+	g_assert(num_ones <= num_total);
 	counts = g_slice_new(Counts);
 	counts->ref_count = 1;
 	counts->num_ones = num_ones;

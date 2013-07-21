@@ -68,6 +68,9 @@ void dataset_unref(Dataset* dataset) {
 }
 
 void dataset_set_filename(Dataset *dataset, const gchar *filename) {
+	if (dataset->filename != NULL) {
+		g_free(dataset->filename);
+	}
 	dataset->filename = g_strdup(filename);
 }
 
@@ -78,6 +81,7 @@ const gchar * dataset_get_filename(Dataset * dataset) {
 
 void dataset_set_omitted(Dataset * dataset, gboolean omitted) {
 	g_assert(omitted == FALSE || omitted == TRUE);
+	g_assert(g_hash_table_size(dataset->cells) == 0);
 	dataset->omitted = omitted;
 }
 
