@@ -34,6 +34,7 @@ void dataset_unref(Dataset *);
 const gchar * dataset_get_filename(Dataset *);
 void dataset_set_filename(Dataset *, const gchar *);
 void dataset_set_omitted(Dataset *, gboolean omitted);
+void dataset_set_keep_diagonal(Dataset *, gboolean);
 gboolean dataset_get_sparse(Dataset *, gboolean *omitted);
 
 void dataset_set(Dataset *, gpointer, gpointer, gboolean);

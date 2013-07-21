@@ -6,6 +6,7 @@ Dataset * dataset_gen_speckle(GRand * rng, guint num_items, gdouble prob_one) {
 	guint ii, jj;
 
 	dd = dataset_new();
+	dataset_set_keep_diagonal(dd, TRUE);
 	for (ii = 0; ii < num_items; ii++) {
 		gchar *name_ii = num_to_string(ii);
 		gpointer label_ii = dataset_label_create(dd, name_ii);
@@ -28,6 +29,7 @@ Dataset * dataset_gen_blocks(GRand * rng, guint num_items, guint block_width, gd
 	guint value;
 
 	dd = dataset_new();
+	dataset_set_keep_diagonal(dd, TRUE);
 	for (ii = 0; ii < num_items; ii++) {
 		gchar *name_ii = num_to_string(ii);
 		gpointer label_ii = dataset_label_create(dd, name_ii);
@@ -79,6 +81,7 @@ Dataset * dataset_gen_toy4(gboolean sparse) {
 	gpointer aa, bb, cc, dd;
 
 	dataset = dataset_new();
+	dataset_set_keep_diagonal(dataset, TRUE);
 	if (sparse) {
 		dataset_set_omitted(dataset, FALSE);
 	}

@@ -12,6 +12,7 @@ static gboolean sparse_greedy = FALSE;
 static gboolean lua_shell = FALSE;
 static gboolean verbose = FALSE;
 static gboolean disable_fit_file = FALSE;
+static gboolean dataset_keep_diag = FALSE;
 static guint build_restarts = 1;
 static guint seed = 0x2a23b6bb;
 static gdouble param_gamma = 0.4;
@@ -44,6 +45,8 @@ static GOptionEntry options[] = {
 									"slice sample hyperparameters, output to this file", NULL },
 	{ "merge-local-score", 0,0, G_OPTION_ARG_NONE,	&merge_local_score,
 									"use local score for merges", NULL },
+	{ "data-keep-diag", 0,0, G_OPTION_ARG_NONE,	&dataset_keep_diag,
+									"retain diagonal values", NULL },
 
 	{ "gamma",	 'g', 0, G_OPTION_ARG_DOUBLE,	&param_gamma,	"set mixture parameter to GAMMA","GAMMA" },
 	{ "alpha",	 'a', 0, G_OPTION_ARG_DOUBLE,	&param_alpha,	"set on-diagonal one hyperparameter to ALPHA", "ALPHA" },

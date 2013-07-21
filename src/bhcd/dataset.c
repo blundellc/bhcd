@@ -10,6 +10,7 @@ struct Dataset_t {
 	guint		ref_count;
 	gchar *		filename;
 	gint		omitted;
+	gboolean	keep_diag;
 	GQuark		max_qlabel;
 	GHashTable *	labels;
 	GHashTable *	cells;
@@ -34,6 +35,7 @@ Dataset* dataset_new(void) {
 	data->ref_count = 1;
 	data->filename = NULL;
 	data->omitted = -1;
+	data->keep_diag = FALSE;
 	data->cells = g_hash_table_new_full(
 				dataset_key_hash,
 				dataset_key_eq,
@@ -77,6 +79,11 @@ const gchar * dataset_get_filename(Dataset * dataset) {
 void dataset_set_omitted(Dataset * dataset, gboolean omitted) {
 	g_assert(omitted == FALSE || omitted == TRUE);
 	dataset->omitted = omitted;
+}
+
+void dataset_set_keep_diagonal(Dataset * dataset, gboolean keep_diag){ 
+	g_assert(g_hash_table_size(dataset->cells) == 0);
+	dataset->keep_diag = keep_diag;
 }
 
 gboolean dataset_get_sparse(Dataset * dataset, gboolean * omitted) {
@@ -124,7 +131,7 @@ gboolean dataset_is_missing(Dataset * dataset, gpointer src, gpointer dst) {
 void dataset_set(Dataset * dataset, gpointer src, gpointer dst, gboolean value) {
 	g_assert(value == FALSE || value == TRUE);
 	dataset_set_full(dataset, src, dst, value);
-	g_assert(!dataset_is_missing(dataset, src, dst));
+	g_assert(!dataset_is_missing(dataset, src, dst) || (!dataset->keep_diag && src == dst));
 }
 
 void dataset_set_missing(Dataset * dataset, gpointer src, gpointer dst) {
@@ -134,6 +141,14 @@ void dataset_set_missing(Dataset * dataset, gpointer src, gpointer dst) {
 
 static void dataset_set_full(Dataset * dataset, gpointer src, gpointer dst, gint value) {
 	Dataset_Key * key;
+
+	if (!dataset->keep_diag && src == dst && value != -1) {
+		g_message("overriding diagonal edge between %s and %s as missing",
+				dataset_label_to_string(dataset, src),
+				dataset_label_to_string(dataset, dst)
+			 );
+		value = -1;
+	}
 
 	key = dataset_key(dataset, src, dst);
 	if (value == dataset->omitted) {
