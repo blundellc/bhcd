@@ -200,12 +200,6 @@ static void build_init_merges(Build * build) {
 			/* make sure diagonal elements are not added */
 			suffstats_sub(global_suffstats, tree_get_suffstats(aa));
 			suffstats_sub(global_suffstats, tree_get_suffstats(bb));
-			if (build_debug) {
-				merge_println(new_merge, "\tadd init merge: ");
-				g_print("\t\tsum stats: ");
-				suffstats_print(global_suffstats);
-				g_print("\n");
-			}
 			minheap_enq(build->merges, new_merge);
 		}
 	}
@@ -218,6 +212,9 @@ static void build_init_merges(Build * build) {
 	while (minheap_iter_next(&iter, &pmerge)) {
 		new_merge = pmerge;
 		merge_notify_global_suffstats(new_merge, global_suffstats);
+		if (build_debug) {
+			merge_println(new_merge, "\tadd init merge: ");
+		}
 	}
 	/* rebuild to reflect updated scores */
 	minheap_rebuild(build->merges);
@@ -283,12 +280,6 @@ static void build_sparse_init_merges(Build * build) {
 		/* make sure diagonal elements are not added */
 		suffstats_sub(global_suffstats, tree_get_suffstats(aa));
 		suffstats_sub(global_suffstats, tree_get_suffstats(bb));
-		if (build_debug) {
-			merge_println(new_merge, "\tadd init merge: ");
-			g_print("\t\tsum stats: ");
-			suffstats_print(global_suffstats);
-			g_print("\n");
-		}
 		minheap_enq(build->merges, new_merge);
 	}
 	islands_get_edges_free(edges);
@@ -301,6 +292,9 @@ static void build_sparse_init_merges(Build * build) {
 	while (minheap_iter_next(&iter, &pmerge)) {
 		new_merge = pmerge;
 		merge_notify_global_suffstats(new_merge, global_suffstats);
+		if (build_debug) {
+			merge_println(new_merge, "\tadd init merge: ");
+		}
 	}
 	/* rebuild to reflect updated scores */
 	minheap_rebuild(build->merges);
