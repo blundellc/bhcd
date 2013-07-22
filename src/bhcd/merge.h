@@ -24,7 +24,7 @@ typedef struct {
 
 Merge * merge_new(GRand * rng, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb, Tree * mm);
 void merge_free(Merge * merge);
-void merge_notify_global_suffstats(Merge *, gpointer);
+void merge_notify_pair(Merge *, gpointer);
 
 Merge * merge_best(GRand *, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);
 Merge * merge_absorb(GRand *, Merge * parent, Params * params, guint ii, Tree * aa, guint jj, Tree * bb);

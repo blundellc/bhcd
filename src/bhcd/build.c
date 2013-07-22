@@ -211,7 +211,7 @@ static void build_init_merges(Build * build) {
 	minheap_iter_init(build->merges, &iter);
 	while (minheap_iter_next(&iter, &pmerge)) {
 		new_merge = pmerge;
-		merge_notify_global_suffstats(new_merge, global_suffstats);
+		merge_notify_pair(new_merge, global_suffstats);
 		if (build_debug) {
 			merge_println(new_merge, "\tadd init merge: ");
 		}
@@ -291,7 +291,7 @@ static void build_sparse_init_merges(Build * build) {
 	minheap_iter_init(build->merges, &iter);
 	while (minheap_iter_next(&iter, &pmerge)) {
 		new_merge = pmerge;
-		merge_notify_global_suffstats(new_merge, global_suffstats);
+		merge_notify_pair(new_merge, global_suffstats);
 		if (build_debug) {
 			merge_println(new_merge, "\tadd init merge: ");
 		}

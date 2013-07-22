@@ -31,7 +31,7 @@ Merge * merge_new(GRand * rng, Merge * parent, Params * params, guint ii, Tree *
 	merge->ss_self = NULL;
 	merge->sym_break = g_rand_double(rng);
 	if (parent != NULL && parent->ss_parent != NULL) {
-		merge_notify_global_suffstats(merge, parent->ss_self);
+		merge_notify_pair(merge, parent->ss_self);
 	}
 	merge_calc_score(merge);
 	return merge;
@@ -50,7 +50,7 @@ void merge_free(Merge * merge) {
 }
 
 
-void merge_notify_global_suffstats(Merge * merge, gpointer global_suffstats) {
+void merge_notify_pair(Merge * merge, gpointer global_suffstats) {
 	/* the first pairwise merges have no parents, but we want an alternate
 	 * hypothesis
 	 */
