@@ -14,7 +14,7 @@ typedef struct {
 	/* break equal scores at random */
 	gdouble sym_break;
 	gpointer ss_offblock;
-	gpointer ss_hyp;
+	gpointer ss_all;
 } Merge;
 
 

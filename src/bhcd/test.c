@@ -435,10 +435,16 @@ void test_merge_score3(void) {
 			   ,gsl_sf_log(1.0 - 0.4) + correct_tab + 0.0 + gsl_sf_lnbeta(0.2, 1.0+2) - gsl_sf_lnbeta(0.2, 1.0)
 			   );
 	assert_eqfloat(tree_get_logprob(tabc), correct_tabc, prec);
-	score_tabc = correct_tabc - (correct_tab + 0.0 + gsl_sf_lnbeta(0.2, 1.0+2) - gsl_sf_lnbeta(0.2, 1.0));
+	//score_tabc = correct_tabc - (correct_tab + 0.0 + gsl_sf_lnbeta(0.2, 1.0+2) - gsl_sf_lnbeta(0.2, 1.0));
+	score_tabc = correct_tabc - correct_tab - gsl_sf_lnbeta(0.2+1, 1.0+2) + gsl_sf_lnbeta(0.2+1, 1.0);
 	assert_eqfloat(merge_abc->score, score_tabc, prec);
 
-	score_tabc = correct_tabc - correct_tab - gsl_sf_lnbeta(0.2, 1.0+2) + gsl_sf_lnbeta(0.2, 1.0);
+	// hyp: 1,1
+	// all: 1,3
+	// 1/(g(all)/g(hyp)) = g(hyp)/g(all) = g(0.2+1,1.0)/g(0.2+1,1.0+3)
+	//score_tabc = correct_tabc - correct_tab - gsl_sf_lnbeta(0.2, 1.0+2) + gsl_sf_lnbeta(0.2, 1.0);
+	assert_eqfloat(merge_abc->tree_score, correct_tabc - correct_tab - 0.0, prec);
+	score_tabc = correct_tabc - correct_tab - gsl_sf_lnbeta(0.2+1, 1.0+2) + gsl_sf_lnbeta(0.2+1, 1.0);
 	assert_eqfloat(merge_abc->score, score_tabc, prec);
 
 	merge_free(merge_abc);

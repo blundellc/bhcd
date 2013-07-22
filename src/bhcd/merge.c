@@ -27,10 +27,10 @@ Merge * merge_new(GRand * rng, Merge * parent, Params * params, guint ii, Tree *
 			tree_get_merge_left(bb),
 			tree_get_merge_right(bb));
 	suffstats_ref(merge->ss_offblock);
-	merge->ss_hyp = NULL;
+	merge->ss_all = NULL;
 	merge->sym_break = g_rand_double(rng);
-	if (parent != NULL && parent->ss_hyp != NULL) {
-		merge_notify_global_suffstats(merge, parent->ss_hyp);
+	if (parent != NULL && parent->ss_all != NULL) {
+		merge_notify_global_suffstats(merge, parent->ss_all);
 	}
 	merge_calc_score(merge);
 	return merge;
@@ -38,8 +38,8 @@ Merge * merge_new(GRand * rng, Merge * parent, Params * params, guint ii, Tree *
 
 void merge_free(Merge * merge) {
 	suffstats_unref(merge->ss_offblock);
-	if (merge->ss_hyp != NULL) {
-		suffstats_unref(merge->ss_hyp);
+	if (merge->ss_all != NULL) {
+		suffstats_unref(merge->ss_all);
 	}
 	tree_unref(merge->tree);
 	g_slice_free(Merge, merge);
@@ -50,10 +50,9 @@ void merge_notify_global_suffstats(Merge * merge, gpointer global_suffstats) {
 	/* the first pairwise merges have no parents, but we want an alternate
 	 * hypothesis
 	 */
-	g_assert(merge->ss_hyp == NULL);
-	merge->ss_hyp = suffstats_new_empty();
-	suffstats_add(merge->ss_hyp, global_suffstats);
-	suffstats_sub(merge->ss_hyp, merge->ss_offblock);
+	g_assert(merge->ss_all == NULL);
+	merge->ss_all = global_suffstats;
+	suffstats_ref(merge->ss_all);
 	merge_calc_score(merge);
 }
 
@@ -61,37 +60,37 @@ static void merge_calc_score(Merge * merge) {
 	Params * params;
 
 	params = tree_get_params(merge->tree);
-	if (merge_local_score || merge->ss_hyp == NULL) {
+	if (merge_local_score || merge->ss_all == NULL) {
 		/* local score */
 		merge->score = merge->tree_score - params_logprob_offscore(params, merge->ss_offblock);
 		if (merge_debug) {
 			merge_println(merge, "");
 		}
 	} else {
-		gpointer ss_all;
+		gpointer ss_hyp;
 
-		ss_all = suffstats_new_empty();
-		suffstats_add(ss_all, merge->ss_hyp);
-		suffstats_add(ss_all, merge->ss_offblock);
+		ss_hyp = suffstats_new_empty();
+		suffstats_add(ss_hyp, merge->ss_all);
+		suffstats_sub(ss_hyp, merge->ss_offblock);
 		merge->score = merge->tree_score
-			+ params_logprob_offscore(params, merge->ss_hyp)
-			- params_logprob_offscore(params, ss_all);
+			+ params_logprob_offscore(params, ss_hyp)
+			- params_logprob_offscore(params, merge->ss_all);
 		if (merge_debug) {
 			merge_println(merge, "");
 			g_print("tree score: %e, hyp score: %e(%d,%d), all score: %e(%d,%d), off score %e(%d,%d)\n",
 					merge->tree_score,
-					params_logprob_offscore(params, merge->ss_hyp),
-					((Counts *)merge->ss_hyp)->num_ones,
-					((Counts *)merge->ss_hyp)->num_total,
-					params_logprob_offscore(params, ss_all),
-					((Counts *)ss_all)->num_ones,
-					((Counts *)ss_all)->num_total,
+					params_logprob_offscore(params, ss_hyp),
+					((Counts *)ss_hyp)->num_ones,
+					((Counts *)ss_hyp)->num_total,
+					params_logprob_offscore(params, merge->ss_all),
+					((Counts *)merge->ss_all)->num_ones,
+					((Counts *)merge->ss_all)->num_total,
 					params_logprob_offscore(params, merge->ss_offblock),
 					((Counts *)merge->ss_offblock)->num_ones,
 					((Counts *)merge->ss_offblock)->num_total
 			       );
 		}
-		suffstats_unref(ss_all);
+		suffstats_unref(ss_hyp);
 	}
 }
 
@@ -106,6 +105,29 @@ void merge_println(const Merge * merge, const gchar * prefix) {
 
 void merge_tostring(const Merge * merge, GString * out) {
 	g_string_append_printf(out, "%03d + %03d (%2.2e/%1.2e)-> ", merge->ii, merge->jj, merge->score, merge->sym_break);
+	if (merge->ss_all != NULL) {
+		gpointer ss_tree = tree_get_suffstats(merge->tree);
+		gpointer ss_hyp = suffstats_new_empty();
+		Params * params = tree_get_params(merge->tree);
+		suffstats_add(ss_hyp, merge->ss_all);
+		suffstats_sub(ss_hyp, merge->ss_offblock);
+		g_string_append_printf(out, "[total tree score: %e, new tree score: %e(%d,%d), hyp score: %e(%d,%d), all score: %e(%d,%d), off score %e(%d,%d)]",
+				merge->tree_score,
+				tree_get_logprob(merge->tree),
+				((Counts *)ss_tree)->num_ones,
+				((Counts *)ss_tree)->num_total,
+				params_logprob_offscore(params, ss_hyp),
+				((Counts *)ss_hyp)->num_ones,
+				((Counts *)ss_hyp)->num_total,
+				params_logprob_offscore(params, merge->ss_all),
+				((Counts *)merge->ss_all)->num_ones,
+				((Counts *)merge->ss_all)->num_total,
+				params_logprob_offscore(params, merge->ss_offblock),
+				((Counts *)merge->ss_offblock)->num_ones,
+				((Counts *)merge->ss_offblock)->num_total
+		       );
+		suffstats_unref(ss_hyp);
+	}
 	tree_tostring(merge->tree, out);
 }
 
