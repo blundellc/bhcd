@@ -13,8 +13,12 @@ typedef struct {
 	gdouble score;
 	/* break equal scores at random */
 	gdouble sym_break;
+	/* suff stats between leaves of this tree */
 	gpointer ss_offblock;
-	gpointer ss_all;
+	/* suff stats for elements not in parent forest */
+	gpointer ss_parent;
+	/* suff stats for elements not in this forest */
+	gpointer ss_self;
 } Merge;
 
 

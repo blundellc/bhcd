@@ -4,7 +4,7 @@
 #include "minheap.h"
 
 
-static const gboolean build_debug = FALSE;
+static const gboolean build_debug = TRUE;
 
 typedef void (*InitMergesFunc)(Build *);
 typedef void (*AddMergesFunc)(Build *, Merge *);
