@@ -105,14 +105,18 @@ gboolean dataset_get(Dataset * dataset, gconstpointer src, gconstpointer dst, gb
 	Dataset_Key * key;
 	gpointer ptr;
 
-	key = dataset_key(dataset, src, dst);
-	ptr = g_hash_table_lookup(dataset->cells, key);
-	dataset_key_free(key);
-	if (ptr == NULL) {
-		value = dataset->omitted;
+	if (!dataset->keep_diag && src == dst) {
+		value = -1;
 	} else {
-		value = DATASET_VALUE_TO_INT(ptr);
-		g_assert(value != dataset->omitted);
+		key = dataset_key(dataset, src, dst);
+		ptr = g_hash_table_lookup(dataset->cells, key);
+		dataset_key_free(key);
+		if (ptr == NULL) {
+			value = dataset->omitted;
+		} else {
+			value = DATASET_VALUE_TO_INT(ptr);
+			g_assert(value != dataset->omitted);
+		}
 	}
 
 	if (value < 0) {
