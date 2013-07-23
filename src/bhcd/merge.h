@@ -15,9 +15,11 @@ typedef struct {
 	gdouble sym_break;
 	/* suff stats between leaves of this tree */
 	gpointer ss_offblock;
+	/* suff stats for all */
+	gpointer ss_all;
 	/* suff stats for elements not in parent forest */
 	gpointer ss_parent;
-	/* suff stats for elements not in this forest */
+	/* suff stats for elements not in forest at time of creation */
 	gpointer ss_self;
 } Merge;
 

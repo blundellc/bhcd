@@ -2,9 +2,10 @@
 #include "sscache.h"
 #include "counts.h"
 
-static const gboolean merge_debug = TRUE;
+static const gboolean merge_debug = FALSE;
 gboolean merge_local_score = FALSE;
 
+static void merge_notify_parent(Merge * merge, gpointer global_suffstats, gpointer ss_aa, gpointer ss_bb);
 static void merge_calc_score(Merge * merge);
 
 
@@ -27,11 +28,12 @@ Merge * merge_new(GRand * rng, Merge * parent, Params * params, guint ii, Tree *
 			tree_get_merge_left(bb),
 			tree_get_merge_right(bb));
 	suffstats_ref(merge->ss_offblock);
+	merge->ss_all = NULL;
 	merge->ss_parent = NULL;
 	merge->ss_self = NULL;
 	merge->sym_break = g_rand_double(rng);
-	if (parent != NULL && parent->ss_parent != NULL) {
-		merge_notify_pair(merge, parent->ss_self);
+	if (parent != NULL && parent->ss_all != NULL) {
+		merge_notify_parent(merge, parent->ss_all, tree_get_suffstats(aa), tree_get_suffstats(bb));
 	}
 	merge_calc_score(merge);
 	return merge;
@@ -39,6 +41,9 @@ Merge * merge_new(GRand * rng, Merge * parent, Params * params, guint ii, Tree *
 
 void merge_free(Merge * merge) {
 	suffstats_unref(merge->ss_offblock);
+	if (merge->ss_all != NULL) {
+		suffstats_unref(merge->ss_all);
+	}
 	if (merge->ss_parent != NULL) {
 		suffstats_unref(merge->ss_parent);
 	}
@@ -51,14 +56,25 @@ void merge_free(Merge * merge) {
 
 
 void merge_notify_pair(Merge * merge, gpointer global_suffstats) {
-	/* the first pairwise merges have no parents, but we want an alternate
-	 * hypothesis
-	 */
-	g_assert(merge->ss_parent == NULL);
-	merge->ss_parent = global_suffstats;
-	suffstats_ref(merge->ss_parent);
-	merge->ss_self = suffstats_copy(merge->ss_parent);
-	suffstats_sub(merge->ss_self, merge->ss_offblock);
+	g_assert(merge->ss_all == NULL);
+	merge_notify_parent(merge, global_suffstats, NULL, NULL);
+}
+
+static void merge_notify_parent(Merge * merge, gpointer global_suffstats, gpointer ss_aa, gpointer ss_bb) {
+	merge->ss_all = global_suffstats;
+	suffstats_ref(merge->ss_all);
+
+	if (ss_aa == NULL && ss_bb == NULL) {
+		merge->ss_parent = merge->ss_all;
+		suffstats_ref(merge->ss_parent);
+	} else {
+		merge->ss_parent = suffstats_copy(merge->ss_all);
+		suffstats_sub(merge->ss_parent, ss_aa);
+		suffstats_sub(merge->ss_parent, ss_bb);
+	}
+
+	merge->ss_self = suffstats_copy(merge->ss_all);
+	suffstats_sub(merge->ss_self, tree_get_suffstats(merge->tree));
 	merge_calc_score(merge);
 }
 
@@ -70,7 +86,6 @@ static void merge_calc_score(Merge * merge) {
 		/* local score */
 		merge->score = merge->tree_score - params_logprob_offscore(params, merge->ss_offblock);
 	} else {
-		g_assert(merge->ss_self != NULL);
 		merge->score = merge->tree_score
 			+ params_logprob_offscore(params, merge->ss_self)
 			- params_logprob_offscore(params, merge->ss_parent);

@@ -407,7 +407,7 @@ void test_merge_score3(void) {
 	branch_add_child(tab, lbb);
 	merge_ab = merge_new(rng, NULL, params, 0, laa, 1, lbb, tab);
 	global_suffstats = counts_new(1, 3);
-	merge_notify_global_suffstats(merge_ab, global_suffstats);
+	merge_notify_pair(merge_ab, global_suffstats);
 	suffstats_unref(global_suffstats);
 
 	correct_tab =
