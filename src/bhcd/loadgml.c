@@ -62,11 +62,39 @@ void write_graph(gpointer arg, GIOChannel *io) {
 	}
 }
 
+void write_pairs(gpointer arg, GIOChannel *io) {
+	Pair * argpair = arg;
+	GHashTable * label_index = argpair->fst;
+	Dataset * dataset = argpair->snd;
+	DatasetPairIter pairs;
+	gpointer lsrc, ldst;
+	gpointer src_ptr, dst_ptr;
+	guint src, dst;
+	gboolean value;
+
+	dataset_label_pairs_iter_init(dataset, &pairs);
+	while (dataset_label_pairs_iter_next(&pairs, &lsrc, &ldst)) {
+		if (lsrc == ldst) {
+			g_warning("skipping self-link");
+			continue;
+		}
+		src_ptr = g_hash_table_lookup(label_index, lsrc);
+		src = GPOINTER_TO_INT(src_ptr);
+		dst_ptr = g_hash_table_lookup(label_index, ldst);
+		dst = GPOINTER_TO_INT(dst_ptr);
+		value = dataset_get(dataset, lsrc, ldst, NULL);
+		if (value) {
+			io_printf(io, "%u\t%u\n", src, dst);
+		}
+	}
+	g_hash_table_unref(label_index);
+}
 
 void usage(const gchar *name) {
 	g_error("usage: %s <filename> cmd\n"
 		"\twrite_irm <output graph> <output names>\n"
 		"\twrite_gml <output gml> <output adj>\n"
+		"\twrite_pairs <output pairs> <output pair names>\n"
 		"\tnum_items\n", name);
 }
 
@@ -92,6 +120,19 @@ int main(int argc, char *argv[]) {
 			io_writefile(argv[4], (IOFunc) write_names, indices_dataset);
 		}
 		io_writefile(argv[3], (IOFunc) write_graph, indices_dataset);
+		g_hash_table_unref(indices_dataset->fst);
+		pair_free(indices_dataset);
+	} else if (strcmp(argv[2], "write_pairs") == 0 && argc == 5) {
+		Pair * indices_dataset = pair_new(g_hash_table_new(NULL, NULL), dataset);
+		if (g_file_test(argv[4], G_FILE_TEST_EXISTS)) {
+			g_print("names file exists already; using it.\n");
+			io_readfile(argv[4], (IOFunc) read_names, indices_dataset);
+		} else {
+			io_writefile(argv[4], (IOFunc) write_names, indices_dataset);
+		}
+		io_writefile(argv[3], (IOFunc) write_pairs, indices_dataset);
+		g_hash_table_unref(indices_dataset->fst);
+		pair_free(indices_dataset);
 	} else {
 		usage(argv[0]);
 	}
