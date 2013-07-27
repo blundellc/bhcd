@@ -1,4 +1,6 @@
 #!/bin/sh
 dd=$(date +%Y%m%d)
-mkdir -p output/$dd || exit 1
-echo ${dd}gscore
+tag=gscore
+name=$dd$tag
+mkdir -p output/$name || exit 1
+echo $name

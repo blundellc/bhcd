@@ -15,6 +15,8 @@ data_index <- function(fold='nips1', fit_or_pred='pred') {
         cbind('bhcd-bin',   paste('output/latest/blend/',fold,'bin.score_',fit_or_pred,sep='')),
         cbind('bhcd-sp',    paste('output/latest/blend/',fold,'sparse.score_',fit_or_pred,sep='')),
         cbind('bhcd-spbin', paste('output/latest/blend/',fold,'binsparse.score_',fit_or_pred,sep='')),
+        cbind('bhcd-gl',    paste('output/latest/blend/',fold,'global.score_',fit_or_pred,sep='')),
+        cbind('bhcd-glbin', paste('output/latest/blend/',fold,'binglobal.score_',fit_or_pred,sep='')),
         cbind('irm-mcmc',   paste('output/latest/irm/',fold,'/score_',fit_or_pred, sep='')),
         cbind('irm-greedy', paste('output/latest/irm/',fold,'search/score_',fit_or_pred, sep=''))
         )))
@@ -34,18 +36,18 @@ mkplot <- function(dim, index=data_index()) {
     pp <- pp + geom_point() + geom_line()
     pp <- pp + scale_x_log10() + xlab('Run time (s)') + ylab(dim_labels[1, dim])
     pp <- pp + scale_color_discrete(name='',
-                breaks=c('irm-mcmc', 'irm-greedy', 'bhcd-bin', 'bhcd', 'bhcd-spbin', 'bhcd-sp'),
-                labels=c('MCMC', 'Greedy', 'Binary ', 'Rose ', 'Binary', 'Rose'))
+                breaks=c('irm-mcmc', 'irm-greedy', 'bhcd-bin', 'bhcd', 'bhcd-spbin', 'bhcd-sp', 'bhcd-glbin', 'bhcd-gl'),
+                labels=c('MCMC', 'Greedy', 'Binary ', 'Rose ', 'Binary', 'Rose', 'Binary', 'Rose'))
     pp <- pp + scale_shape_discrete(name='',
-                breaks=c('irm-mcmc', 'irm-greedy', 'bhcd-bin', 'bhcd', 'bhcd-spbin', 'bhcd-sp'),
-                labels=c('MCMC', 'Greedy', 'Binary ', 'Rose ', 'Binary', 'Rose'))
+                breaks=c('irm-mcmc', 'irm-greedy', 'bhcd-bin', 'bhcd', 'bhcd-spbin', 'bhcd-sp', 'bhcd-glbin', 'bhcd-gl'),
+                labels=c('MCMC', 'Greedy', 'Binary ', 'Rose ', 'Binary', 'Rose', 'Binary', 'Rose'))
     pp <- pp + scale_linetype_manual(name='',
-                breaks=c('irm-mcmc', 'irm-greedy', 'bhcd-bin', 'bhcd', 'bhcd-spbin', 'bhcd-sp'),
-                labels=c('MCMC', 'Greedy', 'Binary ', 'Rose ', 'Binary', 'Rose'),
-                values=c(1, 2, 3, 4, 5, 6))
+                breaks=c('irm-mcmc', 'irm-greedy', 'bhcd-bin', 'bhcd', 'bhcd-spbin', 'bhcd-sp', 'bhcd-glbin', 'bhcd-gl'),
+                labels=c('MCMC', 'Greedy', 'Binary ', 'Rose ', 'Binary', 'Rose', 'Binary', 'Rose'),
+                values=c(1, 2, 3, 4, 5, 6, 7, 8))
     pp <- pp + theme_bw()
     if (dim == 'lpred_mean') {
-        gg <- guide_legend(title='IRM             BHCD        BHCD sparse',
+        gg <- guide_legend(title='IRM             BHCD        BHCD sparse     BHCD global',
                 title.position='top', nrow=2, direction='horizontal')
         pp <- pp + guides(color = gg, shape = gg, linetype=gg)
         pp <- pp + theme(legend.position = c(0.65,0.15))

@@ -21,6 +21,8 @@ for x in $(seq 1 10); do
             ./scripts/bhcd_$mode ${name}${x}bin $train $test --binary-only $params
             ./scripts/bhcd_$mode ${name}${x}sparse $train $test --sparse $params
             ./scripts/bhcd_$mode ${name}${x}binsparse $train $test --binary-only --sparse $params
+            ./scripts/bhcd_$mode ${name}${x}global $train $test --merge-global-score $params
+            ./scripts/bhcd_$mode ${name}${x}binglobal $train $test --merge-global-score --binary-only $params
         done
     done
 done

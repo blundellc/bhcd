@@ -3,7 +3,7 @@
 #include "counts.h"
 
 static const gboolean merge_debug = FALSE;
-gboolean merge_local_score = FALSE;
+gboolean merge_global_score = FALSE;
 
 static void merge_notify_parent(Merge * merge, gpointer global_suffstats, gpointer ss_aa, gpointer ss_bb);
 static void merge_calc_score(Merge * merge);
@@ -61,6 +61,13 @@ void merge_notify_pair(Merge * merge, gpointer global_suffstats) {
 }
 
 static void merge_notify_parent(Merge * merge, gpointer global_suffstats, gpointer ss_aa, gpointer ss_bb) {
+	/* if we're just doing the local score, we do not need to compute all
+	 * these bits
+	 */
+	if (!merge_global_score) {
+		return;
+	}
+
 	merge->ss_all = global_suffstats;
 	suffstats_ref(merge->ss_all);
 
@@ -82,7 +89,7 @@ static void merge_calc_score(Merge * merge) {
 	Params * params;
 
 	params = tree_get_params(merge->tree);
-	if (merge_local_score || merge->ss_parent == NULL) {
+	if (!merge_global_score || merge->ss_parent == NULL) {
 		/* local score */
 		merge->score = merge->tree_score - params_logprob_offscore(params, merge->ss_offblock);
 	} else {

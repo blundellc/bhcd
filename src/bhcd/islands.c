@@ -38,6 +38,8 @@ Islands * islands_new(Dataset * dataset, GPtrArray *trees) {
 		jj = GPOINTER_TO_INT(qq);
 		islands_add_edge(islands, ii, jj);
 	}
+	/*
+	 * a ``correct'' but ineffective sparse rule
 	dataset_label_pairs_iter_init_full(dataset, DATASET_ITER_MISSING, &pairs);
 	while (dataset_label_pairs_iter_next(&pairs, &src, &dst)) {
 		pp = g_hash_table_lookup(labels_to_trees, src);
@@ -46,6 +48,7 @@ Islands * islands_new(Dataset * dataset, GPtrArray *trees) {
 		jj = GPOINTER_TO_INT(qq);
 		islands_add_edge(islands, ii, jj);
 	}
+	*/
 	g_hash_table_unref(labels_to_trees);
 
 	return islands;

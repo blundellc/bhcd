@@ -5,7 +5,7 @@
 #include <glib/gprintf.h>
 #include "bhcd.h"
 
-extern gboolean merge_local_score;
+extern gboolean merge_global_score;
 
 static gboolean binary_only = FALSE;
 static gboolean sparse_greedy = FALSE;
@@ -43,8 +43,8 @@ static GOptionEntry options[] = {
 	{ "prefix",	 'p', 0, G_OPTION_ARG_STRING,	&output_prefix,	"prefix for output filenames", NULL },
 	{ "sample-hypers", 0, 0, G_OPTION_ARG_STRING,	&output_hypers_fname,
 									"slice sample hyperparameters, output to this file", NULL },
-	{ "merge-local-score", 0,0, G_OPTION_ARG_NONE,	&merge_local_score,
-									"use local score for merges", NULL },
+	{ "merge-global-score", 'G',0, G_OPTION_ARG_NONE, &merge_global_score,
+									"use global score for merges", NULL },
 	{ "data-keep-diag", 0,0, G_OPTION_ARG_NONE,	&dataset_keep_diag,
 									"retain diagonal values", NULL },
 
@@ -204,6 +204,10 @@ int main(int argc, char * argv[]) {
 	Pair * root_timer_train;
 
 	train_fname = parse_args(&argc, &argv);
+
+	if (sparse_greedy && merge_global_score) {
+		g_error("cannot combine sparse with global score at present");
+	}
 
 	g_print("seed: %x\n", seed);
 	g_print("output prefix: %s\n", output_prefix);
