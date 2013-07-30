@@ -1,8 +1,8 @@
 #!/bin/bash
 
 dd=$(./scripts/datestamp)
-params_sparse='-S -R 50'
-params_binsparse='-SB -R 50'
+params_sparse='-S -R 10'
+params_binsparse='-SB -R 10'
 
 for mode in _sparse _binsparse
 do

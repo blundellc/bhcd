@@ -51,7 +51,7 @@ def main():
         prefix = prefix_path + prefix_atom
         if not os.path.exists(os.path.dirname(out_prefix)):
             os.makedirs(os.path.dirname(out_prefix))
-        for suffix_atom in ['', 'bin', 'sparse', 'binsparse']:
+        for suffix_atom in ['', 'bin', 'sparse', 'binsparse', 'global', 'binglobal']:
             suffix = suffix_atom + suffix_path
             names, results = load_all(prefix, suffix)
             result = avg_results(results)

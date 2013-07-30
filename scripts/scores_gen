@@ -15,7 +15,7 @@ do
 #            ./scripts/pred output/latest/irm/$c${n}search/$type >output/$cur/irm/$c${n}search/score_$type &
 #            ./scripts/pred output/latest/irm/$c$n/$type >output/$cur/irm/$c$n/score_$type &
             wait
-            for x in "" sparse bin binsparse
+            for x in "" sparse bin binsparse global binglobal
             do
                 ./scripts/pred output/latest/blend/*/$c$n$x.$type >output/$cur/blend/$c$n$x.score_$type &
             done
