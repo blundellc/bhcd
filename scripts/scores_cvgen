@@ -44,30 +44,32 @@ def main():
         print 'bad date stamp'
         sys.exit(1)
     out_prefix_path = 'output/' + date_str + '/'
-    suffix_path = '.score_pred'
     # bhcd first
-    for prefix_atom in ['blend/nips', 'blend/gene']:
-        out_prefix = out_prefix_path + prefix_atom
-        prefix = prefix_path + prefix_atom
-        if not os.path.exists(os.path.dirname(out_prefix)):
-            os.makedirs(os.path.dirname(out_prefix))
-        for suffix_atom in ['', 'bin', 'sparse', 'binsparse', 'global', 'binglobal']:
-            suffix = suffix_atom + suffix_path
-            names, results = load_all(prefix, suffix)
-            result = avg_results(results)
-            output(out_prefix, suffix, names, result)
+    for suffix_path in ['.score_pred','.score_fit']:
+        #for prefix_atom in ['blend/nips', 'blend/gene']:
+        for prefix_atom in ['blend/nips']:
+            out_prefix = out_prefix_path + prefix_atom
+            prefix = prefix_path + prefix_atom
+            if not os.path.exists(os.path.dirname(out_prefix)):
+                os.makedirs(os.path.dirname(out_prefix))
+            for suffix_atom in ['', 'bin', 'sparse', 'binsparse', 'global', 'binglobal']:
+                suffix = suffix_atom + suffix_path
+                names, results = load_all(prefix, suffix)
+                result = avg_results(results)
+                output(out_prefix, suffix, names, result)
     # irm
-    suffix_path = '/score_pred'
-    for prefix_atom in ['irm/nips', 'irm/gene']:
-        prefix = prefix_path + prefix_atom
-        out_prefix = out_prefix_path + prefix_atom
-        for suffix_atom in ['', 'search']:
-            if not os.path.exists(out_prefix+'_cv_'+suffix_atom):
-                os.makedirs(out_prefix+'_cv_'+suffix_atom)
-            suffix = suffix_atom + suffix_path
-            names, results = load_all(prefix, suffix)
-            result = avg_results(results)
-            output(out_prefix, suffix, names, result)
+    for suffix_path in ['/score_pred','/score_fit']:
+        #for prefix_atom in ['irm/nips', 'irm/gene']:
+        for prefix_atom in ['irm/nips']:
+            prefix = prefix_path + prefix_atom
+            out_prefix = out_prefix_path + prefix_atom
+            for suffix_atom in ['', 'search']:
+                if not os.path.exists(out_prefix+'_cv_'+suffix_atom):
+                    os.makedirs(out_prefix+'_cv_'+suffix_atom)
+                suffix = suffix_atom + suffix_path
+                names, results = load_all(prefix, suffix)
+                result = avg_results(results)
+                output(out_prefix, suffix, names, result)
 
 if __name__ == '__main__':
     main()

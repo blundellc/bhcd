@@ -1,10 +1,12 @@
 #!/bin/bash
 
 dd=$(./scripts/datestamp)
-params_sparse='-S -R 10'
-params_binsparse='-SB -R 10'
+repeat='-R 1'
+params=$repeat
+params_sparse="-S $repeat"
+#params_binsparse="-SB $repeat"
 
-for mode in _sparse _binsparse
+for mode in '' _sparse _binsparse
 do
     params_name="params${mode}"
     pp=${!params_name}

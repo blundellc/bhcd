@@ -22,7 +22,7 @@ data_index <- function(fold='nips1', fit_or_pred='pred') {
         )))
 }
 
-dim_labels = data.frame(lpred_mean='Average Log Predictive', loss01='Accuracy', auc='Area Under the Curve (AUC)')
+dim_labels = data.frame(lpred_mean='Average Log Predictive', loss01='Accuracy', auc='Area Under the Curve (AUC)', rmse='Root Mean Square Error')
 
 mkplot <- function(dim, index=data_index()) {
     df = c()
@@ -64,7 +64,8 @@ main <- function() {
         for (field in c('lpred_mean','loss01','rmse','auc')) {
             #for (fold in c('_cv_', 1,2,3,4,5,6,7,8,9,10)) {
             for (fold in c('_cv_', 1)) {
-                for (data in c('nips','gene')) {
+                #for (data in c('nips','gene')) {
+                for (data in c('nips')) {
                     foldname <- paste(data, fold, sep='')
                     print(paste(foldname,field))
                     pp <- mkplot(field, data_index(foldname,type))

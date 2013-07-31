@@ -7,7 +7,8 @@ for type in pred fit
 do
     for n in $(seq 1 10)
     do
-        for c in gene nips
+        #for c in gene nips
+        for c in nips
         do
             echo $c$n $type
             mkdir -p output/$cur/irm/$c$n
