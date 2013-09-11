@@ -22,3 +22,6 @@ do
         ./scripts/bhcd_plot $prefix$suffix.tree $prefix$suffix.fit $prefix$suffix.pdf
     done
 done
+
+# ground truth: use any .fit file
+./scripts/bhcd_plot data/sampson_t4_truth.tree $prefix.fit ${prefix}_truth.pdf

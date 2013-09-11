@@ -34,7 +34,7 @@ class Data(object):
 
     def add(self, src, dst, truth, lp_false, lp_true):
         self.edges[src, dst] = {None: truth, False: lp_false, True: lp_true}
-        self.edges[dst, src] = {None: truth, False: lp_false, True: lp_true}
+        #self.edges[dst, src] = {None: truth, False: lp_false, True: lp_true}
 
     def min_size(self, ctx, labels):
         num_labels = len(labels)
