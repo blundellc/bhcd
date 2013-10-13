@@ -6,6 +6,7 @@
 #include "bhcd.h"
 
 extern gboolean merge_global_score;
+extern gboolean dataset_symmetric;
 
 static gboolean binary_only = FALSE;
 static gboolean sparse_greedy = FALSE;
@@ -47,6 +48,8 @@ static GOptionEntry options[] = {
 									"use global score for merges", NULL },
 	{ "data-keep-diag", 0,0, G_OPTION_ARG_NONE,	&dataset_keep_diag,
 									"retain diagonal values", NULL },
+	{ "data-symmetric", 0,0, G_OPTION_ARG_NONE,	&dataset_symmetric,
+									"symmetrise data set", NULL },
 
 	{ "gamma",	 'g', 0, G_OPTION_ARG_DOUBLE,	&param_gamma,	"set mixture parameter to GAMMA","GAMMA" },
 	{ "alpha",	 'a', 0, G_OPTION_ARG_DOUBLE,	&param_alpha,	"set on-diagonal one hyperparameter to ALPHA", "ALPHA" },

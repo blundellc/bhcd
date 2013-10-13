@@ -6,6 +6,8 @@
 #define	DATASET_VALUE_TO_INT(pp)	(GPOINTER_TO_INT(pp) - DATASET_VALUE_SHIFT)
 #define	DATASET_INT_TO_VALUE(ii)	(GINT_TO_POINTER(ii + DATASET_VALUE_SHIFT))
 
+gboolean dataset_symmetric = FALSE;
+
 struct Dataset_t {
 	guint		ref_count;
 	gchar *		filename;
@@ -368,6 +370,11 @@ static Dataset_Key * dataset_key(Dataset * dd, gconstpointer psrc, gconstpointer
 
 	src = GPOINTER_TO_INT(psrc);
 	dst = GPOINTER_TO_INT(pdst);
+	if (dataset_symmetric && src > dst) {
+		GQuark tmp = src;
+		src = dst;
+		dst = tmp;
+	}
 	key->src = src;
 	key->dst = dst;
 

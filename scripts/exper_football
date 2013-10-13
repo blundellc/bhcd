@@ -1,6 +1,6 @@
 #!/bin/sh
 
-opt='-R 100'
+opt='-R 50 --data-symmetric'
 prefix="output/$(./scripts/datestamp)/football"
 
 ./src/bhcd/bhcd $opt -p ${prefix} data/football.gml
