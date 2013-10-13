@@ -7,8 +7,8 @@ prefix="output/$(./scripts/datestamp)/sampson_t4"
 ./src/bhcd/bhcd $opt -p ${prefix}_bin -B data/pajek/Sampson_Sampson_T4.gml
 ./src/bhcd/bhcd $opt -p ${prefix}_sparse -S data/pajek/Sampson_Sampson_T4.gml
 ./src/bhcd/bhcd $opt -p ${prefix}_binsparse -BS data/pajek/Sampson_Sampson_T4.gml
-./src/bhcd/bhcd $opt -p ${prefix}_global -a 1 -b 1 -d 1 -l 1 -G data/pajek/Sampson_Sampson_T4.gml
-./src/bhcd/bhcd $opt -p ${prefix}_binglobal -a 1 -b 1 -d 1 -l 1 -GB data/pajek/Sampson_Sampson_T4.gml
+./src/bhcd/bhcd $opt -p ${prefix}_global -G data/pajek/Sampson_Sampson_T4.gml
+./src/bhcd/bhcd $opt -p ${prefix}_binglobal -GB data/pajek/Sampson_Sampson_T4.gml
 
 for x in '' bin
 do

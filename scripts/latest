@@ -60,7 +60,9 @@ def update_links(latest):
 
 def main():
     latest = find_latest()
+    print('latest has', len(latest), 'items. removing old...')
     remove_old(latest)
+    print 'updating links...'
     update_links(latest)
 
 if __name__ == '__main__':
