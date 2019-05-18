@@ -22,11 +22,12 @@ def parse_tree(filename):
                 parent_node = tree
             else:
                 stem_parent_name = str(i["stem"]["parent"])
-                parent_node = tree.search_nodes(name=stem_parent_name)[0]
-            parent_node.add_child(name=str(i["stem"]["child"]))
+                parent_node = tree.search_nodes(custom_name=stem_parent_name)[0]
+            child = parent_node.add_child()
+            child.add_features(custom_name=str(i["stem"]["child"]))
         elif(i.get("leaf")):# parse leaf
             leaf_parent_name = str(i["leaf"]["parent"])
-            parent_node = tree.search_nodes(name=leaf_parent_name)[0]
+            parent_node = tree.search_nodes(custom_name=leaf_parent_name)[0]
             parent_node.add_child(name=str(i["leaf"]["label"]))
     return tree
 
