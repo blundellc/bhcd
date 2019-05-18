@@ -47,7 +47,7 @@ class BHCD:
             _G.add_edge(i,j)
         _, filename = tempfile.mkstemp()
         self.gml = filename
-        nx.write(filename)
+        nx.write_gml(_G, filename)
         
     def fit(self, G, initialize_tree = True):
         self._write_gml(G)
