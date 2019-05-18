@@ -212,8 +212,8 @@ int main(int argc, char * argv[]) {
 		g_error("cannot combine sparse with global score at present");
 	}
 
-	g_print("seed: %x\n", seed);
-	g_print("output prefix: %s\n", output_prefix);
+	// g_print("seed: %x\n", seed);
+	// g_print("output prefix: %s\n", output_prefix);
 	rng = g_rand_new_with_seed(seed);
 	timer = g_timer_new();
 	dataset = dataset_gml_load(train_fname);
@@ -222,8 +222,8 @@ int main(int argc, char * argv[]) {
 	root = run(rng, dataset);
 	g_timer_stop(timer);
 
-	io_stdout((IOFunc)timer_save_io, timer);
-	tree_println(root, "tree: ");
+	// io_stdout((IOFunc)timer_save_io, timer);
+	// tree_println(root, "tree: ");
 
 	io_writefile(output_time_fname, (IOFunc)timer_save_io, timer);
 	tree_io_save(root, output_tree_fname);
