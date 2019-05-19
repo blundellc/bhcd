@@ -242,10 +242,6 @@ int main(int argc, char * argv[]) {
 		io_writefile(output_hypers_fname, (IOFunc)sample_save_hypers, root);
 	}
 
-	if (lua_shell) {
-		bhcd_lua_shell(root);
-	}
-
 	tree_unref(root);
 	g_free(output_tree_fname);
 	g_free(output_pred_fname);

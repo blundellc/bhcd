@@ -14,7 +14,6 @@
 #include "build.h"
 #include "bitset.h"
 #include "labelset.h"
-#include "lua_bhcd.h"
 #include "lnbetacache.h"
 #include "minheap.h"
 
