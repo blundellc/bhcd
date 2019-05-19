@@ -12,7 +12,7 @@ from ete3 import Tree
 BUILD_DIR = os.path.join(os.path.dirname(__file__), 'build')
 
 def parse_tree(filename):
-    st = open(filename).read()
+    st = open(filename).read().replace('\n','').replace('\t','').replace('\\','/')
     js = json.loads(st)
     tree = Tree()
     for i in js["tree"]:

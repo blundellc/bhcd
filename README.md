@@ -4,6 +4,9 @@ An efficient Bayesian nonparametric model for discovering hierarchical community
 
 ## Build
 
+CMake
+remove lua support.
+
 ```sh
 # apt install automake libtool libgsl-dev liblua5.1-dev
 $ autoreconf -i
