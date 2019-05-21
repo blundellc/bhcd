@@ -15,6 +15,7 @@ def parse_tree(filename):
     st = open(filename).read().replace('\n','').replace('\t','').replace('\\','/')
     js = json.loads(st)
     tree = Tree()
+    tree.add_features(custom_name='0')
     for i in js["tree"]:
         # parse stem    
         if(i.get("stem")):
