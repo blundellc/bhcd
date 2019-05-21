@@ -9,6 +9,8 @@ add_executable(bhcd bhcd.c)
 if(WIN32)
     find_package(unofficial-glib REQUIRED)
     target_link_libraries(bhcd unofficial::glib::glib)
+elseif(UNIX)
+    target_link_libraries(bhcd ${GLIB_LDFLAGS})
 endif()
 
 target_link_libraries(bhcd debug ${GSL_LIBRARY_DEBUG})

@@ -4,7 +4,7 @@ import os
 import json
 import tempfile
 import subprocess
-import pdb
+import sys
 
 import networkx as nx
 from ete3 import Tree
@@ -36,9 +36,13 @@ class BHCD:
         if(os.environ.get('BHCD')):
             self.bhcd = os.environ['BHCD']
         else:
-            exe_path = os.path.join(os.path.dirname(__file__), 'src', 'build', 'bhcd', 'Release', 'bhcd.exe')
+            if(sys.platform == 'win32'):
+                exe_path = os.path.join(os.path.dirname(__file__), 'src', 'build', 'bhcd', 'Release', 'bhcd.exe')
+            else:
+                exe_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'src', 'build', 'bhcd', 'bhcd')
             if(os.path.exists(exe_path)):
                 self.bhcd = exe_path
+        print(exe_path)            
         self.tree = Tree()
         self._gamma = gamma
         self._alpha = alpha
