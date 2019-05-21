@@ -64,7 +64,7 @@ class BHCD:
     def fit(self, G, initialize_tree = True):
         self._write_gml(G)
         # write files to build directory, replace the last run of fit
-        command_list = [self.bhcd, '-S', '-g', str(self._gamma), '-a', str(self._alpha),
+        command_list = [self.bhcd, '-g', str(self._gamma), '-a', str(self._alpha),
             '-b', str(self._beta), '-d', str(self._delta), '-l', str(self._lambda),
             '-p', 'runner']
         if(self.sparse):
