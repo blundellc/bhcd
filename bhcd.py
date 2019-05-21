@@ -33,7 +33,7 @@ def parse_tree(filename):
     return tree
 
 class BHCD:
-    def __init__(self, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, sparse=True):
+    def __init__(self, restart=1, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, sparse=True):
         if(os.environ.get('BHCD')):
             self.bhcd = os.environ['BHCD']
         else:
@@ -43,7 +43,6 @@ class BHCD:
                 exe_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'src', 'build', 'bhcd', 'bhcd')
             if(os.path.exists(exe_path)):
                 self.bhcd = exe_path
-        print(exe_path)            
         self.tree = Tree()
         self._gamma = gamma
         self._alpha = alpha
@@ -51,6 +50,7 @@ class BHCD:
         self._delta = delta
         self._lambda = _lambda
         self.sparse = sparse
+        self.restart = restart
     def _write_gml(self, G):
         '''write to tmp dir
         '''
@@ -67,7 +67,7 @@ class BHCD:
         # write files to build directory, replace the last run of fit
         command_list = [self.bhcd, '-g', str(self._gamma), '-a', str(self._alpha),
             '-b', str(self._beta), '-d', str(self._delta), '-l', str(self._lambda),
-            '-p', 'runner']
+            '-p', 'runner', '-R', str(self.restart)]
         if(self.sparse):
             command_list.append('-S')
         command_list.append(self.gml)
