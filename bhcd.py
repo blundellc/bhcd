@@ -55,6 +55,8 @@ class BHCD:
         '''write to tmp dir
         '''
         _G = nx.Graph()
+        for node in G.nodes():
+            _G.add_node(node)
         for edge in G.edges():
             i,j = edge
             _G.add_edge(i,j)
@@ -67,14 +69,14 @@ class BHCD:
         # write files to build directory, replace the last run of fit
         command_list = [self.bhcd, '-g', str(self._gamma), '-a', str(self._alpha),
             '-b', str(self._beta), '-d', str(self._delta), '-l', str(self._lambda),
-            '-p', 'runner', '-R', str(self.restart)]
+            '-p', 'runner', '-R', str(self.restart), '--data-symmetric']
         if(self.sparse):
             command_list.append('-S')
         command_list.append(self.gml)
         subprocess.run(command_list, cwd=BUILD_DIR)
         # block until call returned
         tree_filename = os.path.join(BUILD_DIR, 'runner.tree')
-        if(initialize_tree and self.tree.is_leaf()):
+        if(initialize_tree):
             self.tree = parse_tree(tree_filename)
             
 if __name__ == '__main__':
