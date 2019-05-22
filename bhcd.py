@@ -13,6 +13,8 @@ BUILD_DIR = os.path.join(os.path.dirname(__file__), 'src', 'build')
 
 def parse_tree(filename):
     st = open(filename).read().replace('\n','').replace('\t','').replace('\\','/')
+    st = st.replace(']}','')
+    st += ']}'
     js = json.loads(st)
     tree = Tree()
     tree.add_features(custom_name='0')
