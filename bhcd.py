@@ -65,13 +65,26 @@ class BHCD:
         _, filename = tempfile.mkstemp()
         self.gml = filename
         nx.write_gml(_G, filename)
-        
-    def fit(self, G, initialize_tree = True):
+
+    def _write_gml_test(self, node_num):
+        _G = nx.Graph()
+        for i in range(node_num):
+            for j in range(i+1, node_num):
+                _G.add_edge(i, j)
+        _, filename = tempfile.mkstemp()
+        self.test_gml = filename
+        nx.write_gml(_G, filename)
+
+    def fit(self, G, initialize_tree = True, predict=True):
         self._write_gml(G)
+        self._write_gml_test(len(G))
         # write files to build directory, replace the last run of fit
         command_list = [self.bhcd, '-g', str(self._gamma), '-a', str(self._alpha),
             '-b', str(self._beta), '-d', str(self._delta), '-l', str(self._lambda),
             '-p', 'runner', '-R', str(self.restart), '--data-symmetric']
+        if(predict):
+            self._write_gml_test(len(G))
+            command_list.extend(['-t', self.test_gml])    
         if(self.sparse):
             command_list.append('-S')
         command_list.append(self.gml)
