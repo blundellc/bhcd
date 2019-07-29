@@ -37,3 +37,4 @@ src/bhcd/bhcd
 src/bhcd/loadgml
 src/bhcd/pagerank
 src/bhcd/savetoy
+bhcd.egg-info
