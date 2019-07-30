@@ -97,9 +97,10 @@ class BHCD:
             self.node_size = len(G)
             self._write_gml_test(self.node_size)            
         # write files to build directory, replace the last run of fit
+        intermediate_file_prefix = 'runner_%d'%os.getpid()
         command_list = [self.bhcd, '-g', str(self._gamma), '-a', str(self._alpha),
             '-b', str(self._beta), '-d', str(self._delta), '-l', str(self._lambda),
-            '-p', 'runner', '-R', str(self.restart), '--data-symmetric']
+            '-p', intermediate_file_prefix, '-R', str(self.restart), '--data-symmetric']
         if(predict):
             self._write_gml_test(len(G))
             command_list.extend(['-t', self.test_gml])    
@@ -108,11 +109,11 @@ class BHCD:
         command_list.append(self.gml)
         subprocess.run(command_list, cwd=BUILD_DIR)
         # block until call returned
-        tree_filename = os.path.join(BUILD_DIR, 'runner.tree')
+        tree_filename = os.path.join(BUILD_DIR,  intermediate_file_prefix + '.tree')
         if(initialize_tree):
             self.tree = parse_tree(tree_filename)
         if(predict):
-            predict_file = os.path.join(BUILD_DIR, 'runner.pred')
+            predict_file = os.path.join(BUILD_DIR, intermediate_file_prefix + '.pred')
             self.predict_dic = parse_predict_file(predict_file)
     
     def predict(self, node_index_i, node_index_j, weight_added = 1):
