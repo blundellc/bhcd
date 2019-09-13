@@ -52,6 +52,7 @@ def parse_predict_file(filename):
     
 class BHCD:
     def __init__(self, restart=1, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, sparse=True):
+        self.bhcd = 'bhcd'
         if(os.environ.get('BHCD')):
             self.bhcd = os.environ['BHCD']
         else:
