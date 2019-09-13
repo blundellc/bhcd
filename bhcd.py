@@ -11,7 +11,7 @@ import math
 import networkx as nx
 from ete3 import Tree
 
-BUILD_DIR = os.path.join(os.path.dirname(__file__), 'src', 'build')
+BUILD_DIR = os.path.join(os.path.dirname(__file__), 'build')
 
 def parse_tree(filename):
     st = ''
