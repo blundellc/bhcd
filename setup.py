@@ -19,10 +19,10 @@ def set_up_git_version():
     with open('git_version.h', 'w') as f:
         f.write(version_macro)
 
-def find_all_c(given_dir, exclude=None):
+def find_all_c(given_dir, exclude=[]):
     c_file_list = []
     for i in os.listdir(given_dir):
-        if i.find('.c') > 0 and exclude != i:
+        if i.find('.c') > 0 and exclude.count(i) == 0:
             c_file_list.append(os.path.join(given_dir, i))
     return c_file_list
 
@@ -45,8 +45,8 @@ def set_up_cython_extension():
             extra_lib_dir.append(lib_dir)
     # collect library
     sourcefiles = ['pybhcd.pyx']
-    sourcefiles.extend(find_all_c(os.path.join(os.getcwd(), 'bhcd', 'bhcd'), exclude='bhcd.c'))
-    sourcefiles.extend(find_all_c(os.path.join(os.getcwd(), 'bhcd', 'hccd')))
+    sourcefiles.extend(find_all_c(os.path.join(os.getcwd(), 'bhcd', 'bhcd'), exclude=['pagerank.c', 'loadgml.c', 'benchbhcd.c', 'bhcd.c', 'test.c', 'test_bitset_hash.c']))
+    sourcefiles.extend(find_all_c(os.path.join(os.getcwd(), 'bhcd', 'hccd'), exclude=[]))
     extra_compile_flags_list = []
     extra_link_flags_list = []
     extensions = [
