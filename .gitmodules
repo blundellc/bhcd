@@ -1,0 +1,3 @@
+[submodule "bhcd"]
+	path = bhcd
+	url = https://github.com/zhaofeng-shu33/bhcd
