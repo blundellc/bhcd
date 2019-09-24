@@ -57,9 +57,9 @@ class BHCD:
             self.bhcd = os.environ['BHCD']
         else:
             if(sys.platform == 'win32'):
-                exe_path = os.path.join(os.path.dirname(__file__), 'src', 'build', 'bhcd', 'Release', 'bhcd.exe')
+                exe_path = os.path.join(os.path.dirname(__file__), 'bhcd', 'build', 'bhcd', 'Release', 'bhcd.exe')
             else:
-                exe_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'src', 'build', 'bhcd', 'bhcd')
+                exe_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'bhcd', 'build', 'bhcd', 'bhcd')
             if(os.path.exists(exe_path)):
                 self.bhcd = exe_path
         self.tree = Tree()
