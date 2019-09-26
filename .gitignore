@@ -1,21 +1,12 @@
 __pycache__/
 build/
-Makefile
-Makefile.in
-configure
-*.log
-*.swp
 *.o
 *.orig
 config.status
 .deps/
 install-sh
-configure.scan
 depcomp
-output/
 tags
-config.guess
-config.sub
 libtool
 ltmain.sh
 data
@@ -23,3 +14,4 @@ data
 bhcd.egg-info
 git_version.h
 pybhcd.c
+*.pyd
