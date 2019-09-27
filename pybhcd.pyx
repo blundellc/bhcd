@@ -44,7 +44,7 @@ cpdef bhcd(gml_py_str):
     cdef Build* build_ptr
     cdef Tree* root_ptr
     cdef gchar* strbuffer
-    gml_py_byte = gml_py_str.encode('ascii')
+    gml_py_byte = (gml_py_str + '\n').encode('ascii')
     gml_c_str = gml_py_byte
     rng_ptr = g_rand_new()
     dataset_ptr = dataset_gml_load( <gchar*> gml_c_str)
@@ -55,7 +55,7 @@ cpdef bhcd(gml_py_str):
     params_unref(params_ptr)
     build_run(build_ptr)
     root_ptr = build_get_best_tree(build_ptr)
-    tree_ref(root_ptr)    
+    tree_ref(root_ptr)
     build_free(build_ptr)
     tree_io_save_string(root_ptr, address(strbuffer))
     cdef gint str_size = strlen(strbuffer)
