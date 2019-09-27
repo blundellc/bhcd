@@ -1,0 +1,18 @@
+version: 1.0.{build}
+image: Visual Studio 2019
+configuration: Release
+platform: x64
+environment:
+  VCPKG_ROOT: C:\Tools\vcpkg
+install:
+- cmd: >-
+    COPY .\appveyor\x64-windows-bhcd.cmake C:\Tools\vcpkg\triplets\
+    IF NOT EXIST "C:\Tools\vcpkg\installed\x64-windows\include\glib.h" vcpkg install glib:x64-windows-bhcd gsl:x64-windows-bhcd
+    C:\Python36-x64\python.exe -m pip install wheel cython twine
+    C:\Python37-x64\python.exe -m pip install wheel cython twine
+cache: C:\Tools\vcpkg\installed\x64-windows-bhcd
+build: off
+build_script:
+- cmd: >-
+    C:\Python36-x64\python.exe -m pip wheel . -w dist --no-deps
+    C:\Python37-x64\python.exe -m pip wheel . -w dist --no-deps
