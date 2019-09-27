@@ -36,7 +36,7 @@ cdef extern from "bhcd/bhcd/bhcd.h":
     void g_free(gpointer mem)
     void tree_io_save_string(Tree* tree, gchar** strbufferptr)
     
-cpdef bhcd(gml_py_str):
+cpdef bhcd(gml_py_str, gamma=0.4, alpha=1.0, beta=0.2, delta=1.0, _lambda=0.2, binary_only=False, restarts=1, sparse=False):
     cdef char* gml_c_str
     cdef GRand* rng_ptr
     cdef Params* params_ptr
@@ -48,9 +48,10 @@ cpdef bhcd(gml_py_str):
     gml_c_str = gml_py_byte
     rng_ptr = g_rand_new()
     dataset_ptr = dataset_gml_load( <gchar*> gml_c_str)
-    params_ptr = params_new(dataset_ptr, 0.4, 1.0, 0.2, 0.2, 1.0)    
-    params_ptr.binary_only = 0
-    build_ptr = build_new(rng_ptr, params_ptr, 1, 0)
+    params_ptr = params_new(dataset_ptr, <gdouble> gamma, <gdouble> alpha, 
+        <gdouble> beta, <gdouble> delta, <gdouble> _lambda)    
+    params_ptr.binary_only = <gboolean> binary_only
+    build_ptr = build_new(rng_ptr, params_ptr, <guint> restarts, <gboolean> sparse)
     build_set_verbose(build_ptr, 0)
     params_unref(params_ptr)
     build_run(build_ptr)

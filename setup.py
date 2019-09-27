@@ -65,8 +65,11 @@ def set_up_cython_extension():
     sourcefiles = ['pybhcd.pyx']
     sourcefiles.extend(find_all_c(os.path.join(os.getcwd(), 'bhcd', 'bhcd'), exclude=['pagerank.c', 'loadgml.c', 'benchbhcd.c', 'bhcd.c', 'test.c', 'test_bitset_hash.c']))
     sourcefiles.extend(find_all_c(os.path.join(os.getcwd(), 'bhcd', 'hccd'), exclude=[]))
-    extra_compile_flags_list = ['/Zi', '/Od']
-    extra_link_flags_list = ['/DEBUG']
+    extra_compile_flags_list = []
+    extra_link_flags_list = []    
+    if sys.platform == 'win32' and os.environ.get('BHCD_DEBUG'): 
+        extra_compile_flags_list.extend(['/Zi', '/Od'])
+        extra_link_flags_list.append('/DEBUG')
     extensions = [
         Extension('pybhcd', sourcefiles,
                   include_dirs=extra_include_path,
