@@ -6,6 +6,8 @@ from shutil import copyfile
 
 from Cython.Build import cythonize
 
+gsl_run_time_name = ''
+
 with open("README.md") as fh:
     long_description = fh.read()
 
@@ -36,6 +38,7 @@ def set_up_glib_include_path_linux(extra_include_path):
     extra_include_path.append(glib_platform_depedent_include_path)
         	
 def set_up_cython_extension():
+    global gsl_run_time_name
     extra_include_path = []
     extra_include_path.append(os.path.join(os.getcwd()))
     extra_include_path.append(os.path.join(os.getcwd(), 'bhcd', 'bhcd'))
@@ -53,7 +56,6 @@ def set_up_cython_extension():
         if os.path.exists(lib_dir):
             extra_lib_dir.append(lib_dir)
 
-        gsl_run_time_name = 'glib-2.dll'  
         gsl_run_time = os.path.join(root_dir, 'installed', triplet, 'bin', gsl_run_time_name)
         # copy to current directory
         copyfile(gsl_run_time, os.path.join(os.getcwd(), gsl_run_time_name))
@@ -81,11 +83,20 @@ def set_up_cython_extension():
     ]
     return cythonize(extensions)
 
-EXT_MODULE_CLASS = set_up_cython_extension()
+def set_up_data_files():
+    global gsl_run_time_name
+    if sys.platform != 'win32':
+        return {}
+    gsl_run_time_name = 'glib-2.dll'
+    return [('Lib/site-packages', [gsl_run_time_name])]
+
     
 if __name__ == '__main__':
     set_up_git_version()
+    data_file_list = set_up_data_files()
+    EXT_MODULE_CLASS = set_up_cython_extension()
     setup(name = 'pybhcd',
+          data_files = data_file_list,
           version = '0.1',
           description = 'Bayesian Hierarchical Community Discovery',
           author = 'blundellc, zhaofeng-shu33',

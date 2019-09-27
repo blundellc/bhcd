@@ -1,15 +1,11 @@
 __pycache__/
+pybhcd.egg-info/
+dist
 build/
 *.o
 *.dll
-config.status
 .deps/
 install-sh
-depcomp
-tags
-libtool
-ltmain.sh
-data
 *.so
 bhcd.egg-info
 git_version.h

@@ -1,6 +1,7 @@
 # distutils: language = c
 from libc.string cimport strlen
 from cython.operator import address
+
 cdef extern from "bhcd/bhcd/bhcd.h":
     ctypedef char gchar
     ctypedef unsigned int guint
