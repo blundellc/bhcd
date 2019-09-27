@@ -53,11 +53,8 @@ def set_up_cython_extension():
         if os.path.exists(lib_dir):
             extra_lib_dir.append(lib_dir)
 
-        gsl_run_time_name = 'glib-2.dll'            
-        if sys.argv.count('--debug') > 0:
-            gsl_run_time = os.path.join(root_dir, 'installed', triplet, 'debug', 'bin', gsl_run_time_name) 
-        else:
-            gsl_run_time = os.path.join(root_dir, 'installed', triplet, 'bin', gsl_run_time_name)
+        gsl_run_time_name = 'glib-2.dll'  
+        gsl_run_time = os.path.join(root_dir, 'installed', triplet, 'bin', gsl_run_time_name)
         # copy to current directory
         copyfile(gsl_run_time, os.path.join(os.getcwd(), gsl_run_time_name))
 

@@ -15,4 +15,5 @@ bhcd.egg-info
 git_version.h
 pybhcd.c
 *.pdb
+.vs
 *.pyd
