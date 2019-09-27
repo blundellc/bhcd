@@ -28,6 +28,13 @@ def find_all_c(given_dir, exclude=[]):
             c_file_list.append(os.path.join(given_dir, i))
     return c_file_list
 
+def set_up_glib_include_path_linux(extra_include_path):
+    GLIB_ROOT = os.environ.get('GLIB_ROOT', '/usr/')
+    glib_platform_indepedent_include_path = os.path.join(GLIB_ROOT, 'include', 'glib-2.0')
+    glib_platform_depedent_include_path = os.path.join(GLIB_ROOT, 'lib64', 'glib-2.0', 'include')
+    extra_include_path.append(glib_platform_indepedent_include_path)
+    extra_include_path.append(glib_platform_depedent_include_path)
+        	
 def set_up_cython_extension():
     extra_include_path = []
     extra_include_path.append(os.path.join(os.getcwd()))
@@ -45,6 +52,7 @@ def set_up_cython_extension():
         lib_dir = os.path.join(root_dir, 'installed', triplet, 'lib')
         if os.path.exists(lib_dir):
             extra_lib_dir.append(lib_dir)
+
         gsl_run_time_name = 'glib-2.dll'            
         if sys.argv.count('--debug') > 0:
             gsl_run_time = os.path.join(root_dir, 'installed', triplet, 'debug', 'bin', gsl_run_time_name) 
@@ -52,6 +60,10 @@ def set_up_cython_extension():
             gsl_run_time = os.path.join(root_dir, 'installed', triplet, 'bin', gsl_run_time_name)
         # copy to current directory
         copyfile(gsl_run_time, os.path.join(os.getcwd(), gsl_run_time_name))
+
+    if sys.platform == 'linux':
+        set_up_glib_include_path_linux(extra_include_path)    
+
     # collect library
     sourcefiles = ['pybhcd.pyx']
     sourcefiles.extend(find_all_c(os.path.join(os.getcwd(), 'bhcd', 'bhcd'), exclude=['pagerank.c', 'loadgml.c', 'benchbhcd.c', 'bhcd.c', 'test.c', 'test_bitset_hash.c']))
