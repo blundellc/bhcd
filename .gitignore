@@ -1,7 +1,7 @@
 __pycache__/
 build/
 *.o
-*.orig
+*.dll
 config.status
 .deps/
 install-sh

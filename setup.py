@@ -1,6 +1,7 @@
 import os
 from setuptools import setup, Extension
 from subprocess import Popen, PIPE
+from shutil import copyfile
 
 from Cython.Build import cythonize
 
@@ -36,13 +37,17 @@ def set_up_cython_extension():
 
     if os.environ.get('VCPKG_ROOT'):
         root_dir = os.environ['VCPKG_ROOT']
-        triplet = os.environ.get('VCPKG_DEFAULT_TRIPLET', 'x64-windows')
+        triplet = os.environ.get('VCPKG_DEFAULT_TRIPLET', 'x64-windows-bhcd')
         include_dir = os.path.join(root_dir, 'installed', triplet, 'include')
         if os.path.exists(include_dir):
             extra_include_path.append(include_dir)
         lib_dir = os.path.join(root_dir, 'installed', triplet, 'lib')
         if os.path.exists(lib_dir):
             extra_lib_dir.append(lib_dir)
+        gsl_run_time_name = 'glib-2.dll'
+        gsl_run_time = os.path.join(root_dir, 'installed', triplet, 'bin', gsl_run_time_name)
+        # copy to current directory
+        copyfile(gsl_run_time, os.path.join(os.getcwd(), gsl_run_time_name))
     # collect library
     sourcefiles = ['pybhcd.pyx']
     sourcefiles.extend(find_all_c(os.path.join(os.getcwd(), 'bhcd', 'bhcd'), exclude=['pagerank.c', 'loadgml.c', 'benchbhcd.c', 'bhcd.c', 'test.c', 'test_bitset_hash.c']))
